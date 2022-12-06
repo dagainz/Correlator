@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 
+"""This module reports on i280 activity through the Message Queue"""
+
 
 class I280Transaction:
     def __init__(self, start_date):
@@ -15,7 +17,7 @@ class I280Queue:
         self.states = {}
         self.transactions = {}
         self.description = 'i280 Queue monitor'
-        self.identifier = 'i280Queue'
+        self.identifier = 'I280Queue'
         self.notifier = notifier
         self.i280_total = 0
         self.i280_fail = 0
@@ -68,11 +70,14 @@ class I280Queue:
         # Create and update transactions store
 
     def _start_transaction(self, identifier, start_date):
+        """Initialize an I280 transaction"""
         if self.transactions.get(identifier):
             del self.transactions[identifier]
         self.transactions[identifier] = I280Transaction(start_date)
 
     def _add_correlation_id(self, identifier, correlation_id):
+        """Adds a correlation ID to an initialized transaction"""
+
         obj = self.transactions.get(identifier)
         if obj:
             obj.correlation_id = correlation_id
@@ -80,6 +85,7 @@ class I280Queue:
             raise ValueError("No transaction!")
 
     def _finish_transaction(self, identifier, end_date):
+        """finishes the transaction."""
         obj = self.transactions.get(identifier)
         if obj:
             obj.end = end_date
