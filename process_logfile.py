@@ -9,9 +9,9 @@ from py.ucpath_queue import I280Queue
 
 log = logging.getLogger('logger')
 
-parser = argparse.ArgumentParser('Log Analyzer')
+parser = argparse.ArgumentParser('Log analyze and report')
 parser.add_argument(
-    '--d', action='store_true', help='Debug mode')
+    '--d', action='store_true', help='Show debugging messages"')
 parser.add_argument(
     '--csv', action='store_true',
     help='Write audit data for each module to csv files')
