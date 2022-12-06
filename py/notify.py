@@ -66,23 +66,24 @@ class CSVNotify(Notify):
         self.initialized_files = {}
 
     def initialize_module(self, module):
-        csv_filename = '{}-audit.csv'.format(module)
+
+        csv_basename = '{}-audit'.format(module)
 
         # Check if the csv file exists, and if so, rotates old logs
         # and then renames the existing file to .1
 
-        if os.path.exists(csv_filename):
+        if os.path.exists(csv_basename + '.csv'):
             for number in range(self.ROTATE_KEEP - 1, 0, -1):
-                old_name = csv_filename + "." + str(number)
+                old_name = csv_basename + "_" + str(number) + ".csv"
                 if os.path.exists(old_name):
-                    new_name = csv_filename + "." + str(number + 1)
+                    new_name = csv_basename + "_" + str(number + 1) + ".csv"
                     os.rename(old_name, new_name)
-            old_name = csv_filename
-            new_name = csv_filename + ".1"
+            old_name = csv_basename + '.csv'
+            new_name = csv_basename + "_1.csv"
             os.rename(old_name, new_name)
             # csv_filename is now clear
 
-        file_obj = open(csv_filename, "w", newline='')
+        file_obj = open(csv_basename + '.csv', 'w', newline='')
         self.initialized_files[module] = file_obj
 
     def send_warning(self, message):
