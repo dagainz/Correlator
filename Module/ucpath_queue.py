@@ -176,7 +176,7 @@ class I280Queue:
                 duration_ms = (obj.end - obj.start).microseconds
                 duration_s = (obj.end - obj.start).seconds
                 self.notifier.send_info(
-                    'i280 [{}] submitted succesfully to worker.'
+                    'i280 [{}] submitted successfully to worker.'
                     ' Time in queue: {} seconds'.format(
                         obj.correlation_id, duration_s))
                 self._setstate(record.identifier, 0)
