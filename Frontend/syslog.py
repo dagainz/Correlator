@@ -14,7 +14,7 @@ class SyslogRecord:
     main_regex = (
             r'<(?P<priority>\d+?)>(?P<version>\d) (?P<timestamp_str>.+?) '
             r'(?P<hostname>.+?) (?P<appname>.+?) (?P<procid>.+?) (?P<msgid>.+?)'
-            r' (?P<structure>\[.+\]|-) (?P<message>.+)')
+Cons            r' (?P<structure>\[.+\]|-) (?P<detail>.+)')
     sd_element_regex = r'\[(\w+) ([^\]]+?)\](.*)'
     sd_param_regex = r'(.+?)="(.*?)"\s?(.*)'
 
@@ -83,7 +83,7 @@ class SyslogRecord:
         self.appname = self.m.group('appname')
         self.procid = self.m.group('procid')
         self.msgid = self.m.group('msgid')
-        self.message = self.m.group('message')
+        self.detail = self.m.group('detail')
 
     def __repr__(self):
         return '{} ({})'.format(self.m.groupdict(), self.structured_data)
