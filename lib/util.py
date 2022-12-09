@@ -2,6 +2,10 @@ import logging
 import sys
 
 
+class ParserError(Exception):
+    pass
+
+
 class LogHelper:
 
     @staticmethod

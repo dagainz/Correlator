@@ -1,9 +1,6 @@
 import re
 from datetime import datetime
-
-
-class ParserError(Exception):
-    pass
+from lib.util import ParserError
 
 
 class LogRecord:
