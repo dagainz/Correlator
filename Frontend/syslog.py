@@ -14,7 +14,7 @@ class SyslogRecord:
     main_regex = (
             r'<(?P<priority>\d+?)>(?P<version>\d) (?P<timestamp_str>.+?) '
             r'(?P<hostname>.+?) (?P<appname>.+?) (?P<procid>.+?) (?P<msgid>.+?)'
-Cons            r' (?P<structure>\[.+\]|-) (?P<detail>.+)')
+            r' (?P<structure>\[.+\]|-) (?P<detail>.+)')
     sd_element_regex = r'\[(\w+) ([^\]]+?)\](.*)'
     sd_param_regex = r'(.+?)="(.*?)"\s?(.*)'
 
