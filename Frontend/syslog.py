@@ -85,6 +85,20 @@ class SyslogRecord:
         self.msgid = self.m.group('msgid')
         self.detail = self.m.group('detail')
 
+        # Properties
+
+        p = re.match(r'(.*)\((.+)\)', self.procid)
+        if p:
+            self.prog = p.group(1)
+            self.identifier = p.group(2)
+        else:
+            self.prog = self.procid
+            self.identifier = ''
+
+        self.instance = self.appname
+
+        self.request = ''
+
     def __repr__(self):
         return '{} ({})'.format(self.m.groupdict(), self.structured_data)
 

@@ -15,7 +15,10 @@ parser.add_argument(
 parser.add_argument(
     '--csv', action='store_true',
     help='Write audit data for each module to csv files')
-parser.add_argument('logfile', help='Log file to parse')
+parser.add_argument('--logfile', help='Log file to parse', required=True)
+parser.add_argument('--instance', help='Instance name', required=True)
+parser.add_argument('--hostname', help='Host name', required=True)
+
 args = parser.parse_args()
 
 # Set up the notifier chain
@@ -41,7 +44,7 @@ LogHelper.initialize_console_logging(log, debug_level)
 
 log.info('Starting')
 app = LogfileProcessor(notifiers, modules, log)
-app.from_file(args.logfile)
+app.from_file(args.logfile, args.instance, args.hostname)
 app.log_stats()
 
 
