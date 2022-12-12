@@ -19,6 +19,9 @@ syslog_tcp_port = 514
 
 parser = argparse.ArgumentParser('Syslog ')
 group = parser.add_mutually_exclusive_group()
+parser.add_argument(
+    '--d', help='Debug level', action='store_true'
+)
 
 group.add_argument(
     '--save-records',
@@ -26,9 +29,6 @@ group.add_argument(
 group.add_argument(
     '--read-records',
     help='File to read and process saved syslog records')
-group.add_argument(
-    '--d', help='Debug level', action='store_true'
-)
 
 cmd_args = parser.parse_args()
 debug_level = logging.DEBUG if cmd_args.d else logging.INFO
@@ -61,7 +61,7 @@ output_file = None
 if cmd_args.read_records:
     # Replay from capture file
     input_file = open(cmd_args.read_records, 'rb')
-    log.info('Reading from ')
+    log.info('Reading from capture file {} '.format(cmd_args.read_records))
     SyslogHandler(input_file)
     sys.exit(0)
 elif cmd_args.save_records:
@@ -69,6 +69,8 @@ elif cmd_args.save_records:
         print("{} exists. Delete it first".format(cmd_args.save_records))
         sys.exit(0)
     else:
+        log.info('Writing received syslog data to capture file {}'.format(
+            cmd_args.save_records))
         output_file = open(cmd_args.save_records, 'wb')
 
 

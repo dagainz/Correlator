@@ -125,7 +125,7 @@ class SyslogHandler(socketserver.BaseRequestHandler):
 
     # Start of handler
 
-    BUFFER_SIZE = 24
+    BUFFER_SIZE = 1024
 
     def __init__(self, *args):
         if len(args) == 1:      # from-file context
@@ -153,6 +153,8 @@ class SyslogHandler(socketserver.BaseRequestHandler):
             if block:
                 if self.output_file:
                     self.output_file.write(block)
+                    self.log.debug('Wrote {} byte(s) to capture file'.format(
+                        len(block)))
             data = last + block
             if not data:
                 break
