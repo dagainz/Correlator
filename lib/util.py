@@ -22,3 +22,10 @@ class LogHelper:
         ch.setFormatter(formatter)
         log.addHandler(ch)
 
+
+def build_modules(modules, notifiers, log):
+    moduledict = {}
+    for module in modules:
+        obj = module(notifiers, log)
+        moduledict[obj.identifier] = obj
+    return moduledict

@@ -67,20 +67,16 @@ class RecordResult:
 
 
 class LogfileProcessor:
-    def __init__(self, notifiers, modules, log):
+    def __init__(self, modules, log):
 
         self.log = log
         self.start = None
         self.end = None
 
-        self.modules = {}
-        for module in modules:
-            obj = module(notifiers, log)
-            self.modules[obj.identifier] = obj
+        self.modules = modules
 
     @staticmethod
     def logfile_reader(file_object, instance, hostname):
-
         record = ''
         eof = False
         while not eof:

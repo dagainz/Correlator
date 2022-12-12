@@ -5,7 +5,7 @@ import logging
 from Frontend.logfile import LogfileProcessor
 from Notify.notify import Notifiers, ConsoleNotify, CSVNotify
 from Module.ucpath_queue import I280Queue
-from lib.util import LogHelper
+from lib.util import LogHelper, build_modules
 
 log = logging.getLogger('logger')
 
@@ -22,7 +22,6 @@ parser.add_argument('--hostname', help='Host name', required=True)
 args = parser.parse_args()
 
 # Set up the notifier chain
-
 notifiers = Notifiers()
 # Add the basic console notifier
 notifiers.add_notifier(ConsoleNotify())
@@ -32,9 +31,10 @@ if args.csv:
 
 # List of modules
 
-modules = [
-    I280Queue
-]
+modules = build_modules(
+    [I280Queue],
+    notifiers,
+    log)
 
 # Debugging
 
@@ -43,7 +43,7 @@ debug_level = logging.DEBUG if args.d else logging.INFO
 LogHelper.initialize_console_logging(log, debug_level)
 
 log.info('Starting')
-app = LogfileProcessor(notifiers, modules, log)
+app = LogfileProcessor(modules, log)
 app.from_file(args.logfile, args.instance, args.hostname)
 app.log_stats()
 

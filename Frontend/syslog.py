@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import iso8601
 import re
 import socketserver
 
@@ -36,20 +37,20 @@ class SyslogRecord:
         if not self.m:
             raise ValueError('Invalid syslog record')
 
-        self.structured_data = {}
+        self.sd_data = {}
 
         # Decode RFC 5424 STRUCTURED-DATA
         structure = self.m.group('structure')
         while True:
             # Read an SD-ELEMENT
-            sd_element = re.match(self.sd_element_regex, structure)
-            if sd_element:
-                sd_element_id = sd_element.group(1)
-                sd_element_data = sd_element.group(2)
-                sd_element_remaining = sd_element.group(3)
+            sd_elem = re.match(self.sd_element_regex, structure)
+            if sd_elem:
+                sd_elem_id = sd_elem.group(1)
+                sd_elem_data = sd_elem.group(2)
+                sd_elem_remaining = sd_elem.group(3)
                 while True:
                     # Read an SD-PARAM
-                    sd_param = re.match(self.sd_param_regex, sd_element_data)
+                    sd_param = re.match(self.sd_param_regex, sd_elem_data)
                     if sd_param:
                         sd_param_key = sd_param.group(1)
                         sd_param_value = sd_param.group(2)
@@ -57,27 +58,32 @@ class SyslogRecord:
 
                         # Add k/v
 
-                        if sd_element_id not in self.structured_data:
-                            self.structured_data[sd_element_id] = {}
+                        if sd_elem_id not in self.sd_data:
+                            self.sd_data[sd_elem_id] = {}
 
                         # Add key/value pair
-                        self.structured_data[sd_element_id][sd_param_key] = sd_param_value
+                        self.sd_data[sd_elem_id][sd_param_key] = sd_param_value
 
                         # Keep parsing SD-PARAM's if there are any
                         if sd_param_remaining:
-                            sd_element_data = sd_param_remaining
+                            sd_elem_data = sd_param_remaining
                         else:
                             # Last (or only) SD-PARAM
                             break
                     else:
                         raise ParserError('SD-PARAM regex did not match')
-                if sd_element_remaining:
+                if sd_elem_remaining:
                     # Keep parsing SD-ELEMENT'S if there are any
-                    structure = sd_element_remaining
+                    structure = sd_elem_remaining
                 else:
                     break
 
         self.timestamp_str = self.m.group('timestamp_str')
+        try:
+            self.timestamp = iso8601.parse_date(self.timestamp_str)
+        except iso8601.ParseError:
+            self.timestamp = None
+
         self.priority = self.m.group('priority')
         self.hostname = self.m.group('hostname')
         self.appname = self.m.group('appname')
@@ -86,6 +92,9 @@ class SyslogRecord:
         self.detail = self.m.group('detail')
 
         # Properties
+
+        self.who = ''
+        self.request = ''
 
         p = re.match(r'(.*)\((.+)\)', self.procid)
         if p:
@@ -97,68 +106,93 @@ class SyslogRecord:
 
         self.instance = self.appname
 
-        self.request = ''
-
     def __repr__(self):
-        return '{} ({})'.format(self.m.groupdict(), self.structured_data)
+        return '{} ({})'.format(self.m.groupdict(), self.sd_data)
 
 
-class SyslogTCPHandler(socketserver.BaseRequestHandler):
+class SyslogHandler(socketserver.BaseRequestHandler):
+
+    # This is a template class, meant to be dynamically generated via type,
+    # because instantiation and initialization happens somewhere in
+    # socketserver, and I can't think of an elegant way to have these
+    # variables be available to the handler.
+
+    # These properties can be set via this method
 
     output_file = None
+    modules = None
+    log = None
+
+    # Start of handler
+
     BUFFER_SIZE = 24
 
-    @staticmethod
-    def handle_record(data):
+    def __init__(self, *args):
+        if len(args) == 1:      # from-file context
+            # In this case, we don't want to call the superclass constructor,
+            # We'll just handle it our self.
+            self.input_file = args[0]
+            self.handle()
+        else:
+            self.input_file = None
+            super().__init__(*args)
+
+    def process_record(self, data):
         record = SyslogRecord(data)
-        print('Process record: {}'.format(record))
-
-    def handle_records(self, data):
-
-        while True:
-            pos = data.find(b'\n')
-            if pos == -1:
-                return data
-            self.handle_record(data[0:pos])
-            data = data[pos + 1:]
+        for module in list(self.modules.values()):
+            module.process_record(record)
+            # print('Process record: {}'.format(record))
 
     def handle(self):
         last = b''
         while True:
-            block = self.request.recv(24)
-            if self.output_file:
-                self.output_file.write(block)
+            if self.input_file:
+                block = self.input_file.read(self.BUFFER_SIZE)
+            else:
+                block = self.request.recv(self.BUFFER_SIZE)
+            if block:
+                if self.output_file:
+                    self.output_file.write(block)
             data = last + block
             if not data:
                 break
-            last = self.handle_records(data)
+            last = self._handle_records(data)
 
-
-class SyslogFromFile:
-    def __init__(self, file_object):
-        self.input_file = file_object
-
-    @staticmethod
-    def handle_record(data):
-        record = SyslogRecord(data)
-        print('Process record: {}'.format(record))
-
-    def handle_records(self, data):
+    def _handle_records(self, data):
 
         while True:
             pos = data.find(b'\n')
             if pos == -1:
                 return data
-            self.handle_record(data[0:pos])
+            self.process_record(data[0:pos])
             data = data[pos + 1:]
 
-    def handle(self):
-        last = b''
-        while True:
-            data = last + self.input_file.read(24)
-            if not data:
-                break
-            last = self.handle_records(data)
+
+# class SyslogFromFile:
+#     def __init__(self, file_object):
+#         self.input_file = file_object
+#
+#     @staticmethod
+#     def handle_record(data):
+#         record = SyslogRecord(data)
+#         print('Process record: {}'.format(record))
+#
+#     def handle_records(self, data):
+#
+#         while True:
+#             pos = data.find(b'\n')
+#             if pos == -1:
+#                 return data
+#             self.handle_record(data[0:pos])
+#             data = data[pos + 1:]
+#
+#     def handle(self):
+#         last = b''
+#         while True:
+#             data = last + self.input_file.read(24)
+#             if not data:
+#                 break
+#             last = self.handle_records(data)
 
 
 

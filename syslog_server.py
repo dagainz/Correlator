@@ -1,13 +1,18 @@
 #!python3
 
 import argparse
+import logging
 import os
 import sys
 import socketserver
 
-from Frontend.syslog import SyslogFromFile, SyslogTCPHandler
+from Frontend.syslog import SyslogHandler
+from Notify.notify import Notifiers, ConsoleNotify, CSVNotify
+from Module.ucpath_queue import I280Queue
+from lib.util import LogHelper, build_modules
 
-output_file = None
+log = logging.getLogger('logger')
+
 
 syslog_host = '0.0.0.0'
 syslog_tcp_port = 514
@@ -21,8 +26,25 @@ group.add_argument(
 group.add_argument(
     '--read-records',
     help='File to read and process saved syslog records')
+group.add_argument(
+    '--d', help='Debug level', action='store_true'
+)
 
 cmd_args = parser.parse_args()
+debug_level = logging.DEBUG if cmd_args.d else logging.INFO
+LogHelper.initialize_console_logging(log, debug_level)
+
+# Set up the notifier chain
+notifiers = Notifiers()
+# Add the basic console notifier
+notifiers.add_notifier(ConsoleNotify())
+
+# List of modules
+
+modules = build_modules(
+    [I280Queue],
+    notifiers,
+    log)
 
 # logging.basicConfig(level=logging.INFO, format='%(message)s', datefmt='', filename=LOG_FILE, filemode='a')
 
@@ -30,48 +52,45 @@ listening = True
 tcpServer = None
 single_thread = True
 
+# log = None
+# modules = None
+input_file = None
+output_file = None
+# notifiers = notifiers
+
 if cmd_args.read_records:
     # Replay from capture file
-    SyslogFromFile(open(cmd_args.read_records, 'rb')).handle()
+    input_file = open(cmd_args.read_records, 'rb')
+    log.info('Reading from ')
+    SyslogHandler(input_file)
     sys.exit(0)
-
-if cmd_args.save_records:
+elif cmd_args.save_records:
     if os.path.exists(cmd_args.save_records):
-        print("Will not overwrite {}. Remove it first.".format(cmd_args.save_records))
+        print("{} exists. Delete it first".format(cmd_args.save_records))
         sys.exit(0)
     else:
         output_file = open(cmd_args.save_records, 'wb')
-        handler_object = type('SyslogTCPWriterHandler', (SyslogTCPHandler, ), {'output_file': output_file})
-else:
-    handler_object = SyslogTCPHandler
+
+
+props = {
+    'output_file': output_file,
+    'modules': modules,
+    'notifiers': notifiers,
+    'log': log
+}
+
+# Create a new class based on the meta class, with these properties
+# possibly overridden.
+#
+CustomSyslogHandler = type (
+    'CustomSyslogHandler', (SyslogHandler,), props)
+
 
 if single_thread:
     # Create the server, binding to interface and port
-    with socketserver.TCPServer((syslog_host, syslog_tcp_port), handler_object) as server:
+    with socketserver.TCPServer(
+            (syslog_host, syslog_tcp_port), CustomSyslogHandler) as server:
         # Activate the server and run until Ctrl-C
         server.serve_forever()
 else:
     ValueError('No multi thread at this time')
-
-# listening = True
-# tcpServer = None
-#
-# try:
-#
-#     # TCP server
-#     tcpServer = socketserver.TCPServer((HOST, TCP_PORT), SyslogTCPHandler)
-#     tcpThread = threading.Thread(target=tcpServer.serve_forever)
-#     tcpThread.daemon = True
-#     tcpThread.start()
-#
-#     while True:
-#         time.sleep(1)
-# # tcpServer.serve_forever(poll_interval=0.5)
-# except (IOError, SystemExit):
-#     raise
-# except KeyboardInterrupt:
-#     listening = False
-#     if tcpServer:
-#         tcpServer.shutdown()
-#         tcpServer.server_close()
-#     print("Crtl+C Pressed. Shutting down.")
