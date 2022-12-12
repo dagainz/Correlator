@@ -170,31 +170,4 @@ class SyslogHandler(socketserver.BaseRequestHandler):
             data = data[pos + 1:]
 
 
-# class SyslogFromFile:
-#     def __init__(self, file_object):
-#         self.input_file = file_object
-#
-#     @staticmethod
-#     def handle_record(data):
-#         record = SyslogRecord(data)
-#         print('Process record: {}'.format(record))
-#
-#     def handle_records(self, data):
-#
-#         while True:
-#             pos = data.find(b'\n')
-#             if pos == -1:
-#                 return data
-#             self.handle_record(data[0:pos])
-#             data = data[pos + 1:]
-#
-#     def handle(self):
-#         last = b''
-#         while True:
-#             data = last + self.input_file.read(24)
-#             if not data:
-#                 break
-#             last = self.handle_records(data)
-
-
 
