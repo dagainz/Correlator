@@ -51,6 +51,10 @@ class Notifiers:
         for notifier in self.notifiers:
             notifier.send_audit(message, headers)
 
+    def send_debug(self, message):
+        for notifier in self.notifiers:
+            notifier.send_info(message)
+
 
 class CSVNotify(Notify):
     """Creates a notifier that ignores everything but audit events.
@@ -142,3 +146,26 @@ class ConsoleNotify(Notify):
         # don't handle, for now.
         return
 
+
+class LogbackNotify(Notify):
+    """Simple notifier to report on records captured.
+    """
+
+    def __init__(self, log):
+        self.log = log
+
+    def send_warning(self, message):
+        self.log.warning(message)
+
+    def send_info(self, message):
+        self.log.info(message)
+
+    def send_crit(self, message):
+        self.log.error(message.format(message))
+
+    def send_error(self, message):
+        self.log.error(message.format(message))
+
+    def send_audit(self, message, headers):
+        # don't handle, for now.
+        return

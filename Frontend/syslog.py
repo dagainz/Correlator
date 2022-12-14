@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from datetime import datetime
 import iso8601
 import re
 import socketserver
@@ -21,6 +22,7 @@ class SyslogRecord:
 
     def __init__(self, record):
 
+        self.record_length = len(record)
         pos = record.find(b'\xef\xbb\xbf')
         if pos:
             decoded_record = (
@@ -71,7 +73,10 @@ class SyslogRecord:
                             # Last (or only) SD-PARAM
                             break
                     else:
-                        raise ParserError('SD-PARAM regex did not match')
+                        raise ParserError(
+                            'SD-PARAM regex did not match ({})'.format(
+                                sd_elem_data
+                            ))
                 if sd_elem_remaining:
                     # Keep parsing SD-ELEMENT'S if there are any
                     structure = sd_elem_remaining
@@ -93,6 +98,17 @@ class SyslogRecord:
 
         # Properties
 
+    def __repr__(self):
+        return '{} ({})'.format(self.m.groupdict(), self.sd_data)
+
+    def __len__(self):
+        return self.record_length
+
+
+class IDMSyslogRecord(SyslogRecord):
+    def __init__(self, record):
+        super().__init__(record)
+
         self.who = ''
         self.request = ''
 
@@ -105,9 +121,6 @@ class SyslogRecord:
             self.identifier = ''
 
         self.instance = self.appname
-
-    def __repr__(self):
-        return '{} ({})'.format(self.m.groupdict(), self.sd_data)
 
 
 class SyslogHandler(socketserver.BaseRequestHandler):
@@ -138,7 +151,7 @@ class SyslogHandler(socketserver.BaseRequestHandler):
             super().__init__(*args)
 
     def process_record(self, data):
-        record = SyslogRecord(data)
+        record = IDMSyslogRecord(data)
         for module in list(self.modules.values()):
             module.process_record(record)
             # print('Process record: {}'.format(record))
@@ -153,8 +166,6 @@ class SyslogHandler(socketserver.BaseRequestHandler):
             if block:
                 if self.output_file:
                     self.output_file.write(block)
-                    self.log.debug('Wrote {} byte(s) to capture file'.format(
-                        len(block)))
             data = last + block
             if not data:
                 break
