@@ -11,6 +11,7 @@ from Frontend.syslog import SyslogHandler
 from Notify.notify import Notifiers, ConsoleNotify, LogbackNotify
 from Module.ucpath_queue import I280Queue
 from Module.capture import CaptureOnly
+from Module.report import Report
 from lib.util import LogHelper, build_modules
 
 log = logging.getLogger('logger')
@@ -39,6 +40,9 @@ parser.add_argument(
     '--write-only', action='store_true',
     help='If writing to a capture file, do not process data.')
 
+parser.add_argument(
+    '--report-only', action='store_true',
+    help='Report on records processed. Do not take any action')
 
 cmd_args = parser.parse_args()
 if cmd_args.write_only and not cmd_args.write_to_file:
@@ -69,12 +73,17 @@ if cmd_args.write_only:
     notifiers.add_notifier(LogbackNotify(log))
     modules = build_modules([CaptureOnly], notifiers, log)
 else:
-    notifiers.add_notifier(LogbackNotify(LogbackNotify(log)))
-
-    modules = build_modules(
-        [I280Queue],
-        notifiers,
-        log)
+    notifiers.add_notifier(LogbackNotify(log))
+    if not cmd_args.report_only:
+        modules = build_modules(
+            [I280Queue],
+            notifiers,
+            log)
+    else:
+        modules = build_modules(
+            [Report],
+            notifiers,
+            log)
 
 
 props = {
