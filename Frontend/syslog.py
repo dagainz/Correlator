@@ -16,14 +16,16 @@ class SyslogRecord:
     main_regex = (
             r'<(?P<priority>\d+?)>(?P<version>\d) (?P<timestamp_str>.+?) '
             r'(?P<hostname>.+?) (?P<appname>.+?) (?P<procid>.+?) (?P<msgid>.+?)'
-            r' (?P<structure>\[.+\]|-) (?P<detail>.+)')
-    sd_element_regex = r'\[(\w+) ([^\]]+?)\](.*)'
-    sd_param_regex = r'(.+?)="(.*?)"\s?(.*)'
+            r' (?P<rest>.+)')
 
     def __init__(self, record):
 
+        self.original_record = record
         self.record_length = len(record)
+        self.error = None
+
         pos = record.find(b'\xef\xbb\xbf')
+
         if pos:
             decoded_record = (
                     record[0:pos].decode('utf-8')
@@ -31,72 +33,82 @@ class SyslogRecord:
         else:
             decoded_record = record.decode('utf-8')
 
-        # print("DEBUG: Matching {}".format(decoded_record))
-        # print("DEBUG: against {}".format(self.main_regex))
-
         self.m = re.match(self.main_regex, decoded_record)
 
         if not self.m:
-            raise ValueError('Invalid syslog record')
-
-        self.sd_data = {}
-
-        # Decode RFC 5424 STRUCTURED-DATA
-        structure = self.m.group('structure')
-        while True:
-            # Read an SD-ELEMENT
-            sd_elem = re.match(self.sd_element_regex, structure)
-            if sd_elem:
-                sd_elem_id = sd_elem.group(1)
-                sd_elem_data = sd_elem.group(2)
-                sd_elem_remaining = sd_elem.group(3)
-                while True:
-                    # Read an SD-PARAM
-                    sd_param = re.match(self.sd_param_regex, sd_elem_data)
-                    if sd_param:
-                        sd_param_key = sd_param.group(1)
-                        sd_param_value = sd_param.group(2)
-                        sd_param_remaining = sd_param.group(3)
-
-                        # Add k/v
-
-                        if sd_elem_id not in self.sd_data:
-                            self.sd_data[sd_elem_id] = {}
-
-                        # Add key/value pair
-                        self.sd_data[sd_elem_id][sd_param_key] = sd_param_value
-
-                        # Keep parsing SD-PARAM's if there are any
-                        if sd_param_remaining:
-                            sd_elem_data = sd_param_remaining
-                        else:
-                            # Last (or only) SD-PARAM
-                            break
-                    else:
-                        raise ParserError(
-                            'SD-PARAM regex did not match ({})'.format(
-                                sd_elem_data
-                            ))
-                if sd_elem_remaining:
-                    # Keep parsing SD-ELEMENT'S if there are any
-                    structure = sd_elem_remaining
-                else:
-                    break
+            self.error = "1st stage parse failure"
+            return
 
         self.timestamp_str = self.m.group('timestamp_str')
         try:
             self.timestamp = iso8601.parse_date(self.timestamp_str)
         except iso8601.ParseError:
-            self.timestamp = None
+            self.error = 'Cannot parse timestamp'
+            return
 
         self.priority = self.m.group('priority')
         self.hostname = self.m.group('hostname')
         self.appname = self.m.group('appname')
         self.procid = self.m.group('procid')
         self.msgid = self.m.group('msgid')
-        self.detail = self.m.group('detail')
 
-        # Properties
+        try:
+            self.detail, self.structured_data = self._parse_sdata(
+                self.m.group('rest'))
+        except ParserError as e:
+            self.error = 'Cannot parse structured data: {}'.format(e)
+            return
+
+
+    @staticmethod
+    def _parse_sdata(dataline):
+
+        has_structured_data = False
+        element_id = None
+        state = 1
+        parsed_struc = {}
+
+        def add_param(eid, param_key, param_value):
+            if element_id not in parsed_struc:
+                parsed_struc[eid] = {}
+
+            parsed_struc[eid][param_key] = param_value
+
+        while True:
+            if not dataline:
+                raise ParserError('Ran out of content')
+            if state == 1:
+
+                if not has_structured_data and dataline[0:2] == '- ':
+                    return dataline[2:], {}
+
+                m = re.match(r'\[(\w+) (.*)', dataline)
+                if not m:
+                    if not has_structured_data:
+                        raise ParserError(
+                            'SD-DATA {} parse failed '.format(dataline))
+                    else:
+                        return dataline.lstrip(), parsed_struc
+                element_id = m.group(1)
+                dataline = m.group(2)
+                state = 2
+                continue
+            elif state == 2:
+                m = re.match(r'\](.*)', dataline)
+                if m:
+                    dataline = m.group(1)
+                    state = 1
+                    continue
+                m = re.match(r'(.+?)="*([^"]+)"\s*(.*)', dataline)
+                if m:
+                    add_param(element_id, m.group(1), m.group(2))
+                    has_structured_data = True
+                    dataline = m.group(3)
+                    continue
+                else:
+                    raise ParserError(
+                        'SD-DATA Key/Value {} parse failed'.format(
+                            dataline))
 
     def __repr__(self):
         return '{} ({})'.format(self.m.groupdict(), self.sd_data)
@@ -152,9 +164,13 @@ class SyslogHandler(socketserver.BaseRequestHandler):
 
     def process_record(self, data):
         record = IDMSyslogRecord(data)
-        for module in list(self.modules.values()):
-            module.process_record(record)
-            # print('Process record: {}'.format(record))
+        if not record.error:
+            for module in list(self.modules.values()):
+                module.process_record(record)
+        else:
+            self.log.error('{}\nRecord: {}'.format(
+                record.error, record.original_record))
+                # print('Process record: {}'.format(record))
 
     def handle(self):
         last = b''
