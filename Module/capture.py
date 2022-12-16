@@ -43,6 +43,8 @@ class CaptureOnly:
             self.end = record.timestamp
 
         self.notifier.send_info('{} byte record captured'.format(recordsize))
+        self.num_records += 1
+        self.size_records += recordsize
 
         return True
 
