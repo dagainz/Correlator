@@ -12,28 +12,29 @@ from Notify.notify import Notifiers, LogbackNotify
 from Module.ucpath_queue import I280Queue
 from Module.capture import CaptureOnly
 from Module.report import Report
-from lib.util import LogHelper, build_modules
+from lib.util import LogHelper, build_modules, capture_filename
 
 log = logging.getLogger('logger')
 
-
-syslog_host = '0.0.0.0'
+default_port = 514
+default_bind_addr = '0.0.0.0'
+default_capture_file = capture_filename()
 
 parser = argparse.ArgumentParser('Syslog ')
 parser.add_argument(
     '--d', help='Debug level', action='store_true'
 )
 parser.add_argument(
-    '--port', help='TCP port to listen on', type=int, default=514
+    '--port', help='TCP port to listen on', type=int, default=default_port
 )
 group = parser.add_mutually_exclusive_group()
 
 group.add_argument(
-    '--write-to-file', metavar='filename',
+    '--write-file', metavar='filename', nargs='?', default='.',
     help='File to capture records and save to raw syslog capture file')
 
 group.add_argument(
-    '--read-from-file', metavar='filename',
+    '--read-file', metavar='filename',
     help='raw syslog capture file to read and process')
 
 parser.add_argument(
@@ -45,8 +46,19 @@ parser.add_argument(
     help='Report on records processed. Do not take any action')
 
 cmd_args = parser.parse_args()
-if cmd_args.write_only and not cmd_args.write_to_file:
-    parser.error('--write-only requires --write-to-file')
+
+# Hackery pokery to give a default value to write_file if not provided
+
+d = vars(cmd_args)
+
+if cmd_args.write_file is None:
+    d['write_file'] = default_capture_file
+elif cmd_args.write_file == '.':
+    d['write_file'] = None
+
+
+if cmd_args.write_only and not cmd_args.write_file:
+    parser.error('--write-only requires --write-file')
 
 debug_level = logging.DEBUG if cmd_args.d else logging.INFO
 LogHelper.initialize_console_logging(log, debug_level)
@@ -58,14 +70,14 @@ single_thread = True
 input_file = None
 output_file = None
 
-if cmd_args.write_to_file:
-    if os.path.exists(cmd_args.write_to_file):
-        print("{} exists. Delete it first".format(cmd_args.write_to_file))
+if cmd_args.write_file:
+    if os.path.exists(cmd_args.write_file):
+        print("{} exists. Delete it first".format(cmd_args.write_file))
         sys.exit(0)
     else:
         log.info('Writing received syslog data to capture file {}'.format(
-            cmd_args.write_to_file))
-        output_file = open(cmd_args.write_to_file, 'wb')
+            cmd_args.write_file))
+        output_file = open(cmd_args.write_file, 'wb')
 
 
 notifiers = Notifiers()
@@ -100,10 +112,10 @@ props = {
 CustomSyslogHandler = type(
     'CustomSyslogHandler', (SyslogHandler,), props)
 
-if cmd_args.read_from_file:
+if cmd_args.read_file:
     # Replay from capture file
-    input_file = open(cmd_args.read_from_file, 'rb')
-    log.info('Reading from capture file {} '.format(cmd_args.read_from_file))
+    input_file = open(cmd_args.read_file, 'rb')
+    log.info('Reading from capture file {} '.format(cmd_args.read_file))
     CustomSyslogHandler(input_file)
     sys.exit(0)
 
@@ -111,7 +123,7 @@ if single_thread:
     # Create the server, binding to interface and port
 
     with socketserver.TCPServer(
-            (syslog_host, cmd_args.port), CustomSyslogHandler) as server:
+            (default_bind_addr, cmd_args.port), CustomSyslogHandler) as server:
         # Activate the server and run until Ctrl-C
         try:
             start = datetime.now()
