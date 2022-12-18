@@ -123,9 +123,11 @@ if single_thread:
             end = datetime.now()
 
             for module in list(modules.values()):
-                notifiers.send_info(
+                log.info(
                     'Statistics for module {}'.format(module.description))
-                module.log_statistics()
+                messages = module.statistics()
+                for line in messages:
+                    log.info(line)
 
             log.info('Statistics ** Server session wide **')
             log.info(

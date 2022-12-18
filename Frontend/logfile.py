@@ -116,7 +116,9 @@ class LogfileProcessor:
     def log_stats(self):
         for module in list(self.modules.values()):
             self.log.info('Statistics for module {}'.format(module.description))
-            module.log_statistics()
+            messages = module.statistics()
+            for line in messages:
+                self.log.info(line)
         self.log.info('Statistics ** Logfile wide **')
 
         if self.start:

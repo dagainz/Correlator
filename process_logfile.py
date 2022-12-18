@@ -3,7 +3,7 @@
 import argparse
 import logging
 from Frontend.logfile import LogfileProcessor
-from Notify.notify import Notifiers, ConsoleNotify, CSVNotify
+from Notify.notify import Notifiers, CSVNotify, LogbackNotify
 from Module.ucpath_queue import I280Queue
 from lib.util import LogHelper, build_modules
 
@@ -24,7 +24,8 @@ args = parser.parse_args()
 # Set up the notifier chain
 notifiers = Notifiers()
 # Add the basic console notifier
-notifiers.add_notifier(ConsoleNotify())
+# notifiers.add_notifier(ConsoleNotify())
+notifiers.add_notifier(LogbackNotify(log))
 if args.csv:
     # add the CSV notifier if requested.
     notifiers.add_notifier(CSVNotify())

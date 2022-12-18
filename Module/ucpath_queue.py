@@ -36,26 +36,29 @@ class I280Queue:
         self.end = None
         self.queue_durations = []
 
-    def log_statistics(self):
+    def statistics(self):
 
-        self.log.info(
-            '{} total i280 messages detected'.format(self.i280_total))
-        self.log.info(
-            '{} i280 messages successfully queued'.format(self.i280_ok))
-        self.log.info(
-            '{} i280 messages failed to queue'.format(self.i280_fail))
+        messages = [
+            '{} total i280 messages detected'.format(self.i280_total),
+            '{} i280 messages successfully queued'.format(self.i280_ok),
+            '{} i280 messages failed to queue'.format(self.i280_fail)
+        ]
 
         if self.queue_durations:
             average_queue_duration = sum(self.queue_durations) / len(
                 self.queue_durations)
             min_queue_duration = min(self.queue_durations)
             max_queue_duration = max(self.queue_durations)
-            self.log.info('Average queue delay: {}'.format(
-                str(timedelta(microseconds=average_queue_duration))))
-            self.log.info('Minimium queue delay: {}'.format(
-                str(timedelta(microseconds=min_queue_duration))))
-            self.log.info('Maximum queue delay: {}'.format(
-                str(timedelta(microseconds=max_queue_duration))))
+            messages.extend([
+                'Average queue delay: {}'.format(str(timedelta(
+                    microseconds=average_queue_duration))),
+                'Minimium queue delay: {}'.format(str(
+                    timedelta(microseconds=min_queue_duration))),
+                'Maximum queue delay: {}'.format(str(
+                    timedelta(microseconds=max_queue_duration)))
+            ])
+
+        return messages
 
     def _setstate(self, identifier, state):
         self.states[identifier] = state

@@ -19,20 +19,20 @@ class CaptureOnly:
         self.start = None
         self.end = None
 
-    def log_statistics(self):
+    def statistics(self):
 
-        self.log.info(
-            'Capture started at {}'.format(self.start)),  3
-        self.log.info(
-            'Capture ended at {}'.format(self.end))
-        self.log.info(
-            'Capture duration: {}'.format(str(self.end - self.start)))
-        self.log.info(
+        messages = [
+            'Capture started at {}'.format(self.start),
+            'Capture ended at {}'.format(self.end),
+            'Capture duration: {}'.format(str(self.end - self.start)),
             '{} total syslog messages captured'.format(
-                self.num_records))
-        self.log.info(
+                self.num_records),
             '{} total bytes of syslog messages captured'.format(
-                self.size_records))
+                self.size_records)
+
+        ]
+
+        return messages
 
     def process_record(self, record):
         recordsize = len(record)

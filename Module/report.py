@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from Notify.notify import Notification
 
+
 class Report:
 
     def __init__(self, notifier, log):
@@ -18,9 +19,9 @@ class Report:
         self.start = None
         self.end = None
 
-    def log_statistics(self):
+    def statistics(self):
 
-        pass
+        return []
 
         # self.notifier.send_info(
         #     'Capture started at {}'.format(self.start))
