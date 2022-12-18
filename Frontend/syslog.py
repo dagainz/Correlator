@@ -111,7 +111,7 @@ class SyslogRecord:
                             dataline))
 
     def __repr__(self):
-        return '{} ({})'.format(self.m.groupdict(), self.sd_data)
+        return '{} ({})'.format(self.m.groupdict(), self.structured_data)
 
     def __len__(self):
         return self.record_length

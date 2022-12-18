@@ -8,7 +8,7 @@ import socketserver
 from datetime import datetime
 
 from Frontend.syslog import SyslogHandler
-from Notify.notify import Notifiers, ConsoleNotify, LogbackNotify
+from Notify.notify import Notifiers, LogbackNotify
 from Module.ucpath_queue import I280Queue
 from Module.capture import CaptureOnly
 from Module.report import Report

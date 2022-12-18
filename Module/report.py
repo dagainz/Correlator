@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 """This module reports on activity """
 
+from Notify.notify import Notification
 
 class Report:
 
@@ -43,8 +44,10 @@ class Report:
         if self.end is None or record.timestamp > self.end:
             self.end = record.timestamp
 
-        self.notifier.send_info('{} {} {} {}'.format(
-            record.hostname, record.appname, record.prog, record.detail[0:20]))
+        self.notifier.notice(Notification(
+            '{} {} {} {}'.format(
+                record.hostname, record.appname, record.prog,
+                record.detail[0:20]), record))
         self.num_records += 1
         self.size_records += recordsize
 
