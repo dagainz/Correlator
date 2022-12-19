@@ -190,7 +190,7 @@ class SyslogHandler(socketserver.BaseRequestHandler):
     def _handle_records(self, data):
 
         while True:
-            pos = data.find(b'\n')
+            pos = data.find(b'\r')
             if pos == -1:
                 return data
             self.process_record(data[0:pos])

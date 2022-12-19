@@ -17,7 +17,7 @@ class I280Queue:
 
         self.states = {}
         self.transactions = {}
-        self.description = 'i280 Queue monitor'
+        self.description = 'I280 Queue'
         self.identifier = 'I280Queue'
         self.notifier = notifier
         self.i280_total = 0
@@ -99,7 +99,10 @@ class I280Queue:
     # Main entry point
 
     def process_record(self, record):
-        if record.prog[0:22] != 'hid_msgsvc:UCPATH.i280':
+#      if record.prog[0:22] != 'hid_msgsvc:UCPATH.i280':
+        if (
+                not record.prog.startswith('hid_msgsvc:UCPATH.i280') and
+                not record.prog.startswith('soap_server:UCPATH.i280')):
             return None
 
         if self.start is None or record.timestamp < self.start:

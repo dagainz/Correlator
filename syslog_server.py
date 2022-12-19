@@ -18,7 +18,6 @@ log = logging.getLogger('logger')
 
 default_port = 514
 default_bind_addr = '0.0.0.0'
-default_capture_file = capture_filename()
 
 parser = argparse.ArgumentParser('Syslog ')
 parser.add_argument(
@@ -52,7 +51,7 @@ cmd_args = parser.parse_args()
 d = vars(cmd_args)
 
 if cmd_args.write_file is None:
-    d['write_file'] = default_capture_file
+    d['write_file'] = capture_filename()
 elif cmd_args.write_file == '.':
     d['write_file'] = None
 
