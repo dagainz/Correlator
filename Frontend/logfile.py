@@ -49,7 +49,7 @@ class LogRecord:
     def __repr__(self):
         return "{} {} [{}] {} [{}] {}: {}".format(
             self.str_timestamp, self.who, self.request, self.prog,
-            self.identifier, self.severity, self.detail)
+            self.identifier, self.detail)
 
 
 class RecordResult:

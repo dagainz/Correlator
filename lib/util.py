@@ -3,7 +3,8 @@ import logging
 import os
 import sys
 
-DEFAULT_ROTATE_KEEP=10
+DEFAULT_ROTATE_KEEP = 10
+
 
 class ParserError(Exception):
     pass
