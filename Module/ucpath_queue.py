@@ -99,7 +99,10 @@ class I280Queue:
     # Main entry point
 
     def process_record(self, record):
-#      if record.prog[0:22] != 'hid_msgsvc:UCPATH.i280':
+
+        # Handle both cases of workers from inside the message service
+        # and from the command line I280 processor.
+
         if (
                 not record.prog.startswith('hid_msgsvc:UCPATH.i280') and
                 not record.prog.startswith('soap_server:UCPATH.i280')):
