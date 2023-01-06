@@ -121,8 +121,16 @@ class IDMSyslogRecord(SyslogRecord):
     def __init__(self, record):
         super().__init__(record)
 
+        # If superclass set the error, let it through
+        if self.error:
+            return
+
         self.who = ''
         self.request = ''
+
+        if not self.procid:
+            self.error = 'No proc-id in syslog record'
+            return
 
         p = re.match(r'(.*)\((.+)\)', self.procid)
         if p:
