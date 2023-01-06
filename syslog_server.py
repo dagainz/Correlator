@@ -79,28 +79,30 @@ if cmd_args.write_file:
         output_file = open(cmd_args.write_file, 'wb')
 
 
-notifiers = Notifiers()
+module_notifiers = Notifiers()
 if cmd_args.write_only:
-    notifiers.add_notifier(LogbackNotify(log))
-    modules = build_modules([CaptureOnly], notifiers, log)
+    module_notifiers.add_notifier(LogbackNotify(log, 'MODULE'))
+    modules = build_modules([CaptureOnly], module_notifiers, log)
 else:
-    notifiers.add_notifier(LogbackNotify(log))
+    module_notifiers.add_notifier(LogbackNotify(log, 'MODULE'))
     if not cmd_args.report_only:
         modules = build_modules(
             [I280Queue],
-            notifiers,
+            module_notifiers,
             log)
     else:
         modules = build_modules(
             [Report],
-            notifiers,
+            module_notifiers,
             log)
 
+system_notifiers = Notifiers()
+system_notifiers.add_notifier(LogbackNotify(log, 'SYSTEM'))
 
 props = {
     'output_file': output_file,
     'modules': modules,
-    'notifiers': notifiers,
+    'module_notifiers': module_notifiers,
     'log': log
 }
 
