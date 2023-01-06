@@ -5,8 +5,13 @@ from typing import List, Any
 
 from lib.util import rotate_file
 
+
 class Notification:
-    def __init__(self, message: str, record, detail: dict = {}):
+    def __init__(self, message: str, record, detail=None):
+
+        if detail is None:
+            detail = {}
+
         self.message = message
         self.detail = detail
         self.record = record
@@ -183,22 +188,25 @@ class LogbackNotify(Notify):
     """Simple notifier to report on records captured.
     """
 
-    def __init__(self, log):
+    def __init__(self, log, prefix=None):
         super().__init__()
         self.log = log
+        self.prefix = ''
+        if prefix:
+            self.prefix = prefix + ': '
 
-    def warn(self, notif: Notification):
-        self.log.warning(notif.message)
+    def handle_warn(self, notif: Notification):
+        self.log.warning(self.prefix + notif.message)
 
-    def notice(self, notif: Notification):
-        self.log.info(notif.message)
+    def handle_notice(self, notif: Notification):
+        self.log.info(self.prefix + notif.message)
 
-    def error(self, notif: Notification):
-        self.log.error(notif.message)
+    def handle_error(self, notif: Notification):
+        self.log.error(self.prefix + notif.message)
 
-    def audit(self, notif: Notification):
+    def handle_audit(self, notif: Notification):
         # Don't handle
         return
 
-    def debug(self, notif: Notification):
-        self.log.debug(notif.message)
+    def handle_debug(self, notif: Notification):
+        self.log.debug(self.prefix + notif.message)
