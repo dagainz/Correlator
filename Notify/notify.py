@@ -1,8 +1,4 @@
-import csv
-import os
-from datetime import datetime
-from typing import List, Any
-
+1
 from lib.util import rotate_file
 
 
@@ -119,20 +115,6 @@ class CSVNotify(Notify):
         csv_basename = '{}-audit'.format(module)
 
         rotate_file(csv_basename, 'csv')
-        # # Check if the csv file exists, and if so, rotates old logs
-        # # and then renames the existing file to .1
-        #
-        # if os.path.exists(csv_basename + '.csv'):
-        #     for number in range(self.ROTATE_KEEP - 1, 0, -1):
-        #         old_name = csv_basename + "_" + str(number) + ".csv"
-        #         if os.path.exists(old_name):
-        #             new_name = csv_basename + "_" + str(number + 1) + ".csv"
-        #             os.rename(old_name, new_name)
-        #     old_name = csv_basename + '.csv'
-        #     new_name = csv_basename + "_1.csv"
-        #     os.rename(old_name, new_name)
-        #     # csv_filename is now clear
-
         file_obj = open(csv_basename + '.csv', 'w', newline='')
         self.initialized_files[module] = file_obj
 
@@ -158,30 +140,6 @@ class CSVNotify(Notify):
         # writer.writerow(data)
 
         pass
-
-
-# class ConsoleNotify(Notify):
-#     """Simple notifier to display to console.
-#
-#     For now, ignores any audit events
-#
-#     """
-#
-#     def warn(self, message):
-#         print("CON-NOTIFY(WARNING): {}".format(message))
-#
-#     def send_info(self, message):
-#         print("CON-NOTIFY(INFO): {}".format(message))
-#
-#     def send_crit(self, message):
-#         print("CON-NOTIFY(CRITICAL): {}".format(message))
-#
-#     def send_error(self, message):
-#         print("CON-NOTIFY(ERROR): {}".format(message))
-#
-#     def send_audit(self, message, headers):
-#         # don't handle, for now.
-#         return
 
 
 class LogbackNotify(Notify):
