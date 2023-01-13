@@ -1,4 +1,3 @@
-1
 from lib.util import rotate_file
 
 
