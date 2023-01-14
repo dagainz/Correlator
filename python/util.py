@@ -35,7 +35,7 @@ def build_modules(modules, notifiers, log):
     return moduledict
 
 
-def rotate_file(basename, ext, keep = DEFAULT_ROTATE_KEEP):
+def rotate_file(basename, ext, keep=DEFAULT_ROTATE_KEEP):
 
     # Check if the file exists, and if so, rotates old files
     # and then renames the existing file to add _1 before the

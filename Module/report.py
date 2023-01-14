@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 """This module reports on activity """
 
-from Notify.notify import Notification
+from notify import Notification
 
 
 class Report:

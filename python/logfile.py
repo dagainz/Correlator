@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from lib.util import ParserError
+from util import ParserError
 
 Priorities = {
     'perf': 7,

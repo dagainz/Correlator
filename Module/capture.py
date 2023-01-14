@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 """This module reports on i280 activity through the Message Queue"""
-from Notify.notify import Notification
+from notify import Notification
 
 
 class CaptureOnly:

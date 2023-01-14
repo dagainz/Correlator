@@ -7,12 +7,12 @@ import sys
 import socketserver
 from datetime import datetime
 
-from Frontend.syslog import SyslogHandler
-from Notify.notify import Notifiers, LogbackNotify
+from syslog import SyslogHandler
+from notify import Notifiers, LogbackNotify
 from Module.ucpath_queue import I280Queue
 from Module.capture import CaptureOnly
 from Module.report import Report
-from lib.util import LogHelper, build_modules, capture_filename
+from util import LogHelper, build_modules, capture_filename
 
 log = logging.getLogger('logger')
 

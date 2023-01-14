@@ -1,4 +1,4 @@
-from lib.util import rotate_file
+from util import rotate_file
 
 
 class Notification:

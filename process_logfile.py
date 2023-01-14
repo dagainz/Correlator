@@ -2,10 +2,10 @@
 
 import argparse
 import logging
-from Frontend.logfile import LogfileProcessor
-from Notify.notify import Notifiers, CSVNotify, LogbackNotify
+from logfile import LogfileProcessor
+from notify import Notifiers, CSVNotify, LogbackNotify
 from Module.ucpath_queue import I280Queue
-from lib.util import LogHelper, build_modules
+from util import LogHelper, build_modules
 
 log = logging.getLogger('logger')
 

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from Notify.notify import Notifiers, Notification
+from notify import Notifiers, Notification
 
 """This module reports on i280 activity through the Message Queue"""
 

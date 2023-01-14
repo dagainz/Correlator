@@ -5,7 +5,7 @@ import iso8601
 import re
 import socketserver
 
-from lib.util import ParserError
+from util import ParserError
 
 output_file = None
 input_file = None
