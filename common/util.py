@@ -56,6 +56,7 @@ class Module:
     def statistics(self):
         raise NotImplemented
 
+
 def rotate_file(basename, ext, keep=DEFAULT_ROTATE_KEEP):
 
     # Check if the file exists, and if so, rotates old files
@@ -80,3 +81,7 @@ def capture_filename():
     rotate_file(base_name, 'cap')
     return base_name + ".cap"
 
+
+def format_timestamp(date: datetime):
+    if date:
+        return date.strftime('%Y-%m-%d %H:%M:%S')

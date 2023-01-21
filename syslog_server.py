@@ -6,15 +6,29 @@ import os
 import sys
 import socketserver
 from datetime import datetime
+from mako.template import Template
 from pathlib import Path
 
 from common.syslog import SyslogHandler
 # from common.notify import Notifiers, LogbackNotify
-from common.event import EventProcessor, LogbackListener
+from common.event import EventProcessor, LogbackListener, AuditEvent
 from Module.ucpath_queue import I280Queue
 from Module.capture import CaptureOnly
 from Module.report import Report
-from common.util import LogHelper, capture_filename, Module
+from common.util import LogHelper, capture_filename, Module, format_timestamp
+
+
+class StatsEvent(AuditEvent):
+
+    audit_id = 'system-stats'
+    fields = ['start', 'end', 'duration']
+
+    def __init__(self, data):
+        super().__init__(self.audit_id, data)
+
+        self.template_txt = Template(
+            'Severs session started at ${start} and ended at ${end} for a '
+            'total duration of ${duration}')
 
 
 log = logging.getLogger('logger')
@@ -97,22 +111,6 @@ else:
         modules.append(I280Queue(processor, log))
     else:
         modules.append(Report(processor, log))
-#     # module_notifiers.add_notifier(LogbackNotify(log, 'MODULE'))
-#     if not cmd_args.report_only:
-#         modules = build_modules(
-#             [I280Queue],
-#             processor,
-#             log)
-#     else:
-#         modules = build_modules(
-#             [Report],
-#             processor,
-#             log)
-
-# modules = [Report(processor, log)]
-
-# system_notifiers = Notifiers()
-# system_notifiers.add_notifier(LogbackNotify(log, 'SYSTEM'))
 
 props = {
     'output_file': output_file,
@@ -150,18 +148,15 @@ if single_thread:
             end = datetime.now()
 
             for module in modules:
-                log.info(
-                    'Statistics for module {}'.format(module.description))
-                messages = module.statistics()
-                for line in messages:
-                    log.info(line)
+                module.statistics()
 
-            log.info('Statistics ** Server session wide **')
-            log.info(
-                'Server session started: {}'.format(str(start)))
-            log.info(
-                'Server session ended: {}'.format(str(end)))
-            log.info(
-                'Server session duration: {}'.format(str(end-start)))
+            e = StatsEvent(
+                {
+                    'start': format_timestamp(start),
+                    'end': format_timestamp(end),
+                    'duration': str(end-start)
+                })
+            e.system = 'syslog-server'
+            processor.dispatch_event(e)
 else:
     ValueError('No multi thread at this time')

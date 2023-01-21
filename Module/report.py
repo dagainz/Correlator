@@ -23,7 +23,8 @@ class Report(Module):
 
     def statistics(self):
 
-        return []
+        pass
+        # return []
 
         # self.notifier.send_info(
         #     'Capture started at {}'.format(self.start))
@@ -51,7 +52,7 @@ class Report(Module):
             record.hostname, record.appname, record.prog,
             record.detail[0:20])
 
-        self.dispatch_event(NoticeEvent(summary, record))
+        self.dispatch_event(NoticeEvent(summary, record=record))
 
         # self.processor.dispatch_event(
         #     NoticeEvent(summary, record))

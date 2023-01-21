@@ -127,7 +127,7 @@ class I280Queue(Module):
                     'Message sent to worker']:
                 self.dispatch_event(ErrorEvent(
                     'Premature end of transaction',
-                    record))
+                    record=record))
             elif record.detail == 'Begin Transaction':
                 self._setstate(record.identifier, 1)
                 self._start_transaction(record.identifier, record.timestamp)
@@ -139,7 +139,7 @@ class I280Queue(Module):
 
                 self.dispatch_event(ErrorEvent(
                     'Premature end of transaction',
-                    record))
+                    record=record))
 
                 self._setstate(record.identifier, 0)
             if record.detail.startswith('Correlation ID: '):
@@ -150,7 +150,7 @@ class I280Queue(Module):
                     if obj.correlation_id:
                         self.dispatch_event(ErrorEvent(
                             'Correlation ID at this time is not expected',
-                            record))
+                            record=record))
                         self._setstate(self.identifier, 0)
                     else:
                         self._add_correlation_id(record.identifier, corr_id)
@@ -160,13 +160,13 @@ class I280Queue(Module):
             if not obj:
                 self.dispatch_event(ErrorEvent(
                     'State mismatch looking for end transaction',
-                    record))
+                    record=record))
                 self._setstate(record.identifier, 0)
                 return True
             if obj and not obj.correlation_id:
                 self.dispatch_event(ErrorEvent(
                     'State mismatch. No correlation ID',
-                    record))
+                    record=record))
                 self._setstate(record.identifier, 0)
                 return True
 
@@ -177,7 +177,7 @@ class I280Queue(Module):
                 self.dispatch_event(ErrorEvent(
                     'i280 [{}] failed to submit to worker. Time in queue: '
                     '{} seconds'.format(obj.correlation_id, duration_s),
-                    record))
+                    record=record))
 
                 self._setstate(record.identifier, 0)
                 self.i280_fail += 1
@@ -198,7 +198,7 @@ class I280Queue(Module):
                 self.dispatch_event(NoticeEvent(
                     'i280 [{}] submitted successfully to worker. Time in '
                     'queue: {} seconds'.format(obj.correlation_id, duration_s),
-                    record))
+                    record=record))
 
                 self._setstate(record.identifier, 0)
                 self.i280_ok += 1

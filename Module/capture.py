@@ -1,6 +1,21 @@
 from datetime import datetime, timedelta
-from common.util import Module
-from common.event import NoticeEvent, EventProcessor
+from common.util import Module, format_timestamp
+from common.event import NoticeEvent, EventProcessor, AuditEvent
+from mako.template import Template
+
+
+class StatsEvent(AuditEvent):
+
+    audit_id = 'module-stats'
+    fields = ['start', 'end', 'duration', 'messages', 'size']
+
+    def __init__(self, data):
+        super().__init__(self.audit_id, data)
+
+        self.template_txt = Template(
+            'Capture started at ${start} and ended at ${end} for a duration '
+            'of ${duration}. ${messages} total messages (${size} bytes) '
+            'were captured.')
 
 
 class CaptureOnly(Module):
@@ -20,20 +35,26 @@ class CaptureOnly(Module):
         self.start = None
         self.end = None
 
-    def statistics(self):
+    def statistics(self, reset=False):
+        if self.start and self.end:
+            duration = (str(self.end - self.start))
+        else:
+            duration = None
+        data = {
+            'start': format_timestamp(self.start),
+            'end': format_timestamp(self.end),
+            'duration': duration,
+            'messages': self.num_records,
+            'size': self.size_records
+        }
 
-        messages = [
-            'Capture started at {}'.format(self.start),
-            'Capture ended at {}'.format(self.end),
-            'Capture duration: {}'.format(str(self.end - self.start)),
-            '{} total syslog messages captured'.format(
-                self.num_records),
-            '{} total bytes of syslog messages captured'.format(
-                self.size_records)
+        self.dispatch_event(StatsEvent(data))
 
-        ]
-
-        return messages
+        if reset:
+            self.num_records = 0
+            self.size_records = 0
+            self.start = None
+            self.end = None
 
     def process_record(self, record):
         recordsize = len(record)
@@ -45,7 +66,7 @@ class CaptureOnly(Module):
             self.end = record.timestamp
 
         summary = '{} byte record captured'.format(recordsize)
-        self.dispatch_event(NoticeEvent(summary, record))
+        self.dispatch_event(NoticeEvent(summary, record=record))
         self.num_records += 1
         self.size_records += recordsize
 
