@@ -1,19 +1,20 @@
 from datetime import datetime, timedelta
+from common.util import Module
+from common.event import NoticeEvent, EventProcessor
 
-"""This module reports on i280 activity through the Message Queue"""
-from notify import Notification
 
+class CaptureOnly(Module):
 
-class CaptureOnly:
+    def __init__(self, processor: EventProcessor, log):
 
-    def __init__(self, notifier, log):
+        self.log = log
+        self.processor = processor
+        self.description = 'Syslog Capture support'
+        self.identifier = 'Capture'
+
+        self.module_name = self.identifier
 
         self.states = {}
-        self.log = log
-        self.notifier = notifier
-        self.description = 'Assistance with raw syslog record capturing'
-        self.identifier = 'CaptureHelper'
-
         self.num_records = 0
         self.size_records = 0
         self.start = None
@@ -43,8 +44,8 @@ class CaptureOnly:
         if self.end is None or record.timestamp > self.end:
             self.end = record.timestamp
 
-        self.notifier.notice(Notification(
-            '{} byte record captured'.format(recordsize)), record)
+        summary = '{} byte record captured'.format(recordsize)
+        self.dispatch_event(NoticeEvent(summary, record))
         self.num_records += 1
         self.size_records += recordsize
 

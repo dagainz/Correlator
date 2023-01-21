@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta
-from notify import Notifiers, Notification
+from common.util import Module
+from common.event import NoticeEvent, ErrorEvent, EventProcessor
+
+# from notify import Notifiers, Notification
 
 """This module reports on i280 activity through the Message Queue"""
 
@@ -11,15 +14,18 @@ class I280Transaction:
         self.correlation_id = None
 
 
-class I280Queue:
+class I280Queue(Module):
 
-    def __init__(self, notifier: Notifiers, log):
+    def __init__(self, processor: EventProcessor, log):
+
+        self.log = log
+        self.processor = processor
+        self.description = 'I280 Queue'
+        self.identifier = 'I280Queue'
+        self.module_name = self.identifier
 
         self.states = {}
         self.transactions = {}
-        self.description = 'I280 Queue'
-        self.identifier = 'I280Queue'
-        self.notifier = notifier
         self.i280_total = 0
         self.i280_fail = 0
         self.i280_ok = 0
@@ -119,8 +125,9 @@ class I280Queue:
             if record.detail in [
                     'Message failed to process via worker',
                     'Message sent to worker']:
-                self.notifier.error(
-                    Notification('Premature end of transaction', record))
+                self.dispatch_event(ErrorEvent(
+                    'Premature end of transaction',
+                    record))
             elif record.detail == 'Begin Transaction':
                 self._setstate(record.identifier, 1)
                 self._start_transaction(record.identifier, record.timestamp)
@@ -130,8 +137,10 @@ class I280Queue:
                 'Message failed to process via worker',
                     'Message sent to worker']:
 
-                self.notifier.error(
-                    Notification('Premature end of transaction', record))
+                self.dispatch_event(ErrorEvent(
+                    'Premature end of transaction',
+                    record))
+
                 self._setstate(record.identifier, 0)
             if record.detail.startswith('Correlation ID: '):
                 corr_id = record.detail[16:]
@@ -139,10 +148,9 @@ class I280Queue:
                 obj = self.transactions.get(record.identifier)
                 if obj:
                     if obj.correlation_id:
-                        self.notifier.warn(
-                            Notification(
-                                'Correlation ID at this time is not expected',
-                                record))
+                        self.dispatch_event(ErrorEvent(
+                            'Correlation ID at this time is not expected',
+                            record))
                         self._setstate(self.identifier, 0)
                     else:
                         self._add_correlation_id(record.identifier, corr_id)
@@ -150,13 +158,15 @@ class I280Queue:
         elif state == 2:
             obj = self.transactions.get(record.identifier)
             if not obj:
-                self.notifier.error(Notification(
-                    'State mismatch looking for end transaction', record))
+                self.dispatch_event(ErrorEvent(
+                    'State mismatch looking for end transaction',
+                    record))
                 self._setstate(record.identifier, 0)
                 return True
             if obj and not obj.correlation_id:
-                self.notifier.error(Notification(
-                    'State mismatch. No correlation ID', record))
+                self.dispatch_event(ErrorEvent(
+                    'State mismatch. No correlation ID',
+                    record))
                 self._setstate(record.identifier, 0)
                 return True
 
@@ -164,10 +174,11 @@ class I280Queue:
                 self._finish_transaction(record.identifier, record.timestamp)
                 duration_ms = (obj.end - obj.start).microseconds
                 duration_s = (obj.end - obj.start).seconds
-                self.notifier.error(Notification(
-                    'i280 [{}] failed to submit to worker. Time in queue:'
-                    ' {} seconds'.format(
-                        obj.correlation_id, duration_s), record))
+                self.dispatch_event(ErrorEvent(
+                    'i280 [{}] failed to submit to worker. Time in queue: '
+                    '{} seconds'.format(obj.correlation_id, duration_s),
+                    record))
+
                 self._setstate(record.identifier, 0)
                 self.i280_fail += 1
                 self.queue_durations.append(duration_ms)
@@ -184,10 +195,11 @@ class I280Queue:
                 self._finish_transaction(record.identifier, record.timestamp)
                 duration_ms = (obj.end - obj.start).microseconds
                 duration_s = (obj.end - obj.start).seconds
-                self.notifier.notice(Notification(
-                    'i280 [{}] submitted successfully to worker.'
-                    ' Time in queue: {} seconds'.format(
-                        obj.correlation_id, duration_s), record))
+                self.dispatch_event(NoticeEvent(
+                    'i280 [{}] submitted successfully to worker. Time in '
+                    'queue: {} seconds'.format(obj.correlation_id, duration_s),
+                    record))
+
                 self._setstate(record.identifier, 0)
                 self.i280_ok += 1
                 self.queue_durations.append(duration_ms)

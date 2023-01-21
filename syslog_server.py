@@ -6,13 +6,16 @@ import os
 import sys
 import socketserver
 from datetime import datetime
+from pathlib import Path
 
-from syslog import SyslogHandler
-from notify import Notifiers, LogbackNotify
+from common.syslog import SyslogHandler
+# from common.notify import Notifiers, LogbackNotify
+from common.event import EventProcessor, LogbackListener
 from Module.ucpath_queue import I280Queue
 from Module.capture import CaptureOnly
 from Module.report import Report
-from util import LogHelper, build_modules, capture_filename
+from common.util import LogHelper, capture_filename, Module
+
 
 log = logging.getLogger('logger')
 
@@ -78,37 +81,48 @@ if cmd_args.write_file:
             cmd_args.write_file))
         output_file = open(cmd_args.write_file, 'wb')
 
+# Initialize event processor, and add event listeners
 
-module_notifiers = Notifiers()
+processor = EventProcessor(log)
+processor.register_listener(LogbackListener(log))
+
+# Setup list of logic modules
+
+modules: list[Module] = []
+
 if cmd_args.write_only:
-    module_notifiers.add_notifier(LogbackNotify(log, 'MODULE'))
-    modules = build_modules([CaptureOnly], module_notifiers, log)
+    modules.append(CaptureOnly(processor, log))
 else:
-    module_notifiers.add_notifier(LogbackNotify(log, 'MODULE'))
     if not cmd_args.report_only:
-        modules = build_modules(
-            [I280Queue],
-            module_notifiers,
-            log)
+        modules.append(I280Queue(processor, log))
     else:
-        modules = build_modules(
-            [Report],
-            module_notifiers,
-            log)
+        modules.append(Report(processor, log))
+#     # module_notifiers.add_notifier(LogbackNotify(log, 'MODULE'))
+#     if not cmd_args.report_only:
+#         modules = build_modules(
+#             [I280Queue],
+#             processor,
+#             log)
+#     else:
+#         modules = build_modules(
+#             [Report],
+#             processor,
+#             log)
 
-system_notifiers = Notifiers()
-system_notifiers.add_notifier(LogbackNotify(log, 'SYSTEM'))
+# modules = [Report(processor, log)]
+
+# system_notifiers = Notifiers()
+# system_notifiers.add_notifier(LogbackNotify(log, 'SYSTEM'))
 
 props = {
     'output_file': output_file,
     'modules': modules,
-    'module_notifiers': module_notifiers,
+    'processor': processor,
     'log': log
 }
 
 # Create a new class based on the metaclass, with these properties
 # possibly overridden.
-#
 
 CustomSyslogHandler = type(
     'CustomSyslogHandler', (SyslogHandler,), props)
@@ -135,7 +149,7 @@ if single_thread:
 
             end = datetime.now()
 
-            for module in list(modules.values()):
+            for module in modules:
                 log.info(
                     'Statistics for module {}'.format(module.description))
                 messages = module.statistics()

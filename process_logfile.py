@@ -2,10 +2,11 @@
 
 import argparse
 import logging
-from logfile import LogfileProcessor
-from notify import Notifiers, CSVNotify, LogbackNotify
+from common.logfile import LogfileProcessor
+from common.event import EventProcessor, LogbackListener
+# from notify import Notifiers, CSVNotify, LogbackNotify
 from Module.ucpath_queue import I280Queue
-from util import LogHelper, build_modules
+from common.util import LogHelper, Module
 
 log = logging.getLogger('logger')
 
@@ -21,23 +22,16 @@ parser.add_argument('--hostname', help='Host name', required=True)
 
 args = parser.parse_args()
 
-# Set up the notifier chain
-notifiers = Notifiers()
-# Add the basic console notifier
-# notifiers.add_notifier(ConsoleNotify())
-notifiers.add_notifier(LogbackNotify(log))
-if args.csv:
-    # add the CSV notifier if requested.
-    notifiers.add_notifier(CSVNotify())
+processor = EventProcessor(log)
+processor.register_listener(LogbackListener(log))
+
+# if args.csv:
+#     # add the CSV notifier if requested.
+#     notifiers.add_notifier(CSVNotify())
 
 # List of modules
 
-modules = build_modules(
-    [I280Queue],
-    notifiers,
-    log)
-
-# Debugging
+modules: list[Module] = [I280Queue(processor, log)]
 
 debug_level = logging.DEBUG if args.d else logging.INFO
 

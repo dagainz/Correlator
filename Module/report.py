@@ -1,18 +1,20 @@
-from datetime import datetime, timedelta
-
 """This module reports on activity """
 
-from notify import Notification
+from common.util import Module
+from common.event import NoticeEvent, Event, EventProcessor
+
+# from notify import Notification
 
 
-class Report:
+class Report(Module):
 
-    def __init__(self, notifier, log):
+    def __init__(self, processor: EventProcessor, log):
 
         self.log = log
-        self.notifier = notifier
-        self.description = 'Module that reports on syslog activity'
+        self.processor = processor
+        self.description = 'Report-only'
         self.identifier = 'Report'
+        self.module_name = self.identifier
 
         self.num_records = 0
         self.size_records = 0
@@ -45,10 +47,15 @@ class Report:
         if self.end is None or record.timestamp > self.end:
             self.end = record.timestamp
 
-        self.notifier.notice(Notification(
-            '{} {} {} {}'.format(
-                record.hostname, record.appname, record.prog,
-                record.detail[0:20]), record))
+        summary = '{} {} {} {}'.format(
+            record.hostname, record.appname, record.prog,
+            record.detail[0:20])
+
+        self.dispatch_event(NoticeEvent(summary, record))
+
+        # self.processor.dispatch_event(
+        #     NoticeEvent(summary, record))
+
         self.num_records += 1
         self.size_records += recordsize
 

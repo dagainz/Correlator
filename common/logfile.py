@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from util import ParserError
+from common.util import ParserError, Module
 
 Priorities = {
     'perf': 7,
@@ -67,7 +67,7 @@ class RecordResult:
 
 
 class LogfileProcessor:
-    def __init__(self, modules, log):
+    def __init__(self, modules: list[Module], log):
 
         self.log = log
         self.start = None
@@ -110,11 +110,11 @@ class LogfileProcessor:
                             result.record.timestamp > self.end):
                         self.end = result.record.timestamp
 
-                    for module in list(self.modules.values()):
+                    for module in list(self.modules):
                         module.process_record(result.record)
 
     def log_stats(self):
-        for module in list(self.modules.values()):
+        for module in self.modules:
             self.log.info('Statistics for module {}'.format(module.description))
             messages = module.statistics()
             for line in messages:

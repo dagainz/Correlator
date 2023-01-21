@@ -1,4 +1,5 @@
 from datetime import datetime
+from common.event import Event, EventProcessor
 import logging
 import os
 import sys
@@ -27,13 +28,33 @@ class LogHelper:
         log.addHandler(ch)
 
 
-def build_modules(modules, notifiers, log):
-    moduledict = {}
-    for module in modules:
-        obj = module(notifiers, log)
-        moduledict[obj.identifier] = obj
-    return moduledict
+# def build_modules(modules, event_processor, log):
+#     moduledict = {}
+#     for module in modules:
+#         obj = module(event_processor, log)
+#         moduledict[obj.identifier] = obj
+#     return moduledict
 
+
+class Module:
+
+    module_name = 'System'
+    processor: EventProcessor = None
+    description: str = ''
+
+    def dispatch_event(self, event: Event):
+
+        if not self.processor:
+            raise NotImplemented
+
+        event.system = self.module_name
+        self.processor.dispatch_event(event)
+
+    def process_record(self, record):
+        raise NotImplemented
+
+    def statistics(self):
+        raise NotImplemented
 
 def rotate_file(basename, ext, keep=DEFAULT_ROTATE_KEEP):
 
