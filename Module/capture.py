@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta
-from common.util import Module, format_timestamp
-from common.event import NoticeEvent, EventProcessor, AuditEvent
 from mako.template import Template
+
+from common.event import NoticeEvent, EventProcessor, AuditEvent
+from common.util import Module, format_timestamp
 
 
 class StatsEvent(AuditEvent):

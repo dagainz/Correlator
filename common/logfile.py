@@ -1,8 +1,9 @@
 import re
 from datetime import datetime
 from mako.template import Template
-from common.util import ParserError, Module, format_timestamp
+
 from common.event import AuditEvent, EventProcessor
+from common.util import ParserError, Module, format_timestamp
 
 
 class StatsEvent(AuditEvent):

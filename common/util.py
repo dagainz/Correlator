@@ -1,8 +1,9 @@
-from datetime import datetime
-from common.event import Event, EventProcessor
 import logging
 import os
 import sys
+from datetime import datetime
+
+from common.event import Event, EventProcessor
 
 DEFAULT_ROTATE_KEEP = 10
 

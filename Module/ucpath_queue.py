@@ -1,10 +1,8 @@
-from datetime import datetime, timedelta
-from common.util import Module, format_timestamp
-from common.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
-
+from datetime import timedelta
 from mako.template import Template
 
-"""This module reports on i280 activity through the Message Queue"""
+from common.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
+from common.util import Module, format_timestamp
 
 
 class StatsEvent(AuditEvent):

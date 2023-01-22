@@ -1,11 +1,10 @@
-#!python3
-
 import argparse
 import logging
-from common.logfile import LogfileProcessor
+
 from common.event import EventProcessor, LogbackListener, CSVListener
-from Module.ucpath_queue import I280Queue
+from common.logfile import LogfileProcessor
 from common.util import LogHelper, Module
+from Module.ucpath_queue import I280Queue
 
 log = logging.getLogger('logger')
 

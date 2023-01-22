@@ -3,18 +3,17 @@
 import argparse
 import logging
 import os
-import sys
 import socketserver
+import sys
 from datetime import datetime
 from mako.template import Template
-from pathlib import Path
 
-from common.syslog import SyslogHandler
 from common.event import EventProcessor, LogbackListener, AuditEvent
-from Module.ucpath_queue import I280Queue
+from common.syslog import SyslogHandler
+from common.util import LogHelper, capture_filename, Module, format_timestamp
 from Module.capture import CaptureOnly
 from Module.report import Report
-from common.util import LogHelper, capture_filename, Module, format_timestamp
+from Module.ucpath_queue import I280Queue
 
 
 class StatsEvent(AuditEvent):
@@ -128,7 +127,22 @@ if cmd_args.read_file:
     # Replay from capture file
     input_file = open(cmd_args.read_file, 'rb')
     log.info('Reading from capture file {} '.format(cmd_args.read_file))
+
+    start = datetime.now()
     CustomSyslogHandler(input_file)
+    end = datetime.now()
+
+    for module in modules:
+        module.statistics()
+
+    e = StatsEvent(
+        {
+            'start': format_timestamp(start),
+            'end': format_timestamp(end),
+            'duration': str(end - start)
+        })
+    e.system = 'syslog-server'
+    processor.dispatch_event(e)
     sys.exit(0)
 
 if single_thread:

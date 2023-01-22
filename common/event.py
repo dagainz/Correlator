@@ -1,6 +1,6 @@
+import csv
 from datetime import datetime
 from io import StringIO, TextIOWrapper
-import csv
 from typing import Dict
 
 

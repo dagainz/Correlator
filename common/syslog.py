@@ -1,14 +1,11 @@
-
-
-from datetime import datetime
 import iso8601
 import re
 import socketserver
-from typing import List, Union
 from io import BufferedReader
+from typing import List, Union
 
-from common.util import ParserError, Module
 from common.event import EventProcessor, ErrorEvent
+from common.util import ParserError, Module
 
 output_file = None
 input_file = None
@@ -182,7 +179,7 @@ class SyslogHandler(socketserver.BaseRequestHandler):
             self.processor.dispatch_event(
                 ErrorEvent(
                     'Error processing record',
-                    data))
+                    data=data))
 
     def handle(self):
         last = b''
