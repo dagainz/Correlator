@@ -4,7 +4,7 @@ from common.event import NoticeEvent, EventProcessor, AuditEvent
 from common.util import Module, format_timestamp
 
 
-class StatsEvent(AuditEvent):
+class CaptureStatsEvent(AuditEvent):
 
     audit_id = 'module-stats'
     fields = ['start', 'end', 'duration', 'messages', 'size']
@@ -49,7 +49,7 @@ class CaptureOnly(Module):
             'size': self.size_records
         }
 
-        self.dispatch_event(StatsEvent(data))
+        self.dispatch_event(CaptureStatsEvent(data))
 
         if reset:
             self.num_records = 0

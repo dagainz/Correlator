@@ -5,7 +5,7 @@ from common.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
 from common.util import Module, format_timestamp
 
 
-class StatsEvent(AuditEvent):
+class I280QueueStatsEvent(AuditEvent):
 
     audit_id = 'module-stats'
     fields = [
@@ -100,7 +100,7 @@ class I280Queue(Module):
                 'maxqueue': ''
             })
 
-        self.dispatch_event(StatsEvent(data))
+        self.dispatch_event(I280QueueStatsEvent(data))
 
         if reset:
             self.clear_statistics()

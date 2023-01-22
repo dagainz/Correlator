@@ -6,7 +6,7 @@ from common.event import AuditEvent, EventProcessor
 from common.util import ParserError, Module, format_timestamp
 
 
-class StatsEvent(AuditEvent):
+class LogfileStatsEvent(AuditEvent):
 
     audit_id = 'system-stats'
     fields = ['start', 'end', 'duration']
@@ -139,7 +139,7 @@ class LogfileProcessor:
         else:
             duration = ''
 
-        e = StatsEvent(
+        e = LogfileStatsEvent(
             {
                 'start': format_timestamp(self.start),
                 'end': format_timestamp(self.end),

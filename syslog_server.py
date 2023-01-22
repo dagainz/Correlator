@@ -16,7 +16,7 @@ from Module.report import Report
 from Module.ucpath_queue import I280Queue
 
 
-class StatsEvent(AuditEvent):
+class SyslogStatsEvent(AuditEvent):
 
     audit_id = 'system-stats'
     fields = ['start', 'end', 'duration']
@@ -135,7 +135,7 @@ if cmd_args.read_file:
     for module in modules:
         module.statistics()
 
-    e = StatsEvent(
+    e = SyslogStatsEvent(
         {
             'start': format_timestamp(start),
             'end': format_timestamp(end),
@@ -163,7 +163,7 @@ if single_thread:
             for module in modules:
                 module.statistics()
 
-            e = StatsEvent(
+            e = SyslogStatsEvent(
                 {
                     'start': format_timestamp(start),
                     'end': format_timestamp(end),
