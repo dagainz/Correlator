@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
-from common.util import Module
+from common.util import Module, format_timestamp
 from common.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
+
+from mako.template import Template
 
 # from notify import Notifiers, Notification
 
@@ -17,11 +19,32 @@ class StatsEvent(AuditEvent):
     def __init__(self, data):
         super().__init__(self.audit_id, data)
 
-        tmpl=(
+        self.template_txt = Template(
             '${i280_total} total i280 messages detected. ${i280_ok} '
             'were successfully handled by a worker, and ${i280_fail} failed'
             ' to queue. Minimum / maximum / average queue delay: '
             '${minqueue} / ${maxqueue} / ${avgqueue}/')
+
+
+class I280QueueEvent(AuditEvent):
+
+    audit_id = 'queueside'
+
+    fields = ['timestamp', 'correlation_id', 'status']
+
+    def __init__(self, data):
+        super().__init__(self.audit_id, data)
+
+        if data.get('status') == '1':
+            self.template_txt = Template(
+                'an i280 message with correlation ID ${correlation_id} was '
+                'received and was failed to be queued at ${timestamp}.'
+            )
+        else:
+            self.template_txt = Template(
+                'an i280 message with correlation ID ${correlation_id} was '
+                'successfully queued at ${timestamp}.'
+            )
 
 
 class I280Transaction:
@@ -203,13 +226,12 @@ class I280Queue(Module):
                 self._setstate(record.identifier, 0)
                 self.i280_fail += 1
                 self.queue_durations.append(duration_ms)
-                csvdata = {
-                    'Receive Timestamp': obj.start.strftime(
-                        '%Y-%m-%d %H:%M:%S.%f')[:-3],
-                    'OK': 0,
-                    'Correlation ID:': obj.correlation_id
+                data = {
+                    'timestamp': format_timestamp(obj.start),
+                    'status': 0,
+                    'correlation_id': obj.correlation_id
                 }
-                # self.notifier.send_audit(self.identifier, csvdata)
+                self.dispatch_event(I280QueueEvent(data))
                 return True
 
             if record.detail == 'Message sent to worker':
@@ -224,14 +246,12 @@ class I280Queue(Module):
                 self._setstate(record.identifier, 0)
                 self.i280_ok += 1
                 self.queue_durations.append(duration_ms)
-                csvdata = {
-                    'Receive Timestamp': obj.start.strftime(
-                        '%Y-%m-%d %H:%M:%S.%f')[:-3],
-                    'OK': 1,
-                    'Correlation ID:': obj.correlation_id
+                data = {
+                    'timestamp': format_timestamp(obj.start),
+                    'status': 1,
+                    'correlation_id': obj.correlation_id
                 }
-                # self.notifier.send_audit(self.identifier, csvdata)
-                return True
+                self.dispatch_event(I280QueueEvent(data))
         return True
 
 

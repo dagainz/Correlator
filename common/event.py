@@ -1,6 +1,7 @@
 from datetime import datetime
-from io import StringIO
+from io import StringIO, TextIOWrapper
 import csv
+from typing import Dict
 
 
 class Event:
@@ -132,5 +133,37 @@ class LogbackListener(EventListener):
                 self.log.info(f'{event.system}-{event.audit_id}: {text}')
         else:
             self.log.info(f'{event.system}: {event.summary}')
+
+
+class CSVListener(EventListener):
+
+    def __init__(self):
+        self.csv_files: Dict[str: TextIOWrapper] = {}
+
+    def process_event(self, event: Event):
+        if not event.is_audit:
+            return
+
+        row = event.csv_row()
+        if not row:
+            return
+
+        csvname = f'{event.system}-{event.audit_id}'
+        if csvname not in self.csv_files:
+            from common.util import rotate_file  # Avoid cyclic import
+            rotate_file(csvname, 'csv')
+            filehandle = open(csvname + ".csv", "w")
+            self.csv_files[csvname] = filehandle
+            if filehandle.tell() == 0:
+                header = event.csv_header()
+                if header:
+                    filehandle.write(header + '\n')
+        else:
+            filehandle = self.csv_files[csvname]
+
+        filehandle.write(row + '\n')
+
+
+
 
 

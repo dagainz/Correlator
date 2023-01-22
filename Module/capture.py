@@ -40,6 +40,7 @@ class CaptureOnly(Module):
             duration = (str(self.end - self.start))
         else:
             duration = None
+
         data = {
             'start': format_timestamp(self.start),
             'end': format_timestamp(self.end),
