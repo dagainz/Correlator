@@ -3,16 +3,31 @@
 import argparse
 import logging
 import os
-import sys
 import socketserver
+import sys
 from datetime import datetime
+from mako.template import Template
 
-from Frontend.syslog import SyslogHandler
-from Notify.notify import Notifiers, LogbackNotify
-from Module.ucpath_queue import I280Queue
+from common.event import EventProcessor, LogbackListener, AuditEvent
+from common.syslog import SyslogHandler
+from common.util import LogHelper, capture_filename, Module, format_timestamp
 from Module.capture import CaptureOnly
 from Module.report import Report
-from lib.util import LogHelper, build_modules, capture_filename
+from Module.ucpath_queue import I280Queue
+
+
+class SyslogStatsEvent(AuditEvent):
+
+    audit_id = 'system-stats'
+    fields = ['start', 'end', 'duration']
+
+    def __init__(self, data):
+        super().__init__(self.audit_id, data)
+
+        self.template_txt = Template(
+            'Sever session started at ${start} and ended at ${end} for a '
+            'total duration of ${duration}')
+
 
 log = logging.getLogger('logger')
 
@@ -78,37 +93,32 @@ if cmd_args.write_file:
             cmd_args.write_file))
         output_file = open(cmd_args.write_file, 'wb')
 
+# Initialize event processor, and add event listeners
 
-module_notifiers = Notifiers()
+processor = EventProcessor(log)
+processor.register_listener(LogbackListener(log))
+
+# Setup list of logic modules
+
+modules: list[Module] = []
+
 if cmd_args.write_only:
-    module_notifiers.add_notifier(LogbackNotify(log, 'MODULE'))
-    modules = build_modules([CaptureOnly], module_notifiers, log)
+    modules.append(CaptureOnly(processor, log))
 else:
-    module_notifiers.add_notifier(LogbackNotify(log, 'MODULE'))
     if not cmd_args.report_only:
-        modules = build_modules(
-            [I280Queue],
-            module_notifiers,
-            log)
+        modules.append(I280Queue(processor, log))
     else:
-        modules = build_modules(
-            [Report],
-            module_notifiers,
-            log)
-
-system_notifiers = Notifiers()
-system_notifiers.add_notifier(LogbackNotify(log, 'SYSTEM'))
+        modules.append(Report(processor, log))
 
 props = {
     'output_file': output_file,
     'modules': modules,
-    'module_notifiers': module_notifiers,
+    'processor': processor,
     'log': log
 }
 
 # Create a new class based on the metaclass, with these properties
 # possibly overridden.
-#
 
 CustomSyslogHandler = type(
     'CustomSyslogHandler', (SyslogHandler,), props)
@@ -117,7 +127,22 @@ if cmd_args.read_file:
     # Replay from capture file
     input_file = open(cmd_args.read_file, 'rb')
     log.info('Reading from capture file {} '.format(cmd_args.read_file))
+
+    start = datetime.now()
     CustomSyslogHandler(input_file)
+    end = datetime.now()
+
+    for module in modules:
+        module.statistics()
+
+    e = SyslogStatsEvent(
+        {
+            'start': format_timestamp(start),
+            'end': format_timestamp(end),
+            'duration': str(end - start)
+        })
+    e.system = 'syslog-server'
+    processor.dispatch_event(e)
     sys.exit(0)
 
 if single_thread:
@@ -135,19 +160,16 @@ if single_thread:
 
             end = datetime.now()
 
-            for module in list(modules.values()):
-                log.info(
-                    'Statistics for module {}'.format(module.description))
-                messages = module.statistics()
-                for line in messages:
-                    log.info(line)
+            for module in modules:
+                module.statistics()
 
-            log.info('Statistics ** Server session wide **')
-            log.info(
-                'Server session started: {}'.format(str(start)))
-            log.info(
-                'Server session ended: {}'.format(str(end)))
-            log.info(
-                'Server session duration: {}'.format(str(end-start)))
+            e = SyslogStatsEvent(
+                {
+                    'start': format_timestamp(start),
+                    'end': format_timestamp(end),
+                    'duration': str(end-start)
+                })
+            e.system = 'syslog-server'
+            processor.dispatch_event(e)
 else:
     ValueError('No multi thread at this time')

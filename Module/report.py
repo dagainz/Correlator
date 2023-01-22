@@ -1,40 +1,61 @@
-from datetime import datetime, timedelta
 
-"""This module reports on activity """
+from mako.template import Template
 
-from Notify.notify import Notification
+from common.util import Module, format_timestamp
+from common.event import NoticeEvent, AuditEvent, EventProcessor
 
 
-class Report:
+class ReportStatsEvent(AuditEvent):
 
-    def __init__(self, notifier, log):
+    audit_id = 'module-stats'
+    fields = ['start', 'end', 'duration', 'messages', 'size']
+
+    def __init__(self, data):
+        super().__init__(self.audit_id, data)
+
+        self.template_txt = Template(
+            'Syslog record reporting started at ${start} and ended at ${end} '
+            'for a duration of ${duration}. ${messages} total messages '
+            '(${size} bytes) were processed.')
+
+
+class Report(Module):
+
+    def __init__(self, processor: EventProcessor, log):
 
         self.log = log
-        self.notifier = notifier
-        self.description = 'Module that reports on syslog activity'
+        self.processor = processor
+        self.description = 'Report-only'
         self.identifier = 'Report'
+        self.module_name = self.identifier
 
         self.num_records = 0
         self.size_records = 0
         self.start = None
         self.end = None
 
-    def statistics(self):
+    def statistics(self, reset=False):
 
-        return []
+        if self.start and self.end:
+            duration = (str(self.end - self.start))
+        else:
+            duration = None
 
-        # self.notifier.send_info(
-        #     'Capture started at {}'.format(self.start))
-        # self.notifier.send_info(
-        #     'Capture ended at {}'.format(self.end))
-        # self.notifier.send_info(
-        #     'Capture duration: {}'.format(str(self.end - self.start)))
-        # self.notifier.send_info(
-        #     '{} total syslog messages captured'.format(
-        #         self.num_records))
-        # self.notifier.send_info(
-        #     '{} total bytes of syslog messages captured'.format(
-        #         self.size_records))
+        data = {
+            'start': format_timestamp(self.start),
+            'end': format_timestamp(self.end),
+            'duration': duration,
+            'messages': self.num_records,
+            'size': self.size_records
+        }
+
+        self.dispatch_event(ReportStatsEvent(data))
+
+        if reset:
+            self.num_records = 0
+            self.size_records = 0
+            self.start = None
+            self.end = None
 
     def process_record(self, record):
         recordsize = len(record)
@@ -45,10 +66,12 @@ class Report:
         if self.end is None or record.timestamp > self.end:
             self.end = record.timestamp
 
-        self.notifier.notice(Notification(
-            '{} {} {} {}'.format(
-                record.hostname, record.appname, record.prog,
-                record.detail[0:20]), record))
+        summary = '{} {} {} {}'.format(
+            record.hostname, record.appname, record.prog,
+            record.detail[0:20])
+
+        self.dispatch_event(NoticeEvent(summary, record=record))
+
         self.num_records += 1
         self.size_records += recordsize
 

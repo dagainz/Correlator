@@ -1,11 +1,11 @@
-#!/usr/bin/env python
-
-from datetime import datetime
 import iso8601
 import re
 import socketserver
+from io import BufferedReader
+from typing import List, Union
 
-from lib.util import ParserError
+from common.event import EventProcessor, ErrorEvent
+from common.util import ParserError, Module
 
 output_file = None
 input_file = None
@@ -58,7 +58,6 @@ class SyslogRecord:
         except ParserError as e:
             self.error = 'Cannot parse structured data: {}'.format(e)
             return
-
 
     @staticmethod
     def _parse_sdata(dataline):
@@ -152,9 +151,10 @@ class SyslogHandler(socketserver.BaseRequestHandler):
 
     # These properties can be set via this method
 
-    output_file = None
-    modules = None
+    output_file: Union[None, BufferedReader] = None
+    modules: List[Module] = []
     log = None
+    processor: Union[None, EventProcessor] = None
 
     # Start of handler
 
@@ -173,12 +173,13 @@ class SyslogHandler(socketserver.BaseRequestHandler):
     def process_record(self, data):
         record = IDMSyslogRecord(data)
         if not record.error:
-            for module in list(self.modules.values()):
+            for module in self.modules:
                 module.process_record(record)
         else:
-            self.log.error('{}\nRecord: {}'.format(
-                record.error, record.original_record))
-                # print('Process record: {}'.format(record))
+            self.processor.dispatch_event(
+                ErrorEvent(
+                    'Error processing record',
+                    data=data))
 
     def handle(self):
         last = b''

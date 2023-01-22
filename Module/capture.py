@@ -1,38 +1,61 @@
-from datetime import datetime, timedelta
+from mako.template import Template
 
-"""This module reports on i280 activity through the Message Queue"""
-from Notify.notify import Notification
+from common.event import NoticeEvent, EventProcessor, AuditEvent
+from common.util import Module, format_timestamp
 
 
-class CaptureOnly:
+class CaptureStatsEvent(AuditEvent):
 
-    def __init__(self, notifier, log):
+    audit_id = 'module-stats'
+    fields = ['start', 'end', 'duration', 'messages', 'size']
+
+    def __init__(self, data):
+        super().__init__(self.audit_id, data)
+
+        self.template_txt = Template(
+            'Capture started at ${start} and ended at ${end} for a duration '
+            'of ${duration}. ${messages} total messages (${size} bytes) '
+            'were captured.')
+
+
+class CaptureOnly(Module):
+
+    def __init__(self, processor: EventProcessor, log):
+
+        self.log = log
+        self.processor = processor
+        self.description = 'Syslog Capture support'
+        self.identifier = 'Capture'
+
+        self.module_name = self.identifier
 
         self.states = {}
-        self.log = log
-        self.notifier = notifier
-        self.description = 'Assistance with raw syslog record capturing'
-        self.identifier = 'CaptureHelper'
-
         self.num_records = 0
         self.size_records = 0
         self.start = None
         self.end = None
 
-    def statistics(self):
+    def statistics(self, reset=False):
+        if self.start and self.end:
+            duration = (str(self.end - self.start))
+        else:
+            duration = None
 
-        messages = [
-            'Capture started at {}'.format(self.start),
-            'Capture ended at {}'.format(self.end),
-            'Capture duration: {}'.format(str(self.end - self.start)),
-            '{} total syslog messages captured'.format(
-                self.num_records),
-            '{} total bytes of syslog messages captured'.format(
-                self.size_records)
+        data = {
+            'start': format_timestamp(self.start),
+            'end': format_timestamp(self.end),
+            'duration': duration,
+            'messages': self.num_records,
+            'size': self.size_records
+        }
 
-        ]
+        self.dispatch_event(CaptureStatsEvent(data))
 
-        return messages
+        if reset:
+            self.num_records = 0
+            self.size_records = 0
+            self.start = None
+            self.end = None
 
     def process_record(self, record):
         recordsize = len(record)
@@ -43,8 +66,8 @@ class CaptureOnly:
         if self.end is None or record.timestamp > self.end:
             self.end = record.timestamp
 
-        self.notifier.notice(Notification(
-            '{} byte record captured'.format(recordsize)), record)
+        summary = '{} byte record captured'.format(recordsize)
+        self.dispatch_event(NoticeEvent(summary, record=record))
         self.num_records += 1
         self.size_records += recordsize
 

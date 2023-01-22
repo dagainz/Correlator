@@ -1,6 +1,23 @@
 import re
 from datetime import datetime
-from lib.util import ParserError
+from mako.template import Template
+
+from common.event import AuditEvent, EventProcessor
+from common.util import ParserError, Module, format_timestamp
+
+
+class LogfileStatsEvent(AuditEvent):
+
+    audit_id = 'system-stats'
+    fields = ['start', 'end', 'duration']
+
+    def __init__(self, data):
+        super().__init__(self.audit_id, data)
+
+        self.template_txt = Template(
+            'Logfile processing session started at ${start} and ended at '
+            '${end} for a total duration of ${duration}')
+
 
 Priorities = {
     'perf': 7,
@@ -67,7 +84,7 @@ class RecordResult:
 
 
 class LogfileProcessor:
-    def __init__(self, modules, log):
+    def __init__(self, modules: list[Module], log):
 
         self.log = log
         self.start = None
@@ -110,28 +127,23 @@ class LogfileProcessor:
                             result.record.timestamp > self.end):
                         self.end = result.record.timestamp
 
-                    for module in list(self.modules.values()):
+                    for module in list(self.modules):
                         module.process_record(result.record)
 
-    def log_stats(self):
-        for module in list(self.modules.values()):
-            self.log.info('Statistics for module {}'.format(module.description))
-            messages = module.statistics()
-            for line in messages:
-                self.log.info(line)
-        self.log.info('Statistics ** Logfile wide **')
+    def log_stats(self, processor: EventProcessor):
+        for module in self.modules:
+            module.statistics()
 
-        if self.start:
-            start_str = str(self.start)
-        else:
-            start_str = 'Undefined'
-
-        if self.end:
-            end_str = str(self.end)
-        else:
-            end_str = 'Undefined'
-
-        self.log.info('Timestamp of first log entry: {}'.format(start_str))
-        self.log.info('Timestamp of last log entry: {}'.format(end_str))
         if self.start and self.end:
-            self.log.info('Log file Duration: {}'.format(self.end - self.start))
+            duration = (str(self.end - self.start))
+        else:
+            duration = ''
+
+        e = LogfileStatsEvent(
+            {
+                'start': format_timestamp(self.start),
+                'end': format_timestamp(self.end),
+                'duration': duration
+            })
+        e.system = 'logfile-processor'
+        processor.dispatch_event(e)
