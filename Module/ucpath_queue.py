@@ -1,10 +1,27 @@
 from datetime import datetime, timedelta
 from common.util import Module
-from common.event import NoticeEvent, ErrorEvent, EventProcessor
+from common.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
 
 # from notify import Notifiers, Notification
 
 """This module reports on i280 activity through the Message Queue"""
+
+
+class StatsEvent(AuditEvent):
+
+    audit_id = 'module-stats'
+    fields = [
+        'i280_total', 'i280_ok', 'i280_fail', 'minqueue', 'maxqueue', 'avgqueue'
+    ]
+
+    def __init__(self, data):
+        super().__init__(self.audit_id, data)
+
+        tmpl=(
+            '${i280_total} total i280 messages detected. ${i280_ok} '
+            'were successfully handled by a worker, and ${i280_fail} failed'
+            ' to queue. Minimum / maximum / average queue delay: '
+            '${minqueue} / ${maxqueue} / ${avgqueue}/')
 
 
 class I280Transaction:
@@ -42,29 +59,33 @@ class I280Queue(Module):
         self.end = None
         self.queue_durations = []
 
-    def statistics(self):
+    def statistics(self, reset=False):
 
-        messages = [
-            '{} total i280 messages detected'.format(self.i280_total),
-            '{} i280 messages successfully queued'.format(self.i280_ok),
-            '{} i280 messages failed to queue'.format(self.i280_fail)
-        ]
-
+        data = {
+            'i280_total': self.i280_total,
+            'i280_ok': self.i280_ok,
+            'i280_fail': self.i280_fail
+        }
         if self.queue_durations:
             average_queue_duration = sum(self.queue_durations) / len(
                 self.queue_durations)
             min_queue_duration = min(self.queue_durations)
             max_queue_duration = max(self.queue_durations)
-            messages.extend([
-                'Average queue delay: {}'.format(str(timedelta(
-                    microseconds=average_queue_duration))),
-                'Minimium queue delay: {}'.format(str(
-                    timedelta(microseconds=min_queue_duration))),
-                'Maximum queue delay: {}'.format(str(
-                    timedelta(microseconds=max_queue_duration)))
-            ])
+            data.update({
+                'avgqueue': str(timedelta(microseconds=average_queue_duration)),
+                'minqueue': str(timedelta(microseconds=min_queue_duration)),
+                'maxqueue': str(timedelta(microseconds=max_queue_duration))})
+        else:
+            data.update({
+                'avgqueue': '',
+                'minqueue': '',
+                'maxqueue': ''
+            })
 
-        return messages
+        self.dispatch_event(StatsEvent(data))
+
+        if reset:
+            self.clear_statistics()
 
     def _setstate(self, identifier, state):
         self.states[identifier] = state

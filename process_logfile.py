@@ -40,7 +40,7 @@ LogHelper.initialize_console_logging(log, debug_level)
 log.info('Starting')
 app = LogfileProcessor(modules, log)
 app.from_file(args.logfile, args.instance, args.hostname)
-app.log_stats()
+app.log_stats(processor)
 
 
 
