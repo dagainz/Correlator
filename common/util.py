@@ -29,14 +29,6 @@ class LogHelper:
         log.addHandler(ch)
 
 
-# def build_modules(modules, event_processor, log):
-#     moduledict = {}
-#     for module in modules:
-#         obj = module(event_processor, log)
-#         moduledict[obj.identifier] = obj
-#     return moduledict
-
-
 class Module:
 
     module_name = 'System'

@@ -25,7 +25,6 @@ class StatsEvent(AuditEvent):
 class I280QueueEvent(AuditEvent):
 
     audit_id = 'queueside'
-
     fields = ['timestamp', 'correlation_id', 'status']
 
     def __init__(self, data):

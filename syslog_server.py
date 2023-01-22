@@ -25,7 +25,7 @@ class StatsEvent(AuditEvent):
         super().__init__(self.audit_id, data)
 
         self.template_txt = Template(
-            'Severs session started at ${start} and ended at ${end} for a '
+            'Sever session started at ${start} and ended at ${end} for a '
             'total duration of ${duration}')
 
 
