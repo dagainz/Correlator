@@ -4,7 +4,6 @@ import argparse
 import logging
 from common.logfile import LogfileProcessor
 from common.event import EventProcessor, LogbackListener, CSVListener
-# from notify import Notifiers, CSVNotify, LogbackNotify
 from Module.ucpath_queue import I280Queue
 from common.util import LogHelper, Module
 
@@ -25,10 +24,6 @@ args = parser.parse_args()
 processor = EventProcessor(log)
 processor.register_listener(LogbackListener(log))
 processor.register_listener(CSVListener())
-
-# if args.csv:
-#     # add the CSV notifier if requested.
-#     notifiers.add_notifier(CSVNotify())
 
 # List of modules
 

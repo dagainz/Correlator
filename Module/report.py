@@ -3,8 +3,6 @@
 from common.util import Module
 from common.event import NoticeEvent, Event, EventProcessor
 
-# from notify import Notification
-
 
 class Report(Module):
 

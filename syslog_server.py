@@ -10,7 +10,6 @@ from mako.template import Template
 from pathlib import Path
 
 from common.syslog import SyslogHandler
-# from common.notify import Notifiers, LogbackNotify
 from common.event import EventProcessor, LogbackListener, AuditEvent
 from Module.ucpath_queue import I280Queue
 from Module.capture import CaptureOnly

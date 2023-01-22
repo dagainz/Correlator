@@ -4,8 +4,6 @@ from common.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
 
 from mako.template import Template
 
-# from notify import Notifiers, Notification
-
 """This module reports on i280 activity through the Message Queue"""
 
 
