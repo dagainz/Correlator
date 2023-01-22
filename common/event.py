@@ -46,7 +46,9 @@ class AuditEvent(Event):
     fields = []
 
     def __init__(self, audit_id, data):
-        self.repr = 'Audit Event for ID {}'.format(audit_id)
+        kv = [f'{field}={data[field]}' for field in self.fields]
+        self.repr = 'Audit: ' + ', '.join(kv)
+
         super().__init__(self.repr, data=data)
         self.is_audit = True
         self.audit_id = audit_id
@@ -127,12 +129,11 @@ class LogbackListener(EventListener):
         elif event.is_warning:
             self.log.warn(f'{event.system}: {event.summary}')
         elif event.is_audit:
-            self.log.info(f'{event.system}-{event.audit_id}: {event.csv_row()}')
             text = event.render_text()
             if text:
-                self.log.info(f'{event.system}-{event.audit_id}: {text}')
-        else:
-            self.log.info(f'{event.system}: {event.summary}')
+                self.log.info(f'{event.system}: Audit({event.audit_id}): {text}')
+            else:
+                self.log.info(f'{event.system}: Audit({event.audit_id}): {event.summary}')
 
 
 class CSVListener(EventListener):
