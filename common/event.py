@@ -134,6 +134,8 @@ class LogbackListener(EventListener):
                 self.log.info(f'{event.system}: Audit({event.audit_id}): {text}')
             else:
                 self.log.info(f'{event.system}: Audit({event.audit_id}): {event.summary}')
+        else:   # notice
+            self.log.info(f'{event.system}: {event.summary}')
 
 
 class CSVListener(EventListener):
