@@ -1,31 +1,101 @@
 # Correlator
 
-The intention of this project is to provide a system that read and take action on log records. This action may be as simple as logging something to the python log or adding a record into a CSV file or database table, but it could also perform tasks such as generate a ServiceNOW issue or add a temporary rule into a firewall in response to something that was detected in the log.
+This software provides a log analysis system that consumes and processes log data, 
+presumably generated from other systems or applications. 
 
 ## Architecture
 
-### The correlator engine
+### The Correlator Engine
 
-This is the bulk of the system and consists of a front end that reads log records from the source, and passes them to one or more Correlator logic modules for processing.
-
-The engine or any Correlator logic module's response to various situations is to generate and dispatch an event when something noteworthy happens. 
+The Correlator Engine is responsible for reading the log data and passing it through 
+one or more Correlator Logic Modules for processing. During its execution, the Correlator
+Engine may dispatch events to be handled independently by the Event Processor.
  
-### Correlator logic module (Python class)
+### The Event Processor
 
-This is a module that has logic to understand a particular use case or scenario. 
+The Event Processor is responsible for processing and reacting to events dispatched 
+by the Correlator Engine. The Event Processor forwards received events to one or more
+Event Listeners for processing. 
 
-For example, imagine the scenario where you want to detect when someone is trying repeatedly to log in to various accounts via ssh, so that their IP address can get added to a blocklist on a firewall. This module could keep track of the number of failed attempts per source address and dispatch an event with the source IP when it passes some threshold.
+### Correlator Logic Module 
 
-### Event Processing
+The Correlator Logic Module implements logic that:
+- Receives and interprets log data, maintaining state (The Correlation process).
+- Detects situations and responds by creating and dispatching events that get handled 
+by another, independent propcess.
+- (Optionally) Maintain a running set of related statistics, and report on them by 
+dispatching Audit Events
 
-This part of the system is responsible for processing and reacting to events dispatched by the correlator engine. It accomplishes this by distributing the generated events to one or more Event Listeners to give them the opportunity to take action.
+For example, given the hypothetical scenario where we want to detect the situation
+where someone is repeatedly trying to log in via ssh, and take some action when a
+certain number of failed logins were attempted.
 
-### Event Listeners (Python class)
+A Correlator Logic Module would process all log entries from sshd, and maintain a map
+of failed attempts per source address within a certain time period. When this number
+exceeds the maximum allowed, it would create and dispatch a custom event that
+included the source IP address.
 
-Event Listeners are python classes that can decide to take action on events. A new event listener class can be created to take custom action in the response to any events.
+### Event Listeners
 
-There are 2 integrated event listeners: LogbackListener and CSVListener. LogbackListiner simply logs the events to the python log, while CSVListener writes audit events to CSV files.
+Event Listeners are instances of python classes whose process_event method gets called
+with every event dispatched by the Correlator Engine. In that method you can decide what
+action to take, if any.
+
+There are 2 integrated event listeners that both the log file processor and syslog server
+use:
+ - LogbackListener: Logs all events to the python log.
+ - CSVListener: Writes audit events to CSV files
+
+Additional listeners may be created for custom actions. For example, in the case of
+the ssh failed login detection described above: A new listener would be created that
+ignores all events except for that custom event. When it is received, it adds a temporary
+rule to the firewall to block that IP address temporarily.
 
 ### Event System
 
-There are a handful of ready to use or subclass standard events such as ErrorEvent, WarningEvent and NoticeEvent. It is simple to subclass these and add more detail.
+There are several predefined Events that can be used or subclassed:
+ErrorEvent, WarningEvent, NoticeEvent, and AuditEvent.
+
+#### Standard events
+
+The standard Event can contain quite a bit of information:
+
+- Descriptive summary
+- Data block - list of key/value pairs
+- Timestamp
+- The original log record (if applicable)
+- System - source of the event
+- optionally a text/html message generated bv mako
+- Is this warning, error, or informational message
+
+the ErrorEvent, WarningEvent, and NoticeEvent are subclasses of a standard Event. They
+set their own properties to reflect the severity. 
+
+#### Audit events
+
+Audit Events are used to record when something noteworthy happens. They often will end up
+as a record in an audit table.
+
+To use Audit Events, you need to create a custom event class based on AuditEvent. Create it
+by supplying a string identifier and the attributes that describe the event.
+
+See Module.capture.py - CaptureStatsEvent for an example.
+
+To continue with our example of the ssh failed login detection:
+
+- Make the custom event described above a subclass of AuditEvent. Create it with the
+following parameters:
+  - An identifier of 'threshold-exceeded'
+  - The data of timestamp='xx', address='x.x.x.x'
+- Create a new custom event LogonEvent. Add logic to the Correlator Logic Module to dispatch
+this event every time someone successfully logs on. Create it with the following parameters:
+  - An identifier of 'logon-success'
+  - The data of timestamp='xx', address='x.x.x.x', userid='userid'
+
+This would result in two audit streams: threshold-exceeded, and login-success.
+
+- These could be written as records in individual CSV files or database tables (eventually).
+- **threshold-exceeded** would have a row containing the timestamp and remote address for every
+potential intruder detected.
+- **login-success** would have a row that contained the user id in addition to the timestamp and
+remote address for every successful ssh login.
