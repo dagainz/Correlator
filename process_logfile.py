@@ -13,7 +13,7 @@ parser.add_argument(
     '--d', action='store_true', help='Show debugging messages"')
 parser.add_argument(
     '--csv', action='store_true',
-    help='Write audit data for each module to csv files')
+    help='Write audit data for all modules to csv files')
 parser.add_argument('--logfile', help='Log file to parse', required=True)
 parser.add_argument('--instance', help='Instance name', required=True)
 parser.add_argument('--hostname', help='Host name', required=True)
@@ -22,7 +22,8 @@ args = parser.parse_args()
 
 processor = EventProcessor(log)
 processor.register_listener(LogbackListener(log))
-processor.register_listener(CSVListener())
+if args.csv:
+    processor.register_listener(CSVListener())
 
 # List of modules
 
