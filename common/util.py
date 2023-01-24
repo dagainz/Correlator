@@ -6,6 +6,8 @@ from datetime import datetime
 from common.event import Event, EventProcessor
 
 DEFAULT_ROTATE_KEEP = 10
+MAX_SUMMARY = 128
+MAX_BREAK_SEARCH = 10
 
 
 class ParserError(Exception):
@@ -78,3 +80,47 @@ def capture_filename():
 def format_timestamp(date: datetime):
     if date:
         return date.strftime('%Y-%m-%d %H:%M:%S')
+
+
+def calculate_summary(detail: str):
+    """Generates a summary line from a string
+
+    Returns the provided string, trimmed to a maximum of MAX_SUMMARY.
+    It attempts to do it by using a word boundary if one exists within the
+    last MAX_BREAK_SEARCH Characters, otherwise returns exactly MAX_SUMMARY
+    characters.
+
+    """
+
+    # the string is smaller than the max length, return it
+    if len(detail) <= MAX_SUMMARY:
+        return detail
+
+    # Word boundary: If the character directly after the last allowable
+    # character by length is a space, then return the entire string left of it.
+
+    if detail[MAX_SUMMARY] == ' ':
+        return detail[0:MAX_SUMMARY]
+
+    # if a word boundary is found in the last MAX_BREAK_SEARCH characters,
+    # use it to trim the string.
+
+    first = MAX_SUMMARY-1
+    last = first - MAX_BREAK_SEARCH
+    if last < 0:
+        last = 0
+
+    for i in range(first, last, -1):
+        if detail[i] == ' ':
+            return detail[0:i+1]
+
+    # No boundary found, simply return the max size
+
+    return detail[0:MAX_SUMMARY]
+
+
+if __name__ == '__main__':
+    s = 'now is the time for all good women to come to the aid of the party'
+    print(calculate_summary(s, 33, 5))
+
+
