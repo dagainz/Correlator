@@ -14,6 +14,7 @@ from common.util import LogHelper, capture_filename, Module, format_timestamp
 from Module.capture import CaptureOnly
 from Module.report import Report
 from Module.ucpath_queue import I280Queue
+from Module.discovery import Discovery
 
 
 class SyslogStatsEvent(AuditEvent):
@@ -106,7 +107,8 @@ if cmd_args.write_only:
     modules.append(CaptureOnly(processor, log))
 else:
     if not cmd_args.report_only:
-        modules.append(I280Queue(processor, log))
+        # modules.append(I280Queue(processor, log))
+        modules.append(Discovery(processor, log))
     else:
         modules.append(Report(processor, log))
 
