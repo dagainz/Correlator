@@ -118,3 +118,6 @@ CLI scripts hard coded with module/handlers stack.
 - Decouple proprietary logfile format
 - Refactor network server code and get rid of that metaclass nonsense
 
+## Git info
+
+Tag: R3
