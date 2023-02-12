@@ -70,7 +70,6 @@ class CaptureOnly(Module):
             record.hostname, record.appname, record.prog,
             record.detail))
 
-        # summary = '{} byte record captured'.format(recordsize)
         self.dispatch_event(NoticeEvent(summary, record=record))
         self.num_records += 1
         self.size_records += recordsize

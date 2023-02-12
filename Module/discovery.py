@@ -1,4 +1,6 @@
-
+"""
+WIP: Discovery analysis for Bravura Security Inc products.
+"""
 from mako.template import Template
 
 from common.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
