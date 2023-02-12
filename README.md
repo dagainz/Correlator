@@ -1,60 +1,64 @@
 # Correlator
 
-This software provides a log analysis system that consumes and processes log data, 
-presumably generated from other systems or applications. 
+Correlator is an event reading and processing system that can be used
+to analyze, report, and take action on system log events presumably generated from other systems
+or applications.
+
+CLI scripts are provided to:
+- Process logfiles
+- Process, or capture and save, syslog log data. It can listen on the network for real-time syslog processing or processes previously captured syslog data.
+
+This is currently in the prototype stage, and not much more than scaffolding. 
 
 ## Architecture
 
-### The Correlator Engine
+### The engine
 
-The Correlator Engine is responsible for reading the log data and passing it through 
-one or more Correlator Logic Modules for processing. During its execution, the Correlator
-Engine may dispatch events to be handled independently by the Event Processor.
- 
-### The Event Processor
+The  engine is responsible for reading the log data and feeding it through
+one or more Logic modules for processing, as well as requesting and reporting
+on statistics collected by all running modules. 
 
-The Event Processor is responsible for processing and reacting to events dispatched 
-by the Correlator Engine. The Event Processor forwards received events to one or more
-Event Listeners for processing. 
+### Modules 
 
-### Correlator Logic Module 
+Modules process log records, collect statistics, and dispatch events. One module
+handles related log events. It is possible to run multiple modules.
 
-The Correlator Logic Module implements logic that:
-- Receives and interprets log data, maintaining state (The Correlation process).
-- Detects situations and responds by creating and dispatching events that get handled 
-by another, independent propcess.
-- (Optionally) Maintain a running set of related statistics, and report on them by 
-dispatching Audit Events
+Modules:
 
-For example, given the hypothetical scenario where we want to detect the situation
-where someone is repeatedly trying to log in via ssh, and take some action when a
-certain number of failed logins were attempted.
+- Are python classes
+- Maintain and report on internal statistics 
+- Can maintain state to correlate log events for a higher level of business intelligence
+- Dispatch Error, Warning, or Informational events to be logged and possibly acted on
+- Dispatch Audit events: Events with guaranteed data suitable for recording (for example, a database/csv file row)
 
-A Correlator Logic Module would process all log entries from sshd, and maintain a map
-of failed attempts per source address within a certain time period. When this number
-exceeds the maximum allowed, it would create and dispatch a custom event that
-included the source IP address.
+There are two system modules provided: 
+- Reportonly:
+  - Dispatches a Notice event for every log record
+  - Maintains statistics on how many log records processed, as well as the combined records lengths as a total length, in bytes.
+- Capture:
+- - Essentially the same as Reportonly, with slightly different statistics
 
-### Event Listeners
+#### Theoretical example of a custom module:
 
-Event Listeners are instances of python classes whose process_event method gets called
-with every event dispatched by the Correlator Engine. In that method you can decide what
-action to take, if any.
+A module could be created to process events from a secure shell server running on Linux.
+It could listen for both successful and failed login attempts, keeping a running total of both
+for statistical purposes. It could keep track of the number of failed attempts per source address
+within a certain time period. When this number exceeds a predetermined threshold, it could dispatch a custom event
+called (for example) SSHLoginTriesExceeded.
 
-There are 2 integrated event listeners that both the log file processor and syslog server
-use:
- - LogbackListener: Logs all events to the python log.
- - CSVListener: Writes audit events to CSV files
+The event handler for that event could execute a command that would add that source IP address to a temporary
+firewall block list, for example.
 
-Additional listeners may be created for custom actions. For example, in the case of
-the ssh failed login detection described above: A new listener would be created that
-ignores all events except for that custom event. When it is received, it adds a temporary
-rule to the firewall to block that IP address temporarily.
+The daily statistics from this module could be (easily, at least):
+  - Total number of successful ssh logins
+  - Total number of failed ssh logins
+  - Total number of failed ssh logins that don't have a successful login (today)
+  - Total number of source addresses that exceeded X ssh login attempts and got blocked
 
-### Event System
+### Events
 
-There are several predefined Events that can be used or subclassed:
-ErrorEvent, WarningEvent, NoticeEvent, and AuditEvent.
+Events are dispatched from the Correlator engine or one of its modules. They are implemented as
+python classes and be extended to provide additional functionality.
 
 #### Standard events
 
@@ -68,34 +72,47 @@ The standard Event can contain quite a bit of information:
 - optionally a text/html message generated bv mako
 - Is this warning, error, or informational message
 
-the ErrorEvent, WarningEvent, and NoticeEvent are subclasses of a standard Event. They
-set their own properties to reflect the severity. 
+the ErrorEvent, WarningEvent, and NoticeEvent are derived from events with the appropriate properties set.
 
 #### Audit events
 
-Audit Events are used to record when something noteworthy happens. They often will end up
-as a record in an audit table.
+Audit events are dispatched in response to something noteworthy happening. They often will end up
+as a record in a csv file or a database table.
 
-To use Audit Events, you need to create a custom event class based on AuditEvent. Create it
-by supplying a string identifier and the attributes that describe the event.
+To use audit events in your modules, they must be defined as their own class, which subclasses an audit event. An
+identifier and a list of data fields that will be present in each event must be provided in the custom by the
+dispatching code.
+
+These events will often end up as records in a csv file or a database table.
 
 See Module.capture.py - CaptureStatsEvent for an example.
 
-To continue with our example of the ssh failed login detection:
+### Event listeners
 
-- Make the custom event described above a subclass of AuditEvent. Create it with the
-following parameters:
-  - An identifier of 'threshold-exceeded'
-  - The data of timestamp='xx', address='x.x.x.x'
-- Create a new custom event LogonEvent. Add logic to the Correlator Logic Module to dispatch
-this event every time someone successfully logs on. Create it with the following parameters:
-  - An identifier of 'logon-success'
-  - The data of timestamp='xx', address='x.x.x.x', userid='userid'
+An event listener does just that - its python code that can take action in response to an event. All events are currently
+dispatched to all handlers. It is up to the handler itself to filter the events to just the ones that it is interested
+in, if desired.
 
-This would result in two audit streams: threshold-exceeded, and login-success.
+There are 2 system event listeners that are used by the provided scripts and can be used in your code:
 
-- These could be written as records in individual CSV files or database tables (eventually).
-- **threshold-exceeded** would have a row containing the timestamp and remote address for every
-potential intruder detected.
-- **login-success** would have a row that contained the user id in addition to the timestamp and
-remote address for every successful ssh login.
+ - **LogbackListener:** Logs all events to the python log.
+ - **CSVListener:** Writes audit events to CSV files
+
+Additional listeners may be created for custom actions. For example, in the case of
+the **Theoretical example of a module** example in the **Logic Modules** section:
+
+A new event listener could be created that would ignore all events except for the custom event SSHLoginTriesExceeded.
+When processing *that* event, it could add a temporary rule to the firewall to block the source IP address.
+If that event's superclass is one of the standard event classes, then other listeners may also handle that event. For
+example, if the SSHLoginTriesExceeded is a subclass of ErrorEvent, then this will also get logged to the python
+error log.
+
+## Limitations
+
+CLI scripts hard coded with module/handlers stack.
+
+## To do
+
+Refactor network server code
+Add capability for listeners to register criteria for what events it is interested in
+
