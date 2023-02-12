@@ -119,8 +119,3 @@ def calculate_summary(detail: str):
     return detail[0:MAX_SUMMARY]
 
 
-if __name__ == '__main__':
-    s = 'now is the time for all good women to come to the aid of the party'
-    print(calculate_summary(s, 33, 5))
-
-
