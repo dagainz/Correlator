@@ -64,7 +64,7 @@ class LogRecord:
         pass
 
     def __repr__(self):
-        return "{} {} [{}] {} [{}] {}: {}".format(
+        return "{} {} [{}] {} [{}]: {}".format(
             self.str_timestamp, self.who, self.request, self.prog,
             self.identifier, self.detail)
 

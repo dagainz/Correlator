@@ -1,7 +1,7 @@
 from mako.template import Template
 
 from common.event import NoticeEvent, EventProcessor, AuditEvent
-from common.util import Module, format_timestamp
+from common.util import Module, format_timestamp, calculate_summary
 
 
 class CaptureStatsEvent(AuditEvent):
@@ -66,7 +66,11 @@ class CaptureOnly(Module):
         if self.end is None or record.timestamp > self.end:
             self.end = record.timestamp
 
-        summary = '{} byte record captured'.format(recordsize)
+        summary = calculate_summary('{} {} {} {}'.format(
+            record.hostname, record.appname, record.prog,
+            record.detail))
+
+        # summary = '{} byte record captured'.format(recordsize)
         self.dispatch_event(NoticeEvent(summary, record=record))
         self.num_records += 1
         self.size_records += recordsize

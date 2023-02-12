@@ -1,7 +1,7 @@
 
 from mako.template import Template
 
-from common.util import Module, format_timestamp
+from common.util import Module, format_timestamp, calculate_summary
 from common.event import NoticeEvent, AuditEvent, EventProcessor
 
 
@@ -66,9 +66,9 @@ class Report(Module):
         if self.end is None or record.timestamp > self.end:
             self.end = record.timestamp
 
-        summary = '{} {} {} {}'.format(
+        summary = calculate_summary('{} {} {} {}'.format(
             record.hostname, record.appname, record.prog,
-            record.detail[0:20])
+            record.detail))
 
         self.dispatch_event(NoticeEvent(summary, record=record))
 
