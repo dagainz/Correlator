@@ -117,5 +117,3 @@ def calculate_summary(detail: str):
     # No boundary found, simply return the max size
 
     return detail[0:MAX_SUMMARY]
-
-

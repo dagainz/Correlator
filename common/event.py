@@ -131,9 +131,11 @@ class LogbackListener(EventListener):
         elif event.is_audit:
             text = event.render_text()
             if text:
-                self.log.info(f'{event.system}: Audit({event.audit_id}): {text}')
+                self.log.info(f'{event.system}: Audit({event.audit_id}):'
+                              f' {text}')
             else:
-                self.log.info(f'{event.system}: Audit({event.audit_id}): {event.summary}')
+                self.log.info(f'{event.system}: Audit({event.audit_id}): '
+                              f'{event.summary}')
         else:   # notice
             self.log.info(f'{event.system}: {event.summary}')
 
@@ -165,8 +167,3 @@ class CSVListener(EventListener):
             filehandle = self.csv_files[csvname]
 
         filehandle.write(row + '\n')
-
-
-
-
-

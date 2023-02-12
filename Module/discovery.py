@@ -1,4 +1,6 @@
-
+"""
+WIP: Discovery analysis for Bravura Security Inc products.
+"""
 from mako.template import Template
 
 from common.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
@@ -62,7 +64,9 @@ class Discovery(Module):
 
     @staticmethod
     def tostring(record):
-        return f'{record.timestamp} {record.hostname} {record.instance} {record.prog} {record.identifier} {record.msgid} {record.detail}'
+        return (f'{record.timestamp} {record.hostname} {record.instance} '
+                f'{record.prog} {record.identifier} {record.msgid} '
+                f'{record.detail}')
 
     def process_iddiscover(self, record):
         print(f'IDDISCOVER: {self.tostring(record)}')

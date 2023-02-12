@@ -248,5 +248,3 @@ class I280Queue(Module):
                 }
                 self.dispatch_event(I280QueueEvent(data))
         return True
-
-
