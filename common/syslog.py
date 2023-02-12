@@ -204,6 +204,3 @@ class SyslogHandler(socketserver.BaseRequestHandler):
                 return data
             self.process_record(data[0:pos])
             data = data[pos + 1:]
-
-
-

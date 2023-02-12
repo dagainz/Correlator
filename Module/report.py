@@ -76,5 +76,3 @@ class Report(Module):
         self.size_records += recordsize
 
         return True
-
-

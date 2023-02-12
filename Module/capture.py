@@ -75,5 +75,3 @@ class CaptureOnly(Module):
         self.size_records += recordsize
 
         return True
-
-

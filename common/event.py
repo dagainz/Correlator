@@ -167,8 +167,3 @@ class CSVListener(EventListener):
             filehandle = self.csv_files[csvname]
 
         filehandle.write(row + '\n')
-
-
-
-
-
