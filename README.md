@@ -113,6 +113,8 @@ CLI scripts hard coded with module/handlers stack.
 
 ## To do
 
-Refactor network server code
-Add capability for listeners to register criteria for what events it is interested in
+- Project structure
+- Add capability for listeners to register criteria for event filtering at instantiation time.
+- Decouple proprietary logfile format
+- Refactor network server code
 
