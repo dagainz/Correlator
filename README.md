@@ -10,6 +10,19 @@ CLI scripts are provided to:
 
 This is currently in the prototype stage, and not much more than scaffolding. 
 
+## Build and install
+
+To build the python package, ensure you have build installed and then run it in the project directory:
+
+`pip install build`
+`python -m build`
+
+This should build a wheel file and tarball in the dist/ directory.
+
+This file can then be installed into its own virtual environment by running pip:
+
+`pip install path/to/Correlator-X.Y.Z-py3-none-any.whl`
+
 ## Architecture
 
 ### The engine
@@ -113,11 +126,8 @@ CLI scripts hard coded with module/handlers stack.
 
 ## To do
 
-- Project structure
+- Decouple proprietary logfile and syslog record formats
+- Standard linux syslog module
 - Add capability for listeners to register criteria for event filtering at instantiation time.
-- Decouple proprietary logfile format
 - Refactor network server code and get rid of that metaclass nonsense
 
-## Git info
-
-Tag: R3

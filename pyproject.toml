@@ -13,13 +13,16 @@ dependencies = [
     "Mako",
     "MarkupSafe"
 ]
+authors = [
+    { name = "Tim Pushor", email = 'tim.pushor@gmail.com' }
+]
+maintainers = [
+    { name = "Tim Pushor", email = 'tim.pushor@gmail.com' }
+]
 
 [tool.setuptools.packages.find]
-where = ["."]  # ["."] by default
-include = ["Correlator*"]  # ["*"] by default
-# exclude = ["mypackage.tests*"]  # empty by default
-namespaces = false  # true by default
+include = ["Correlator*"]
 
 [project.scripts]
-syslog_server = "Correlator.syslog:main"
-process_idm_logfile = "Correlator.logfile:main"
+syslog_server = "Correlator.syslog:CLI"
+process_idm_logfile = "Correlator.logfile:CLI"
