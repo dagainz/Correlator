@@ -6,7 +6,8 @@ or applications.
 
 Although at this point this is mostly a library to implement your own system, CLI scripts are provided to:
 - Process logfiles
-- Process, or capture and save, syslog log data. It can listen on the network for real-time syslog processing or processes previously captured syslog data.
+- Process, or capture and save, syslog log data. It can listen on the network for real-time syslog processing or 
+processes previously captured syslog data.
 
 This system is currently in the prototype stage, and not much more than scaffolding. 
 
@@ -47,9 +48,10 @@ Modules:
 There are two system modules provided: 
 - Reportonly:
   - Dispatches a Notice event for every log record
-  - Maintains statistics on how many log records processed, as well as the combined records lengths as a total length, in bytes.
+  - Maintains statistics on how many log records processed, as well as the combined records lengths as a total length,
+in bytes.
 - Capture:
-- - Essentially the same as Reportonly, with slightly different statistics
+  - Essentially the same as Reportonly, with slightly different statistics
 
 #### Theoretical example of a custom module:
 
@@ -102,9 +104,9 @@ See Module.capture.py - CaptureStatsEvent for an example.
 
 ### Event listeners
 
-An event listener does just that - its python code that can take action in response to an event. All events are currently
-dispatched to all handlers. It is up to the handler itself to filter the events to just the ones that it is interested
-in, if desired.
+An event listener does just that - its python code that can take action in response to an event. All events are
+currently dispatched to all handlers. It is up to the handler itself to filter the events to just the ones that
+it is interested in, if desired.
 
 There are 2 system event listeners that are used by the provided scripts and can be used in your code:
 

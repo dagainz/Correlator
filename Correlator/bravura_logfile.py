@@ -2,8 +2,7 @@ import argparse
 import logging
 from datetime import datetime
 
-from Correlator.event import (EventProcessor, LogbackListener,
-                              CSVListener)
+from Correlator.event import (EventProcessor, LogbackListener, CSVListener)
 from Correlator.logfile import (LogRecord, LogfileProcessor, Priorities,
                                 Default_priority)
 
