@@ -10,6 +10,32 @@ MAX_SUMMARY = 128
 MAX_BREAK_SEARCH = 10
 
 
+class Config:
+    def __init__(self):
+        self.store = {}
+
+    def get(self, key, default=None):
+        return self.store.get(key, default)
+
+    def set(self, key, value):
+        self.store[key] = value
+
+    def validate(self, key):
+        if isinstance(key, list):
+            keys = key
+        else:
+            keys = [key]
+
+        for key in keys:
+            if key not in self.store:
+                return False
+
+        return True
+
+
+GlobalConfig = Config()
+
+
 class ParserError(Exception):
     pass
 
