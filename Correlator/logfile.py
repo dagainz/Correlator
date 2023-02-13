@@ -153,6 +153,7 @@ class LogfileProcessor:
         e.system = 'logfile-processor'
         processor.dispatch_event(e)
 
+
 def CLI():
     log = logging.getLogger('logger')
 
@@ -217,6 +218,7 @@ def CLI():
     app = LogfileProcessor(modules, log)
     app.from_file(args.logfile, args.instance, args.hostname)
     app.log_stats(processor)
+
 
 if __name__ == '__main__':
     CLI()
