@@ -1,8 +1,8 @@
 from datetime import timedelta
 from mako.template import Template
 
-from common.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
-from common.util import Module, format_timestamp
+from Correlator.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
+from Correlator.util import Module, format_timestamp
 
 
 class I280QueueStatsEvent(AuditEvent):

@@ -3,7 +3,7 @@ import os
 import sys
 from datetime import datetime
 
-from common.event import Event, EventProcessor
+from Correlator.event import Event, EventProcessor
 
 DEFAULT_ROTATE_KEEP = 10
 MAX_SUMMARY = 128
