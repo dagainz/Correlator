@@ -1,9 +1,13 @@
+import argparse
+import logging
 import re
 from datetime import datetime
 from mako.template import Template
 
-from common.event import AuditEvent, EventProcessor
-from common.util import ParserError, Module, format_timestamp
+from Correlator.event import (AuditEvent, EventProcessor, LogbackListener,
+                              CSVListener)
+from Correlator.util import ParserError, Module, format_timestamp, LogHelper
+from Correlator.Module.ucpath_queue import I280Queue
 
 
 class LogfileStatsEvent(AuditEvent):
@@ -28,6 +32,7 @@ Priorities = {
     'warning': 2,
     'error': 1
 }
+
 Default_priority = 1
 
 
@@ -147,3 +152,81 @@ class LogfileProcessor:
             })
         e.system = 'logfile-processor'
         processor.dispatch_event(e)
+
+def CLI():
+    log = logging.getLogger('logger')
+
+    parser = argparse.ArgumentParser('Log analyze and report')
+    parser.add_argument(
+        '--d', action='store_true', help='Show debugging messages"')
+    parser.add_argument(
+        '--csv', action='store_true',
+        help='Write audit data for all modules to csv files')
+    parser.add_argument('--logfile', help='Log file to parse', required=True)
+    parser.add_argument('--instance', help='Instance name', required=True)
+    parser.add_argument('--hostname', help='Host name', required=True)
+
+    args = parser.parse_args()
+
+    processor = EventProcessor(log)
+    processor.register_listener(LogbackListener(log))
+    if args.csv:
+        processor.register_listener(CSVListener())
+
+    # List of modules
+
+    modules: list[Module] = [I280Queue(processor, log)]
+
+    debug_level = logging.DEBUG if args.d else logging.INFO
+
+    LogHelper.initialize_console_logging(log, debug_level)
+
+    log.info('Starting')
+    app = LogfileProcessor(modules, log)
+    app.from_file(args.logfile, args.instance, args.hostname)
+    app.log_stats(processor)
+
+    log = logging.getLogger('logger')
+
+    parser = argparse.ArgumentParser('Log analyze and report')
+    parser.add_argument(
+        '--d', action='store_true', help='Show debugging messages"')
+    parser.add_argument(
+        '--csv', action='store_true',
+        help='Write audit data for all modules to csv files')
+    parser.add_argument('--logfile', help='Log file to parse', required=True)
+    parser.add_argument('--instance', help='Instance name', required=True)
+    parser.add_argument('--hostname', help='Host name', required=True)
+
+    args = parser.parse_args()
+
+    processor = EventProcessor(log)
+    processor.register_listener(LogbackListener(log))
+    if args.csv:
+        processor.register_listener(CSVListener())
+
+    # List of modules
+
+    modules: list[Module] = [I280Queue(processor, log)]
+
+    debug_level = logging.DEBUG if args.d else logging.INFO
+
+    LogHelper.initialize_console_logging(log, debug_level)
+
+    log.info('Starting')
+    app = LogfileProcessor(modules, log)
+    app.from_file(args.logfile, args.instance, args.hostname)
+    app.log_stats(processor)
+
+if __name__ == '__main__':
+    CLI()
+
+
+
+
+
+
+
+
+
+

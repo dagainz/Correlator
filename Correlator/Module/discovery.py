@@ -3,8 +3,8 @@ WIP: Discovery analysis for Bravura Security Inc products.
 """
 from mako.template import Template
 
-from common.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
-from common.util import Module, format_timestamp
+from Correlator.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
+from Correlator.util import Module, format_timestamp
 
 
 class DiscoveryStatsEvent(AuditEvent):

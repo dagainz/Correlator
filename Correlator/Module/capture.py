@@ -1,11 +1,10 @@
-
 from mako.template import Template
 
-from common.util import Module, format_timestamp, calculate_summary
-from common.event import NoticeEvent, AuditEvent, EventProcessor
+from Correlator.event import NoticeEvent, EventProcessor, AuditEvent
+from Correlator.util import Module, format_timestamp, calculate_summary
 
 
-class ReportStatsEvent(AuditEvent):
+class CaptureStatsEvent(AuditEvent):
 
     audit_id = 'module-stats'
     fields = ['start', 'end', 'duration', 'messages', 'size']
@@ -14,28 +13,29 @@ class ReportStatsEvent(AuditEvent):
         super().__init__(self.audit_id, data)
 
         self.template_txt = Template(
-            'Syslog record reporting started at ${start} and ended at ${end} '
-            'for a duration of ${duration}. ${messages} total messages '
-            '(${size} bytes) were processed.')
+            'Capture started at ${start} and ended at ${end} for a duration '
+            'of ${duration}. ${messages} total messages (${size} bytes) '
+            'were captured.')
 
 
-class Report(Module):
+class CaptureOnly(Module):
 
     def __init__(self, processor: EventProcessor, log):
 
         self.log = log
         self.processor = processor
-        self.description = 'Report-only'
-        self.identifier = 'Report'
+        self.description = 'Syslog Capture support'
+        self.identifier = 'Capture'
+
         self.module_name = self.identifier
 
+        self.states = {}
         self.num_records = 0
         self.size_records = 0
         self.start = None
         self.end = None
 
     def statistics(self, reset=False):
-
         if self.start and self.end:
             duration = (str(self.end - self.start))
         else:
@@ -49,7 +49,7 @@ class Report(Module):
             'size': self.size_records
         }
 
-        self.dispatch_event(ReportStatsEvent(data))
+        self.dispatch_event(CaptureStatsEvent(data))
 
         if reset:
             self.num_records = 0
@@ -71,7 +71,6 @@ class Report(Module):
             record.detail))
 
         self.dispatch_event(NoticeEvent(summary, record=record))
-
         self.num_records += 1
         self.size_records += recordsize
 

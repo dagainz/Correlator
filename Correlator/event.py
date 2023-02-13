@@ -9,7 +9,7 @@ class Event:
 
         self.system = kwargs.get('system', 'None')
         self.record = kwargs.get('record', None)
-        self.data = kwargs.get('data', None)
+        self.data = kwargs.get('../data', None)
 
         self.is_error = False
         self.is_warning = False
@@ -155,7 +155,7 @@ class CSVListener(EventListener):
 
         csvname = f'{event.system}-{event.audit_id}'
         if csvname not in self.csv_files:
-            from common.util import rotate_file  # Avoid cyclic import
+            from Correlator.util import rotate_file  # Avoid cyclic import
             rotate_file(csvname, 'csv')
             filehandle = open(csvname + ".csv", "w")
             self.csv_files[csvname] = filehandle
