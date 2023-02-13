@@ -1,14 +1,10 @@
-import argparse
-import logging
 import re
 from datetime import datetime
 from mako.template import Template
 
-from Correlator.event import (AuditEvent, EventProcessor, LogbackListener,
-                              CSVListener)
-from Correlator.util import (ParserError, Module, format_timestamp, LogHelper,
+from Correlator.event import (AuditEvent, EventProcessor)
+from Correlator.util import (ParserError, Module, format_timestamp,
                              GlobalConfig)
-from Correlator.Module.ucpath_queue import I280Queue
 
 
 class LogError(Exception):
@@ -97,6 +93,7 @@ class RecordResult:
             self.record = parsed_record
             self.is_error = False
             self.message = None
+
         except ParserError as e:
             self.record = None
             self.is_error = True
@@ -168,48 +165,6 @@ class LogfileProcessor:
             })
         e.system = 'logfile-processor'
         processor.dispatch_event(e)
-
-
-def CLI():
-
-    log = logging.getLogger('logger')
-
-    parser = argparse.ArgumentParser('Log analyze and report')
-    parser.add_argument(
-        '--d', action='store_true', help='Show debugging messages"')
-    parser.add_argument(
-        '--csv', action='store_true',
-        help='Write audit data for all modules to csv files')
-    parser.add_argument('--logfile', help='Log file to parse', required=True)
-    parser.add_argument('--instance', help='Instance name', required=True)
-    parser.add_argument('--hostname', help='Host name', required=True)
-
-    args = parser.parse_args()
-
-    GlobalConfig.set('idmsuite_instance', args.instance)
-    GlobalConfig.set('idmsuite_hostname', args.hostname)
-
-    processor = EventProcessor(log)
-    processor.register_listener(LogbackListener(log))
-    if args.csv:
-        processor.register_listener(CSVListener())
-
-    # List of modules
-
-    modules: list[Module] = [I280Queue(processor, log)]
-
-    debug_level = logging.DEBUG if args.d else logging.INFO
-
-    LogHelper.initialize_console_logging(log, debug_level)
-
-    log.info('Starting')
-    app = LogfileProcessor(IDMLogRecord, modules, log)
-    app.from_file(args.logfile)
-    app.log_stats(processor)
-
-
-if __name__ == '__main__':
-    CLI()
 
 
 

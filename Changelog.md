@@ -17,6 +17,7 @@ once its public API is documented.
 ### Deprecated
 
 ### Removed
+Dependency on proprietary log format
 
 ### Security
 
