@@ -125,6 +125,7 @@ error log.
 ## Limitations
 
 CLI scripts hard coded with module/handlers stack.
+This is not resilient to exceptions at all.
 
 ## To do
 
@@ -133,4 +134,5 @@ CLI scripts hard coded with module/handlers stack.
 - Standard linux syslog module
 - Add capability for listeners to register criteria for event filtering at instantiation time.
 - Refactor network server code and get rid of that metaclass nonsense
+- Exception handling
 

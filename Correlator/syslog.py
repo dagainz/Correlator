@@ -1,27 +1,112 @@
-import argparse
 import iso8601
-import logging
-import os
 import re
-import socketserver
-import sys
-from typing import List, Union
-from datetime import datetime
+import socket
 from mako.template import Template
-from io import BufferedReader
+from typing import List, BinaryIO
 
-from Correlator.event import (EventProcessor, LogbackListener, AuditEvent,
-                              ErrorEvent)
-# from Correlator.syslog import SyslogHandler
-from Correlator.util import (LogHelper, capture_filename, Module,
-                             format_timestamp, ParserError)
-from Correlator.Module.capture import CaptureOnly
-from Correlator.Module.report import Report
-from Correlator.Module.discovery import Discovery
+from Correlator.event import EventProcessor, ErrorEvent, AuditEvent
+from Correlator.util import ParserError, Module
+
+DEFAULT_SYSLOG_TRAILER = b'\r'
+DEFAULT_BUFFER_SIZE = 1024
 
 
-output_file = None
-input_file = None
+class SyslogServer:
+    """ Handles listening for and processing Syslog data from the network.
+
+    :param modules: A list of Correlator Modules
+    :type modules: List[Module]
+    :param processor: The event processor object
+    :type processor: EventProcessor
+
+    """
+    def __init__(self, modules: List[Module], processor: EventProcessor):
+
+        self.modules = modules
+        self.processor = processor
+        self.buffer_size: int = DEFAULT_BUFFER_SIZE
+        self.syslog_trailer: bytes = DEFAULT_SYSLOG_TRAILER
+
+    def from_file(self, file_obj: BinaryIO):
+        """ Processes saved syslog data from a file
+
+        :param file_obj: File object of a writable binary file
+        :type file_obj: typing.BinaryIO
+
+        """
+
+        last = b''
+        while True:
+            block = file_obj.read(self.buffer_size)
+
+            data = last + block
+            if not data:
+                return
+            last = self._handle_records(data)
+
+    def listen_single(self, host: str = None,
+                      port: int = 514,
+                      output_file: BinaryIO = None):
+
+        """ Single threaded network listener.
+
+         Will write captured network data to the opened for writing binary
+         file output_file if provided.
+
+         :param host: hostname or interface to listen on
+         :type host: str
+         :param port: Port number to listen on (default 514)
+         :type port: int
+         :param output_file: File to write captured data to
+         :type output_file: typing.BinaryIO
+
+         """
+        if host is None:
+            host = socket.gethostname()
+
+        server_socket = socket.socket()
+        server_socket.bind((host, port))
+        server_socket.listen(2)
+        conn, address = server_socket.accept()
+
+        (remote_host, remote_port) = address
+
+        if remote_host == '192.168.1.3':
+            self.syslog_trailer = b'\n'
+
+        last = b''
+
+        while True:
+            block = conn.recv(self.buffer_size)
+
+            # write to capture file, if desired
+            if block and output_file is not None:
+                output_file.write(block)
+
+            data = last + block
+            if not data:
+                break
+            last = self._handle_records(data)
+
+    def _handle_records(self, data):
+
+        while True:
+            pos = data.find(self.syslog_trailer)
+            if pos == -1:
+                return data
+            self._process_record(data[0:pos])
+            data = data[pos + 1:]
+
+    def _process_record(self, data):
+        record = SyslogRecord(data)
+        if not record.error:
+            for module in self.modules:
+                module.process_record(record)
+        else:
+            self.processor.dispatch_event(
+                ErrorEvent(
+                    'Error processing record',
+                    data=data))
 
 
 class SyslogStatsEvent(AuditEvent):
@@ -50,9 +135,11 @@ class SyslogRecord:
         self.record_length = len(record)
         self.error = None
 
+        # todo This needs to be handled better
+
         pos = record.find(b'\xef\xbb\xbf')
 
-        if pos:
+        if pos >= 0:
             decoded_record = (
                     record[0:pos].decode('utf-8')
                     + record[pos + 3:].decode('utf-8'))
@@ -119,7 +206,7 @@ class SyslogRecord:
                 state = 2
                 continue
             elif state == 2:
-                m = re.match(r'\](.*)', dataline)
+                m = re.match(r'](.*)', dataline)
                 if m:
                     dataline = m.group(1)
                     state = 1
@@ -136,248 +223,11 @@ class SyslogRecord:
                             dataline))
 
     def __repr__(self):
+        # why?
         return '{} ({})'.format(self.m.groupdict(), self.structured_data)
+
+    def __str__(self):
+        return f'{self.hostname} {self.appname} {self.procid} {self.detail}'
 
     def __len__(self):
         return self.record_length
-
-
-class IDMSyslogRecord(SyslogRecord):
-    def __init__(self, record):
-        super().__init__(record)
-
-        # If superclass set the error, let it through
-        if self.error:
-            return
-
-        self.who = ''
-        self.request = ''
-
-        if not self.procid:
-            self.error = 'No proc-id in syslog record'
-            return
-
-        p = re.match(r'(.*)\((.+)\)', self.procid)
-        if p:
-            self.prog = p.group(1)
-            self.identifier = p.group(2)
-        else:
-            self.prog = self.procid
-            self.identifier = ''
-
-        self.instance = self.appname
-
-
-class SyslogHandler(socketserver.BaseRequestHandler):
-
-    # This is a template class, meant to be dynamically generated via type,
-    # because instantiation and initialization happens somewhere in
-    # socketserver, and I can't think of an elegant way to have these
-    # variables be available to the handler.
-
-    # These properties can be set via this method
-
-    output_file: Union[None, BufferedReader] = None
-    modules: List[Module] = []
-    log = None
-    processor: Union[None, EventProcessor] = None
-
-    # Start of handler
-
-    BUFFER_SIZE = 1024
-
-    def __init__(self, *args):
-        if len(args) == 1:      # from-file context
-            # In this case, we don't want to call the superclass constructor,
-            # We'll just handle it our self.
-            self.input_file = args[0]
-            self.handle()
-        else:
-            self.input_file = None
-            super().__init__(*args)
-
-    def process_record(self, data):
-        record = IDMSyslogRecord(data)
-        if not record.error:
-            for module in self.modules:
-                module.process_record(record)
-        else:
-            self.processor.dispatch_event(
-                ErrorEvent(
-                    'Error processing record',
-                    data=data))
-
-    def handle(self):
-        last = b''
-        while True:
-            if self.input_file:
-                block = self.input_file.read(self.BUFFER_SIZE)
-            else:
-                block = self.request.recv(self.BUFFER_SIZE)
-            if block:
-                if self.output_file:
-                    self.output_file.write(block)
-            data = last + block
-            if not data:
-                break
-            last = self._handle_records(data)
-
-    def _handle_records(self, data):
-
-        while True:
-            pos = data.find(b'\r')
-            if pos == -1:
-                return data
-            self.process_record(data[0:pos])
-            data = data[pos + 1:]
-
-
-def CLI():
-    log = logging.getLogger('logger')
-
-    default_port = 514
-    default_bind_addr = '0.0.0.0'
-
-    parser = argparse.ArgumentParser('Syslog ')
-    parser.add_argument(
-        '--d', help='Debug level', action='store_true'
-    )
-    parser.add_argument(
-        '--port', help='TCP port to listen on', type=int, default=default_port
-    )
-    group = parser.add_mutually_exclusive_group()
-
-    group.add_argument(
-        '--write-file', metavar='filename', nargs='?', default='.',
-        help='File to capture records and save to raw syslog capture file')
-
-    group.add_argument(
-        '--read-file', metavar='filename',
-        help='raw syslog capture file to read and process')
-
-    parser.add_argument(
-        '--write-only', action='store_true',
-        help='If writing to a capture file, do not process data.')
-
-    parser.add_argument(
-        '--report-only', action='store_true',
-        help='Report on records processed. Do not take any action')
-
-    cmd_args = parser.parse_args()
-
-    # Hackery pokery to give a default value to write_file if not provided
-
-    d = vars(cmd_args)
-
-    if cmd_args.write_file is None:
-        d['write_file'] = capture_filename()
-    elif cmd_args.write_file == '.':
-        d['write_file'] = None
-
-    if cmd_args.write_only and not cmd_args.write_file:
-        parser.error('--write-only requires --write-file')
-
-    debug_level = logging.DEBUG if cmd_args.d else logging.INFO
-    LogHelper.initialize_console_logging(log, debug_level)
-
-    listening = True
-    tcpServer = None
-    single_thread = True
-
-    input_file = None
-    output_file = None
-
-    if cmd_args.write_file:
-        if os.path.exists(cmd_args.write_file):
-            print("{} exists. Delete it first".format(cmd_args.write_file))
-            sys.exit(0)
-        else:
-            log.info('Writing received syslog data to capture file {}'.format(
-                cmd_args.write_file))
-            output_file = open(cmd_args.write_file, 'wb')
-
-    # Initialize event processor, and add event listeners
-
-    processor = EventProcessor(log)
-    processor.register_listener(LogbackListener(log))
-
-    # Setup list of logic modules
-
-    modules: list[Module] = []
-
-    if cmd_args.write_only:
-        modules.append(CaptureOnly(processor, log))
-    else:
-        if not cmd_args.report_only:
-            # modules.append(I280Queue(processor, log))
-            modules.append(Discovery(processor, log))
-        else:
-            modules.append(Report(processor, log))
-
-    props = {
-        'output_file': output_file,
-        'modules': modules,
-        'processor': processor,
-        'log': log
-    }
-
-    # Create a new class based on the metaclass, with these properties
-    # possibly overridden.
-
-    CustomSyslogHandler = type(
-        'CustomSyslogHandler', (SyslogHandler,), props)
-
-    if cmd_args.read_file:
-        # Replay from capture file
-        input_file = open(cmd_args.read_file, 'rb')
-        log.info('Reading from capture file {} '.format(cmd_args.read_file))
-
-        start = datetime.now()
-        CustomSyslogHandler(input_file)
-        end = datetime.now()
-
-        for module in modules:
-            module.statistics()
-
-        e = SyslogStatsEvent(
-            {
-                'start': format_timestamp(start),
-                'end': format_timestamp(end),
-                'duration': str(end - start)
-            })
-        e.system = 'syslog-server'
-        processor.dispatch_event(e)
-        sys.exit(0)
-
-    if single_thread:
-        # Create the server, binding to interface and port
-
-        with socketserver.TCPServer(
-                (default_bind_addr, cmd_args.port),
-                CustomSyslogHandler) as server:
-            # Activate the server and run until Ctrl-C
-            try:
-                start = datetime.now()
-                log.info(
-                    'Server listening on port {}'.format(cmd_args.port))
-                server.serve_forever()
-            except KeyboardInterrupt:
-
-                end = datetime.now()
-
-                for module in modules:
-                    module.statistics()
-
-                e = SyslogStatsEvent(
-                    {
-                        'start': format_timestamp(start),
-                        'end': format_timestamp(end),
-                        'duration': str(end - start)
-                    })
-                e.system = 'syslog-server'
-                processor.dispatch_event(e)
-    else:
-        ValueError('No multi thread at this time')
-
-if __name__ == '__main__':
-    CLI()

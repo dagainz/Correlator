@@ -1,7 +1,10 @@
 import csv
+import logging
 from datetime import datetime
 from io import StringIO, TextIOWrapper
 from typing import Dict
+
+log = logging.getLogger(__name__)
 
 
 class Event:
@@ -105,8 +108,7 @@ class EventListener:
 
 
 class EventProcessor:
-    def __init__(self, log):
-        self.log = log
+    def __init__(self):
         self.listeners: list[EventListener] = []
 
     def register_listener(self, event_listener: EventListener):
@@ -115,29 +117,29 @@ class EventProcessor:
     def dispatch_event(self, event: Event):
         for listener in self.listeners:
             listener.process_event(event)
-        # self.log.info('Handling event {}'.format(str(event)))
 
 
 class LogbackListener(EventListener):
 
-    def __init__(self, log):
-        self.log = log
+    def __init__(self):
+        # todo: Why?
+        pass
 
     def process_event(self, event: Event):
         if event.is_error:
-            self.log.error(f'{event.system}: {event.summary}')
+            log.error(f'{event.system}: {event.summary}')
         elif event.is_warning:
-            self.log.warn(f'{event.system}: {event.summary}')
+            log.warn(f'{event.system}: {event.summary}')
         elif event.is_audit:
             text = event.render_text()
             if text:
-                self.log.info(f'{event.system}: Audit({event.audit_id}):'
+                log.info(f'{event.system}: Audit({event.audit_id}):'
                               f' {text}')
             else:
-                self.log.info(f'{event.system}: Audit({event.audit_id}): '
+                log.info(f'{event.system}: Audit({event.audit_id}): '
                               f'{event.summary}')
         else:   # notice
-            self.log.info(f'{event.system}: {event.summary}')
+            log.info(f'{event.system}: {event.summary}')
 
 
 class CSVListener(EventListener):

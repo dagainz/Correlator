@@ -1,10 +1,19 @@
 """
-WIP: Discovery analysis for Bravura Security Inc products.
+Correlator module for:
+
+   The Bravura Security Inc Identity Management product suite
+
+Process: Discovery
+
 """
+import logging
 from mako.template import Template
 
-from Correlator.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
-from Correlator.util import Module, format_timestamp
+from Correlator.event import EventProcessor, AuditEvent
+from Correlator.util import Module
+from Correlator.bravura import IDMSyslogRecord
+
+log = logging.getLogger(__name__)
 
 
 class DiscoveryStatsEvent(AuditEvent):
@@ -23,16 +32,14 @@ class DiscoveryStatsEvent(AuditEvent):
 
 class Discovery(Module):
 
-    def __init__(self, processor: EventProcessor, log):
+    def __init__(self, processor: EventProcessor):
 
-        self.log = log
         self.processor = processor
         self.description = 'Discovery'
         self.identifier = 'Discovery'
         self.module_name = self.identifier
 
         self.states = {}
-        self.log = log
 
         self.discoveries = 0
 
@@ -76,7 +83,10 @@ class Discovery(Module):
 
     def process_iddb(self, record):
         print(f'IDDB: {self.tostring(record)}')
-    def process_record(self, record):
+
+    def process_record(self, syslog_record):
+
+        record = IDMSyslogRecord(syslog_record.original_record)
 
         if record.prog.startswith('psupdate.exe'):
             self.process_psupdate(record)

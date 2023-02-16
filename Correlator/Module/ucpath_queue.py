@@ -1,8 +1,20 @@
+"""
+Correlator module for:
+
+    The Bravura Security Inc Identity implementation for UCSF
+
+Process: UCPath message queue events and statistics
+
+"""
+
+import logging
 from datetime import timedelta
 from mako.template import Template
 
 from Correlator.event import NoticeEvent, ErrorEvent, EventProcessor, AuditEvent
 from Correlator.util import Module, format_timestamp
+
+log = logging.getLogger(__name__)
 
 
 class I280QueueStatsEvent(AuditEvent):
@@ -51,9 +63,8 @@ class I280Transaction:
 
 class I280Queue(Module):
 
-    def __init__(self, processor: EventProcessor, log):
+    def __init__(self, processor: EventProcessor):
 
-        self.log = log
         self.processor = processor
         self.description = 'I280 Queue'
         self.identifier = 'I280Queue'
@@ -67,7 +78,6 @@ class I280Queue(Module):
         self.start = None
         self.end = None
         self.queue_durations = []
-        self.log = log
 
     def clear_statistics(self):
         self.i280_total = 0
@@ -183,7 +193,7 @@ class I280Queue(Module):
                 self._setstate(record.identifier, 0)
             if record.detail.startswith('Correlation ID: '):
                 corr_id = record.detail[16:]
-                self.log.debug('Correlation ID: {}'.format(corr_id))
+                log.debug('Correlation ID: {}'.format(corr_id))
                 obj = self.transactions.get(record.identifier)
                 if obj:
                     if obj.correlation_id:

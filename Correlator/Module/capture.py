@@ -1,7 +1,10 @@
+import logging
 from mako.template import Template
 
 from Correlator.event import NoticeEvent, EventProcessor, AuditEvent
 from Correlator.util import Module, format_timestamp, calculate_summary
+
+log = logging.getLogger(__name__)
 
 
 class CaptureStatsEvent(AuditEvent):
@@ -20,9 +23,8 @@ class CaptureStatsEvent(AuditEvent):
 
 class CaptureOnly(Module):
 
-    def __init__(self, processor: EventProcessor, log):
+    def __init__(self, processor: EventProcessor):
 
-        self.log = log
         self.processor = processor
         self.description = 'Syslog Capture support'
         self.identifier = 'Capture'

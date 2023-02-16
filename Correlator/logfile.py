@@ -1,10 +1,8 @@
 import re
-from datetime import datetime
 from mako.template import Template
 
 from Correlator.event import (AuditEvent, EventProcessor)
-from Correlator.util import (ParserError, Module, format_timestamp,
-                             GlobalConfig)
+from Correlator.util import ParserError, Module, format_timestamp
 
 
 class LogError(Exception):
@@ -24,19 +22,6 @@ class LogfileStatsEvent(AuditEvent):
             '${end} for a total duration of ${duration}')
 
 
-Priorities = {
-    b'perf': 7,
-    b'verbose': 6,
-    b'debug': 5,
-    b'info': 4,
-    b'notice': 3,
-    b'warning': 2,
-    b'error': 1
-}
-
-Default_priority = 1
-
-
 class LogRecord:
 
     main_regex = None
@@ -52,37 +37,6 @@ class LogRecord:
 
         self.record = record
         self.match = m
-
-
-class IDMLogRecord(LogRecord):
-    """Representation of a logfile record."""
-
-    main_regex = r'(.{28}) (.+?) \[(.*?)\] (.*?) \[(.+?)\] (.+?): (.+)'
-
-    def __init__(self, record):
-
-        super().__init__(record)
-
-        m = self.match
-        # Timestamp str and datetime
-
-        self.str_timestamp = m.group(1)
-        self.timestamp = datetime.strptime(self.str_timestamp[0:23],
-                                           '%Y-%m-%d %H:%M:%S.%f')
-        self.who = m.group(2)
-        self.request = m.group(3)
-        self.prog = m.group(4)
-        self.identifier = m.group(5)
-        severity = m.group(6).lower()
-        self.priority = Priorities.get(severity, Default_priority)
-        self.detail = m.group(7)
-        self.instance = GlobalConfig.get('idmsuite_instance')
-        self.hostname = GlobalConfig.get('idmsuite_hosttname')
-
-    def __repr__(self):
-        return "{} {} [{}] {} [{}]: {}".format(
-            self.str_timestamp, self.who, self.request, self.prog,
-            self.identifier, self.detail)
 
 
 class RecordResult:

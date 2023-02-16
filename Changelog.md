@@ -8,16 +8,19 @@ once its public API is documented.
 
 ## [Unreleased]
 
-### Added 
+### Added
+Started docstrings
 
 ### Changed
+Transition from SocketServer
 
 ### Fixed
+Stop passing log object around
 
 ### Deprecated
 
 ### Removed
-Dependency on proprietary log format
+Most dependencies on proprietary log and syslog formats.
 
 ### Security
 
