@@ -12,6 +12,19 @@ from Correlator.Module.capture import CaptureOnly
 from Correlator.Module.report import Report
 from Correlator.Module.discovery import Discovery
 
+# For syslog trailer discovery
+
+bravura_software = (
+    'Hitachi IDM Suite',
+    'Bravura Security Fabric'
+)
+
+
+def bravura_trailer_discovery(sdata: dict):
+    software = sdata.get('origin', {}).get('software')
+    if software in bravura_software:
+        return b'\r'
+
 
 def cli():
 
@@ -93,7 +106,8 @@ def cli():
         else:
             modules.append(Report(processor))
 
-    server = SyslogServer(modules, processor)
+    server = SyslogServer(modules, processor, bravura_trailer_discovery)
+
     start = datetime.now()
 
     if cmd_args.read_file:
@@ -103,7 +117,7 @@ def cli():
 
     else:
         log.info(
-            f'Server listening on host:port {cmd_args.host}:{cmd_args.port}')
+            f'Server listening on {cmd_args.host}:{cmd_args.port}')
         try:
             server.listen_single(port=cmd_args.port, output_file=output_file,
                                  host=cmd_args.host)

@@ -3,13 +3,17 @@ import logging
 import re
 import socket
 from mako.template import Template
-from typing import List, BinaryIO
+from typing import List, BinaryIO, Callable
 
 from Correlator.event import EventProcessor, ErrorEvent, AuditEvent
 from Correlator.util import ParserError, Module
 
 DEFAULT_SYSLOG_TRAILER = b'\r'
-DEFAULT_BUFFER_SIZE = 1024
+
+# This must be big enough to hold enough of a syslog record to guarantee that
+# it contains the entire structured data for trailer discovery.
+
+DEFAULT_BUFFER_SIZE = 4096
 
 log = logging.getLogger(__name__)
 
@@ -23,17 +27,19 @@ class SyslogServer:
     :type processor: EventProcessor
 
     """
-    def __init__(self, modules: List[Module], processor: EventProcessor):
+    def __init__(self, modules: List[Module], processor: EventProcessor,
+                 trailer_discovery_method: Callable[[dict], bytes] = None):
 
         self.modules = modules
         self.processor = processor
         self.buffer_size: int = DEFAULT_BUFFER_SIZE
-        self.syslog_trailer: bytes = DEFAULT_SYSLOG_TRAILER
+        self.syslog_trailer = None
+        self.trailer_discovery_method = trailer_discovery_method
 
     def from_file(self, file_obj: BinaryIO):
         """ Processes saved syslog data from a file
 
-        :param file_obj: File object of a writable binary file
+        :param file_obj: File object of a readable binary file
         :type file_obj: typing.BinaryIO
 
         """
@@ -41,6 +47,17 @@ class SyslogServer:
         last = b''
         while True:
             block = file_obj.read(self.buffer_size)
+
+            # Find our trailer (syslog record seperator) if
+            # We haven't already.
+
+            if self.syslog_trailer is None:
+                self.syslog_trailer = self.discover_trailer(block)
+                if self.syslog_trailer is None:
+                    self.processor.dispatch_event(
+                        ErrorEvent(
+                            'Problem running trailer discovery'))
+                    return
 
             data = last + block
             if not data:
@@ -86,10 +103,31 @@ class SyslogServer:
             if block and output_file is not None:
                 output_file.write(block)
 
+            # Find our trailer (syslog record seperator) if
+            # We haven't already.
+
+            if self.syslog_trailer is None:
+                self.syslog_trailer = self.discover_trailer(block)
+                if self.syslog_trailer is None:
+                    self.processor.dispatch_event(
+                        ErrorEvent(
+                            'Cannot locate structured data in raw block'))
+                    return
+
             data = last + block
             if not data:
                 break
             last = self._handle_records(data)
+
+    def discover_trailer(self, block):
+        structured_data = SyslogRecord.sdata_from_raw(block)
+        trailer = self.trailer_discovery_method(structured_data)
+
+        if trailer:
+            return trailer
+
+        # Default trailer
+        return DEFAULT_SYSLOG_TRAILER
 
     def _handle_records(self, data):
 
@@ -131,6 +169,25 @@ class SyslogRecord:
             r'<(?P<priority>\d+?)>(?P<version>\d) (?P<timestamp_str>.+?) '
             r'(?P<hostname>.+?) (?P<appname>.+?) (?P<proc_id>.+?) '
             r'(?P<msg_id>.+?) (?P<rest>.+)')
+
+    @staticmethod
+    def sdata_from_raw(block):
+        """Finds the first occurrence of structured data in a raw data block.
+
+        Returns a dict representation of the structured data.
+        This is used only for syslog trailer discovery.
+
+        """
+
+        decoded = block.decode('utf-8')
+        m = re.match(SyslogRecord.main_regex, decoded)
+        if m:
+            try:
+                _, structured_data = SyslogRecord._parse_sdata(m.group('rest'))
+                return structured_data
+            except ParserError:
+                pass
+        return {}
 
     def __init__(self, record):
 
@@ -214,7 +271,8 @@ class SyslogRecord:
                     dataline = m.group(1)
                     state = 1
                     continue
-                m = re.match(r'(.+?)="*([^"]+)"\s*(.*)', dataline)
+                m = re.match(r'(.+?)="([^"]*)"\s*(.*)', dataline)
+
                 if m:
                     add_param(element_id, m.group(1), m.group(2))
                     has_structured_data = True

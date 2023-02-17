@@ -10,6 +10,7 @@ once its public API is documented.
 
 ### Added
 Started documenting code
+Syslog trailer (record separator) discovery.
 
 ### Changed
 Transition from SocketServer
@@ -17,6 +18,7 @@ Changed formats to f-strings
 
 ### Fixed
 Logging
+Structured data parsing
 
 ### Deprecated
 
