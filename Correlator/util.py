@@ -46,9 +46,9 @@ def setup_root_logger(log_level):
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(log_level)
 
+    # noinspection SpellCheckingInspection
     formatter = logging.Formatter(
-        '%(asctime)s: %(levelname)s: %(message)s',
-        '%Y-%m-%d %H:%M:%S')
+        '%(asctime)s: %(levelname)s: %(message)s', '%Y-%m-%d %H:%M:%S')
     ch.setFormatter(formatter)
 
     logger.addHandler(ch)

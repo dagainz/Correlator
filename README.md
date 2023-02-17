@@ -1,15 +1,14 @@
 # Correlator
 
-Correlator is a set of python classes that form the structure of an event reading and processing system
-that can be used to analyze, report, and take action on system log events presumably generated from other systems
+Correlator is python library that facilitates the creation of python based event reading and processing systems.
+These are used to analyze, report, and take action on system log events presumably generated from other systems
 or applications.
 
-Although at this point this is mostly a library to implement your own system, CLI scripts are provided to:
-- Process logfiles
-- Process, or capture and save, syslog log data. It can listen on the network for real-time syslog processing or 
-processes previously captured syslog data.
+CLI's are provided to:
 
-This system is currently in the prototype stage, and not much more than scaffolding. 
+- Process syslog data and logfiles from Bravura Security Inc. Identity Management products
+
+This system is currently in the prototype stage. 
 
 ## Build and install
 
@@ -130,9 +129,8 @@ This is not resilient to exceptions at all.
 ## To do
 
 - Think of overall documentation strategy
-- Decouple proprietary logfile and syslog record formats
 - Standard linux syslog module
 - Add capability for listeners to register criteria for event filtering at instantiation time.
-- Refactor network server code and get rid of that metaclass nonsense
 - Exception handling
+- state Persistence
 

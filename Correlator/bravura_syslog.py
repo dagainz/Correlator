@@ -16,7 +16,7 @@ from Correlator.Module.discovery import Discovery
 def cli():
 
     default_port = 514
-    # default_bind_addr = '0.0.0.0'
+    default_bind_addr = '0.0.0.0'
 
     parser = argparse.ArgumentParser('Syslog ')
     parser.add_argument(
@@ -25,6 +25,10 @@ def cli():
     parser.add_argument(
         '--port', help='TCP port to listen on', type=int, default=default_port
     )
+    parser.add_argument(
+        '--host', help='Address to listen on', type=str,
+        default=default_bind_addr)
+
     group = parser.add_mutually_exclusive_group()
 
     group.add_argument(
@@ -45,7 +49,7 @@ def cli():
 
     cmd_args = parser.parse_args()
 
-    # Hackery pokery to give a default value to write_file if not provided
+    # Give a default value to write_file if not provided
 
     d = vars(cmd_args)
 
@@ -90,52 +94,35 @@ def cli():
             modules.append(Report(processor))
 
     server = SyslogServer(modules, processor)
+    start = datetime.now()
 
     if cmd_args.read_file:
         # Replay from capture file
-        input_file = open(cmd_args.read_file, 'rb')
         log.info('Reading from capture file {} '.format(cmd_args.read_file))
+        server.from_file(open(cmd_args.read_file, 'rb'))
 
-        start = datetime.now()
-        server.from_file(input_file)
-        end = datetime.now()
+    else:
+        log.info(
+            'Server listening on port {}'.format(cmd_args.port))
+        try:
+            server.listen_single(port=cmd_args.port, output_file=output_file,
+                                 host=cmd_args.host)
+        except KeyboardInterrupt:
+            pass
 
-        for module in modules:
-            module.statistics()
+    end = datetime.now()
 
-        e = SyslogStatsEvent(
-            {
-                'start': format_timestamp(start),
-                'end': format_timestamp(end),
-                'duration': str(end - start)
-            })
-        e.system = 'syslog-server'
-        processor.dispatch_event(e)
-        return
+    for module in modules:
+        module.statistics()
 
-    # Start network server
-
-    start = datetime.now()
-    log.info(
-        'Server listening on port {}'.format(cmd_args.port))
-    try:
-        server.listen_single(port=cmd_args.port, output_file=output_file,
-                             host='0.0.0.0')
-    except KeyboardInterrupt:
-        end = datetime.now()
-
-        for module in modules:
-            module.statistics()
-
-        e = SyslogStatsEvent(
-            {
-                'start': format_timestamp(start),
-                'end': format_timestamp(end),
-                'duration': str(end - start)
-            })
-        e.system = 'syslog-server'
-        processor.dispatch_event(e)
-        log.info('Server shutting down')
+    e = SyslogStatsEvent(
+        {
+            'start': format_timestamp(start),
+            'end': format_timestamp(end),
+            'duration': str(end - start)
+        })
+    e.system = 'syslog-server'
+    processor.dispatch_event(e)
 
 
 if __name__ == '__main__':

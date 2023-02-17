@@ -38,10 +38,10 @@ class Event:
             return self.template_html.render(**self.data)
 
     def csv_header(self):
-        return None
+        return ''
 
     def csv_row(self):
-        return None
+        return ''
 
 
 class AuditEvent(Event):
@@ -88,7 +88,7 @@ class ErrorEvent(Event):
 
 class WarningEvent(Event):
 
-    def __init__(self, summary, record, **kwargs):
+    def __init__(self, summary, **kwargs):
         super().__init__(summary, **kwargs)
         self.is_warning = True
 
@@ -129,15 +129,15 @@ class LogbackListener(EventListener):
         if event.is_error:
             log.error(f'{event.system}: {event.summary}')
         elif event.is_warning:
-            log.warn(f'{event.system}: {event.summary}')
+            log.warning(f'{event.system}: {event.summary}')
         elif event.is_audit:
             text = event.render_text()
             if text:
                 log.info(f'{event.system}: Audit({event.audit_id}):'
-                              f' {text}')
+                         f' {text}')
             else:
                 log.info(f'{event.system}: Audit({event.audit_id}): '
-                              f'{event.summary}')
+                         f'{event.summary}')
         else:   # notice
             log.info(f'{event.system}: {event.summary}')
 
@@ -155,17 +155,17 @@ class CSVListener(EventListener):
         if not row:
             return
 
-        csvname = f'{event.system}-{event.audit_id}'
-        if csvname not in self.csv_files:
+        csv_name = f'{event.system}-{event.audit_id}'
+        if csv_name not in self.csv_files:
             from Correlator.util import rotate_file  # Avoid cyclic import
-            rotate_file(csvname, 'csv')
-            filehandle = open(csvname + ".csv", "w")
-            self.csv_files[csvname] = filehandle
+            rotate_file(csv_name, 'csv')
+            filehandle = open(csv_name + ".csv", "w")
+            self.csv_files[csv_name] = filehandle
             if filehandle.tell() == 0:
                 header = event.csv_header()
                 if header:
                     filehandle.write(header + '\n')
         else:
-            filehandle = self.csv_files[csvname]
+            filehandle = self.csv_files[csv_name]
 
         filehandle.write(row + '\n')

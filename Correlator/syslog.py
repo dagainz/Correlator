@@ -129,8 +129,8 @@ class SyslogRecord:
 
     main_regex = (
             r'<(?P<priority>\d+?)>(?P<version>\d) (?P<timestamp_str>.+?) '
-            r'(?P<hostname>.+?) (?P<appname>.+?) (?P<procid>.+?) (?P<msgid>.+?)'
-            r' (?P<rest>.+)')
+            r'(?P<hostname>.+?) (?P<appname>.+?) (?P<proc_id>.+?) '
+            r'(?P<msg_id>.+?) (?P<rest>.+)')
 
     def __init__(self, record):
 
@@ -165,8 +165,8 @@ class SyslogRecord:
         self.priority = self.m.group('priority')
         self.hostname = self.m.group('hostname')
         self.appname = self.m.group('appname')
-        self.procid = self.m.group('procid')
-        self.msgid = self.m.group('msgid')
+        self.proc_id = self.m.group('proc_id')
+        self.msg_id = self.m.group('msg_id')
 
         try:
             self.detail, self.structured_data = self._parse_sdata(
@@ -230,7 +230,7 @@ class SyslogRecord:
         return '{} ({})'.format(self.m.groupdict(), self.structured_data)
 
     def __str__(self):
-        return f'{self.hostname} {self.appname} {self.procid} {self.detail}'
+        return f'{self.hostname} {self.appname} {self.proc_id} {self.detail}'
 
     def __len__(self):
         return self.record_length

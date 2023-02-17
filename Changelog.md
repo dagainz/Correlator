@@ -9,13 +9,13 @@ once its public API is documented.
 ## [Unreleased]
 
 ### Added
-Started docstrings
+Started documenting code
 
 ### Changed
 Transition from SocketServer
 
 ### Fixed
-Stop passing log object around
+Logging
 
 ### Deprecated
 

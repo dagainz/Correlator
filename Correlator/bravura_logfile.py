@@ -5,7 +5,7 @@ from Correlator.bravura import IDMLogRecord
 from Correlator.event import (EventProcessor, LogbackListener, CSVListener)
 from Correlator.logfile import LogfileProcessor
 from Correlator.Module.ucpath_queue import I280Queue
-from Correlator.util import (Module, setup_root_logger, GlobalConfig)
+from Correlator.util import (setup_root_logger, GlobalConfig)
 
 
 def cli():
@@ -33,12 +33,13 @@ def cli():
 
     processor = EventProcessor()
     processor.register_listener(LogbackListener())
+
     if args.csv:
         processor.register_listener(CSVListener())
 
     # Build list of Correlator modules
 
-    modules: list[Module] = [I280Queue(processor)]
+    modules = [I280Queue(processor)]
 
     log.info('Starting')
     app = LogfileProcessor(IDMLogRecord, modules, log)
@@ -48,4 +49,3 @@ def cli():
 
 if __name__ == '__main__':
     cli()
-
