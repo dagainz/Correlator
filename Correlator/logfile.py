@@ -82,14 +82,15 @@ class LogfileProcessor:
                 if data:
                     yield RecordResult(data, self.log_record)
             else:
-                record += '{}\n'.format(line)
+                record += line + '\n'
+                # ''{}\n'.format(line)
 
     def from_file(self, filename):
         with open(filename) as logfile:
             for result in self.logfile_reader(logfile):
                 if result.is_error:
                     self.log.error(
-                        'Error reading entry: {}'.format(result.message))
+                        f'Error reading entry: {result.message}')
                 else:
                     if (self.start is None or
                             result.record.timestamp < self.start):

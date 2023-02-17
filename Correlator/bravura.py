@@ -44,9 +44,8 @@ class IDMLogRecord(LogRecord):
         self.hostname = GlobalConfig.get('idmsuite_hosttname')
 
     def __repr__(self):
-        return "{} {} [{}] {} [{}]: {}".format(
-            self.str_timestamp, self.who, self.request, self.prog,
-            self.identifier, self.detail)
+        return (f"{self.str_timestamp} {self.who} [{self.request}] {self.prog}"
+                f" [{self.identifier}]: {self.detail}")
 
 
 class IDMSyslogRecord(SyslogRecord):

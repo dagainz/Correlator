@@ -13,6 +13,7 @@ Started documenting code
 
 ### Changed
 Transition from SocketServer
+Changed formats to f-strings
 
 ### Fixed
 Logging

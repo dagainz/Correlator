@@ -193,7 +193,7 @@ class I280Queue(Module):
                 self._setstate(record.identifier, 0)
             if record.detail.startswith('Correlation ID: '):
                 corr_id = record.detail[16:]
-                log.debug('Correlation ID: {}'.format(corr_id))
+                log.debug(f'Correlation ID: {corr_id}')
                 obj = self.transactions.get(record.identifier)
                 if obj:
                     if obj.correlation_id:
@@ -224,8 +224,8 @@ class I280Queue(Module):
                 duration_ms = (obj.end - obj.start).microseconds
                 duration_s = (obj.end - obj.start).seconds
                 self.dispatch_event(ErrorEvent(
-                    'i280 [{}] failed to submit to worker. Time in queue: '
-                    '{} seconds'.format(obj.correlation_id, duration_s),
+                    (f'i280 [{obj.correlation_id}] failed to submit to worker. '
+                     f'Time in queue: {duration_s} seconds'),
                     record=record))
 
                 self._setstate(record.identifier, 0)
@@ -244,8 +244,8 @@ class I280Queue(Module):
                 duration_ms = (obj.end - obj.start).microseconds
                 duration_s = (obj.end - obj.start).seconds
                 self.dispatch_event(NoticeEvent(
-                    'i280 [{}] submitted successfully to worker. Time in '
-                    'queue: {} seconds'.format(obj.correlation_id, duration_s),
+                    (f'i280 [{obj.correlation_id}] submitted successfully to '
+                     f'worker. Time in queue: {duration_s} seconds'),
                     record=record))
 
                 self._setstate(record.identifier, 0)

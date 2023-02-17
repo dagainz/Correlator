@@ -172,7 +172,7 @@ class SyslogRecord:
             self.detail, self.structured_data = self._parse_sdata(
                 self.m.group('rest'))
         except ParserError as e:
-            self.error = 'Cannot parse structured data: {}'.format(e)
+            self.error = f'Cannot parse structured data: {e}'
             return
 
     @staticmethod
@@ -201,7 +201,7 @@ class SyslogRecord:
                 if not m:
                     if not has_structured_data:
                         raise ParserError(
-                            'SD-DATA {} parse failed '.format(dataline))
+                            f'SD-DATA {dataline} parse failed ')
                     else:
                         return dataline.lstrip(), parsed_struc
                 element_id = m.group(1)
@@ -222,12 +222,11 @@ class SyslogRecord:
                     continue
                 else:
                     raise ParserError(
-                        'SD-DATA Key/Value {} parse failed'.format(
-                            dataline))
+                        f'SD-DATA Key/Value {dataline} parse failed')
 
     def __repr__(self):
         # why?
-        return '{} ({})'.format(self.m.groupdict(), self.structured_data)
+        return f'{self.m.groupdict()} ({self.structured_data})'
 
     def __str__(self):
         return f'{self.hostname} {self.appname} {self.proc_id} {self.detail}'

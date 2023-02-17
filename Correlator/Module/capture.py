@@ -64,9 +64,8 @@ class CaptureOnly(Module):
         if self.end is None or record.timestamp > self.end:
             self.end = record.timestamp
 
-        summary = calculate_summary('{} {} {} {}'.format(
-            record.hostname, record.appname, record.prog,
-            record.detail))
+        summary = calculate_summary(
+            f'{record.hostname} {record.appname} {record.prog} {record.detail}')
 
         self.dispatch_event(NoticeEvent(summary, record=record))
         self.num_records += 1

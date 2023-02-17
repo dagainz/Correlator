@@ -68,11 +68,11 @@ def cli():
 
     if cmd_args.write_file:
         if os.path.exists(cmd_args.write_file):
-            print("{} exists. Delete it first".format(cmd_args.write_file))
+            print(f'{cmd_args.write_file} exists. Delete it first')
             sys.exit(0)
         else:
-            log.info('Writing received syslog data to capture file {}'.format(
-                cmd_args.write_file))
+            log.info(f'Writing received syslog data to capture file '
+                     f'{cmd_args.write_file}')
             output_file = open(cmd_args.write_file, 'wb')
 
     # Initialize event processor, and add event listeners
@@ -98,12 +98,12 @@ def cli():
 
     if cmd_args.read_file:
         # Replay from capture file
-        log.info('Reading from capture file {} '.format(cmd_args.read_file))
+        log.info(f'Reading from capture file {cmd_args.read_file}')
         server.from_file(open(cmd_args.read_file, 'rb'))
 
     else:
         log.info(
-            'Server listening on port {}'.format(cmd_args.port))
+            f'Server listening on host:port {cmd_args.host}:{cmd_args.port}')
         try:
             server.listen_single(port=cmd_args.port, output_file=output_file,
                                  host=cmd_args.host)
