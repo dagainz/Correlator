@@ -6,12 +6,11 @@ from datetime import datetime
 
 from Correlator.event import EventProcessor, LogbackListener
 from Correlator.syslog import SyslogServer, SyslogStatsEvent
-from Correlator.util import (LogHelper, capture_filename, format_timestamp)
+from Correlator.util import (setup_root_logger, capture_filename,
+                             format_timestamp)
 from Correlator.Module.capture import CaptureOnly
 from Correlator.Module.report import Report
 from Correlator.Module.discovery import Discovery
-
-log = logging.getLogger(__name__)
 
 
 def cli():
@@ -59,7 +58,7 @@ def cli():
         parser.error('--write-only requires --write-file')
 
     debug_level = logging.DEBUG if cmd_args.d else logging.INFO
-    LogHelper.initialize_console_logging(log, debug_level)
+    log = setup_root_logger(debug_level)
 
     output_file = None
 

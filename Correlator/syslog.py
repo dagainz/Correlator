@@ -1,4 +1,5 @@
 import iso8601
+import logging
 import re
 import socket
 from mako.template import Template
@@ -9,6 +10,8 @@ from Correlator.util import ParserError, Module
 
 DEFAULT_SYSLOG_TRAILER = b'\r'
 DEFAULT_BUFFER_SIZE = 1024
+
+log = logging.getLogger(__name__)
 
 
 class SyslogServer:

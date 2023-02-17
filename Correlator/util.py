@@ -40,21 +40,20 @@ class ParserError(Exception):
     pass
 
 
-class LogHelper:
+def setup_root_logger(log_level):
+    logger = logging.getLogger()
+    logger.setLevel(log_level)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(log_level)
 
-    @staticmethod
-    def initialize_console_logging(log, log_level):
-        ch = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter(
+        '%(asctime)s: %(levelname)s: %(message)s',
+        '%Y-%m-%d %H:%M:%S')
+    ch.setFormatter(formatter)
 
-        ch.setLevel(log_level)
-        log.setLevel(log_level)
+    logger.addHandler(ch)
 
-        formatter = logging.Formatter(
-            '%(asctime)s: %(levelname)s: %(message)s',
-            '%Y-%m-%d %H:%M:%S')
-
-        ch.setFormatter(formatter)
-        log.addHandler(ch)
+    return logger
 
 
 class Module:

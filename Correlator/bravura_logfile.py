@@ -5,12 +5,10 @@ from Correlator.bravura import IDMLogRecord
 from Correlator.event import (EventProcessor, LogbackListener, CSVListener)
 from Correlator.logfile import LogfileProcessor
 from Correlator.Module.ucpath_queue import I280Queue
-from Correlator.util import (Module, LogHelper, GlobalConfig)
+from Correlator.util import (Module, setup_root_logger, GlobalConfig)
 
 
 def cli():
-
-    log = logging.getLogger('logger')
 
     parser = argparse.ArgumentParser(
         'Bravura Security Fabric logfile processor')
@@ -25,23 +23,22 @@ def cli():
 
     args = parser.parse_args()
 
+    debug_level = logging.DEBUG if args.d else logging.INFO
+    log = setup_root_logger(debug_level)
+
     GlobalConfig.set('idmsuite_instance', args.instance)
     GlobalConfig.set('idmsuite_hostname', args.hostname)
 
     # Setup event processing
 
-    processor = EventProcessor(log)
-    processor.register_listener(LogbackListener(log))
+    processor = EventProcessor()
+    processor.register_listener(LogbackListener())
     if args.csv:
         processor.register_listener(CSVListener())
 
     # Build list of Correlator modules
 
     modules: list[Module] = [I280Queue(processor)]
-
-    debug_level = logging.DEBUG if args.d else logging.INFO
-
-    LogHelper.initialize_console_logging(log, debug_level)
 
     log.info('Starting')
     app = LogfileProcessor(IDMLogRecord, modules, log)
@@ -51,13 +48,4 @@ def cli():
 
 if __name__ == '__main__':
     cli()
-
-
-
-
-
-
-
-
-
 
