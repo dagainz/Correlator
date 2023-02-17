@@ -72,7 +72,7 @@ class Discovery(Module):
     @staticmethod
     def tostring(record):
         return (f'{record.timestamp} {record.hostname} {record.instance} '
-                f'{record.prog} {record.identifier} {record.msgid} '
+                f'{record.prog} {record.identifier} {record.msg_id} '
                 f'{record.detail}')
 
     def process_iddiscover(self, record):
@@ -96,5 +96,3 @@ class Discovery(Module):
             self.process_iddb(record)
 
         return True
-
-

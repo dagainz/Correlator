@@ -76,6 +76,13 @@ class Module:
     def statistics(self):
         raise NotImplemented
 
+    @staticmethod
+    def _calculate_duration(start, end):
+        try:
+            return str(end - start)
+        except TypeError:
+            return None
+
 
 def rotate_file(basename, ext, keep=DEFAULT_ROTATE_KEEP):
 

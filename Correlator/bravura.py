@@ -60,16 +60,16 @@ class IDMSyslogRecord(SyslogRecord):
         self.who = ''
         self.request = ''
 
-        if not self.procid:
+        if not self.proc_id:
             self.error = 'No proc-id in syslog record'
             return
 
-        p = re.match(r'(.*)\((.+)\)', self.procid)
+        p = re.match(r'(.*)\((.+)\)', self.proc_id)
         if p:
             self.prog = p.group(1)
             self.identifier = p.group(2)
         else:
-            self.prog = self.procid
+            self.prog = self.proc_id
             self.identifier = ''
 
         self.instance = self.appname

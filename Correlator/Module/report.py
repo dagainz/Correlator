@@ -37,15 +37,10 @@ class Report(Module):
 
     def statistics(self, reset=False):
 
-        if self.start and self.end:
-            duration = (str(self.end - self.start))
-        else:
-            duration = None
-
         data = {
             'start': format_timestamp(self.start),
             'end': format_timestamp(self.end),
-            'duration': duration,
+            'duration': self._calculate_duration(self.start, self.end),
             'messages': self.num_records,
             'size': self.size_records
         }
