@@ -1,3 +1,36 @@
+"""Support for Bravura Security Inc. Identity Management Software
+
+To configure the logging service to forward log events that can be processed
+by this system, an entry for this server needs to be defined in the 
+SyslogCollectors section of the idmlogsvc.cfg file in the service subdirectory
+of the Bravura Security Fabric instance:
+
+"TCP=remote_server_name" "remote_server_port" = {
+
+    # Syslog, not idmlog format
+    LoggingAsSyslog = 1;
+
+    # Include both Audit and Diagnostic messages.
+    MessageType = Both;
+
+    # CR
+    EndOfLineStyle = 3;
+
+    # Map all message levels to syslog severities.
+    LoglevelToSeverity = {
+              Critical = 2;   # only valid for audit messages.
+              Error = 3;      # valid for both log and audit messages.
+              Warning = 4;    # valid for both log and audit messages.
+              Notice = 5;     # only valid for log messages.
+              Info = 6;       # valid for both log and audit messages.
+              Debug = 7;      # only valid for log messages.
+              # ignore the Verbose level message
+              Verbose = -1;   # only valid for log messages.
+    };
+};
+
+"""
+
 import re
 from datetime import datetime
 
@@ -16,6 +49,11 @@ Priorities = {
 }
 
 Default_priority = 1
+
+BRAVURA_SOFTWARE = (
+    'Hitachi IDM Suite',
+    'Bravura Security Fabric'
+)
 
 
 class IDMLogRecord(LogRecord):

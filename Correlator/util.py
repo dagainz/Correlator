@@ -99,7 +99,6 @@ def rotate_file(basename, ext, keep=DEFAULT_ROTATE_KEEP):
         old_name = basename + '.' + ext
         new_name = basename + '_1.' + ext
         os.rename(old_name, new_name)
-        # csv_filename is now clear
 
 
 def capture_filename():

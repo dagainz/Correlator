@@ -4,6 +4,7 @@ import os
 import sys
 from datetime import datetime
 
+from Correlator.bravura import BRAVURA_SOFTWARE
 from Correlator.event import EventProcessor, LogbackListener
 from Correlator.syslog import SyslogServer, SyslogStatsEvent
 from Correlator.util import (setup_root_logger, capture_filename,
@@ -12,17 +13,17 @@ from Correlator.Module.capture import CaptureOnly
 from Correlator.Module.report import Report
 from Correlator.Module.discovery import Discovery
 
-# For syslog trailer discovery
+# For syslog trailer discovery function for Bravura Security Inc. Products.
+# For these products, log records can contain multiple lines separated by
+# newlines, so the syslog trailer must be configured to be \r.
 
-bravura_software = (
-    'Hitachi IDM Suite',
-    'Bravura Security Fabric'
-)
+# Check bravura.py for hints on how to configure the logging service
+# to be compatible with this system.
 
 
 def bravura_trailer_discovery(sdata: dict):
     software = sdata.get('origin', {}).get('software')
-    if software in bravura_software:
+    if software in BRAVURA_SOFTWARE:
         return b'\r'
 
 

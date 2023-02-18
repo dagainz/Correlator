@@ -4,7 +4,7 @@ import logging
 from Correlator.bravura import IDMLogRecord
 from Correlator.event import (EventProcessor, LogbackListener, CSVListener)
 from Correlator.logfile import LogfileProcessor
-from Correlator.Module.ucpath_queue import I280Queue
+from Correlator.Module.ucpath import I280Queue
 from Correlator.util import (setup_root_logger, GlobalConfig)
 
 

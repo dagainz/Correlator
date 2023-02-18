@@ -8,7 +8,7 @@ from typing import List, BinaryIO, Callable
 from Correlator.event import EventProcessor, ErrorEvent, AuditEvent
 from Correlator.util import ParserError, Module
 
-DEFAULT_SYSLOG_TRAILER = b'\r'
+DEFAULT_SYSLOG_TRAILER = b'\n'
 
 # This must be big enough to hold enough of a syslog record to guarantee that
 # it contains the entire structured data for trailer discovery.
@@ -121,11 +121,17 @@ class SyslogServer:
 
     def discover_trailer(self, block):
         structured_data = SyslogRecord.sdata_from_raw(block)
-        trailer = self.trailer_discovery_method(structured_data)
+        try:
+            trailer = self.trailer_discovery_method(structured_data)
+            if trailer:
+                log.debug(f'Trailer discovery method returned {repr(trailer)}'
+                          f'. Using it')
+                return trailer
+        except Exception as e:
+            log.error('Trailer discovery method raised exception')
+            log.exception(e)
 
-        if trailer:
-            return trailer
-
+        log.debug(f'Using default trailer of {repr(DEFAULT_SYSLOG_TRAILER)}')
         # Default trailer
         return DEFAULT_SYSLOG_TRAILER
 
