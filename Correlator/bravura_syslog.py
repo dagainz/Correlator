@@ -63,7 +63,8 @@ def cli():
         parser.error('--write-only requires --write-file')
 
     debug_level = logging.DEBUG if cmd_args.d else logging.INFO
-    log = setup_root_logger(debug_level)
+    setup_root_logger(debug_level)
+    log = logging.getLogger(__name__)
 
     output_file = None
 
