@@ -2,6 +2,7 @@ import iso8601
 import logging
 import re
 import socket
+from dataclasses import dataclass
 from mako.template import Template
 from typing import List, BinaryIO, Callable
 
@@ -18,6 +19,17 @@ DEFAULT_BUFFER_SIZE = 4096
 log = logging.getLogger(__name__)
 
 
+@dataclass
+class RawSyslogRecord:
+    timestamp: str
+    priority: str
+    hostname: str
+    appname: str
+    proc_id: str
+    msg_id: str
+    structured_data: dict
+
+
 class SyslogServer:
     """ Handles listening for and processing Syslog data from the network.
 
@@ -28,13 +40,13 @@ class SyslogServer:
 
     """
     def __init__(self, modules: List[Module], processor: EventProcessor,
-                 trailer_discovery_method: Callable[[dict], bytes] = None):
+                 discovery_method: Callable[[RawSyslogRecord], bytes] = None):
 
         self.modules = modules
         self.processor = processor
         self.buffer_size: int = DEFAULT_BUFFER_SIZE
         self.syslog_trailer = None
-        self.trailer_discovery_method = trailer_discovery_method
+        self.trailer_discovery_method = discovery_method
 
     def from_file(self, file_obj: BinaryIO):
         """ Processes saved syslog data from a file
@@ -120,9 +132,9 @@ class SyslogServer:
             last = self._handle_records(data)
 
     def discover_trailer(self, block):
-        structured_data = SyslogRecord.sdata_from_raw(block)
+        raw_block = SyslogRecord.decode_from_raw(block)
         try:
-            trailer = self.trailer_discovery_method(structured_data)
+            trailer = self.trailer_discovery_method(raw_block)
             if trailer:
                 log.debug(f'Trailer discovery method returned {repr(trailer)}'
                           f'. Using it')
@@ -177,7 +189,7 @@ class SyslogRecord:
             r'(?P<msg_id>.+?) (?P<rest>.+)')
 
     @staticmethod
-    def sdata_from_raw(block):
+    def decode_from_raw(block):
         """Finds the first occurrence of structured data in a raw data block.
 
         Returns a dict representation of the structured data.
@@ -187,13 +199,23 @@ class SyslogRecord:
 
         decoded = block.decode('utf-8')
         m = re.match(SyslogRecord.main_regex, decoded)
-        if m:
-            try:
-                _, structured_data = SyslogRecord._parse_sdata(m.group('rest'))
-                return structured_data
-            except ParserError:
-                pass
-        return {}
+        if not m:
+            return None
+
+        try:
+            _, structured_data = SyslogRecord._parse_sdata(m.group('rest'))
+        except ParserError:
+            structured_data = {}
+
+        return RawSyslogRecord(
+            timestamp=m.group('timestamp_str'),
+            priority=m.group('priority'),
+            hostname=m.group('hostname'),
+            appname=m.group('appname'),
+            proc_id=m.group('proc_id'),
+            msg_id=m.group('msg_id'),
+            structured_data=structured_data
+        )
 
     def __init__(self, record):
 

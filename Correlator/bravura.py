@@ -1,4 +1,4 @@
-"""Support for Bravura Security Inc. Identity Management Software
+"""Support for Bravura Security Fabric Identity Management products.
 
 To configure the logging service to forward log events that can be processed
 by this system, an entry for this server needs to be defined in the 
@@ -31,12 +31,16 @@ of the Bravura Security Fabric instance:
 
 """
 
+import logging
 import re
 from datetime import datetime
 
-from Correlator.syslog import SyslogRecord
+
+from Correlator.syslog import SyslogRecord, RawSyslogRecord
 from Correlator.logfile import LogRecord
 from Correlator.util import GlobalConfig
+
+log = logging.getLogger(__name__)
 
 Priorities = {
     b'perf': 7,
@@ -50,10 +54,22 @@ Priorities = {
 
 Default_priority = 1
 
+
 BRAVURA_SOFTWARE = (
     'Hitachi IDM Suite',
     'Bravura Security Fabric'
 )
+
+
+# Function to determine via structured data if this is data from
+# Bravura Security Fabric, and indicate that the syslog trailer is
+# a CR rather than LF.
+
+def bravura_trailer_discovery(raw_record: RawSyslogRecord):
+    log.debug(f'In custom discovery method: {repr(raw_record)}')
+    software = raw_record.structured_data.get('origin', {}).get('software')
+    if software in BRAVURA_SOFTWARE:
+        return b'\r'
 
 
 class IDMLogRecord(LogRecord):
