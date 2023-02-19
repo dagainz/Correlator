@@ -1,13 +1,12 @@
-import argparse
-import logging
 import re
-from datetime import datetime
 from mako.template import Template
 
-from Correlator.event import (AuditEvent, EventProcessor, LogbackListener,
-                              CSVListener)
-from Correlator.util import ParserError, Module, format_timestamp, LogHelper
-from Correlator.Module.ucpath_queue import I280Queue
+from Correlator.event import (AuditEvent, EventProcessor)
+from Correlator.util import ParserError, Module, format_timestamp
+
+
+class LogError(Exception):
+    pass
 
 
 class LogfileStatsEvent(AuditEvent):
@@ -23,65 +22,32 @@ class LogfileStatsEvent(AuditEvent):
             '${end} for a total duration of ${duration}')
 
 
-Priorities = {
-    'perf': 7,
-    'verbose': 6,
-    'debug': 5,
-    'info': 4,
-    'notice': 3,
-    'warning': 2,
-    'error': 1
-}
-
-Default_priority = 1
-
-
 class LogRecord:
-    """Representation of a logfile record."""
 
-    main_regex = r'(.{28}) (.+?) \[(.*?)\] (.*?) \[(.+?)\] (.+?): (.+)'
+    main_regex = None
 
-    def __init__(self, record, instance, hostname):
-        """Parses the text record, raises a ParserError if it gets confused"""
+    def __init__(self, record):
+
+        if self.main_regex is None:
+            raise NotImplementedError
 
         m = re.match(self.main_regex, record)
         if not m:
             raise ParserError('Invalid logfile format')
 
-        # Keep original record
         self.record = record
-
-        # Timestamp str and datetime
-
-        self.str_timestamp = m.group(1)
-        self.timestamp = datetime.strptime(self.str_timestamp[0:23],
-                                           '%Y-%m-%d %H:%M:%S.%f')
-        self.who = m.group(2)
-        self.request = m.group(3)
-        self.prog = m.group(4)
-        self.identifier = m.group(5)
-        severity = m.group(6).lower()
-        self.priority = Priorities.get(severity, Default_priority)
-        self.detail = m.group(7)
-        self.instance = instance
-        self.hostname = hostname
-        # print("Severity: {}".format(self.severity))
-        pass
-
-    def __repr__(self):
-        return "{} {} [{}] {} [{}]: {}".format(
-            self.str_timestamp, self.who, self.request, self.prog,
-            self.identifier, self.detail)
+        self.match = m
 
 
 class RecordResult:
-    def __init__(self, record, instance, hostname):
+    def __init__(self, record, log_record):
 
         try:
-            parsed_record = LogRecord(record, instance, hostname)
+            parsed_record = log_record(record)
             self.record = parsed_record
             self.is_error = False
             self.message = None
+
         except ParserError as e:
             self.record = None
             self.is_error = True
@@ -89,16 +55,16 @@ class RecordResult:
 
 
 class LogfileProcessor:
-    def __init__(self, modules: list[Module], log):
+    def __init__(self, log_record, modules: list[Module], log):
 
         self.log = log
         self.start = None
         self.end = None
 
         self.modules = modules
+        self.log_record = log_record
 
-    @staticmethod
-    def logfile_reader(file_object, instance, hostname):
+    def logfile_reader(self, file_object):
         record = ''
         eof = False
         while not eof:
@@ -107,22 +73,24 @@ class LogfileProcessor:
                 data = record
                 eof = True
                 if data:
-                    yield RecordResult(data, instance, hostname)
+                    yield RecordResult(data, self.log_record)
 
             line = line.rstrip()
             if line and line[0] == '\x18':
                 data = record
                 record = line[1:]
                 if data:
-                    yield RecordResult(data, instance, hostname)
+                    yield RecordResult(data, self.log_record)
             else:
-                record += '{}\n'.format(line)
+                record += line + '\n'
+                # ''{}\n'.format(line)
 
-    def from_file(self, filename, instance, hostname):
+    def from_file(self, filename):
         with open(filename) as logfile:
-            for result in self.logfile_reader(logfile, instance, hostname):
+            for result in self.logfile_reader(logfile):
                 if result.is_error:
-                    self.log.error('Error reading entry: {}'.format(result.message))
+                    self.log.error(
+                        f'Error reading entry: {result.message}')
                 else:
                     if (self.start is None or
                             result.record.timestamp < self.start):
@@ -152,81 +120,3 @@ class LogfileProcessor:
             })
         e.system = 'logfile-processor'
         processor.dispatch_event(e)
-
-def CLI():
-    log = logging.getLogger('logger')
-
-    parser = argparse.ArgumentParser('Log analyze and report')
-    parser.add_argument(
-        '--d', action='store_true', help='Show debugging messages"')
-    parser.add_argument(
-        '--csv', action='store_true',
-        help='Write audit data for all modules to csv files')
-    parser.add_argument('--logfile', help='Log file to parse', required=True)
-    parser.add_argument('--instance', help='Instance name', required=True)
-    parser.add_argument('--hostname', help='Host name', required=True)
-
-    args = parser.parse_args()
-
-    processor = EventProcessor(log)
-    processor.register_listener(LogbackListener(log))
-    if args.csv:
-        processor.register_listener(CSVListener())
-
-    # List of modules
-
-    modules: list[Module] = [I280Queue(processor, log)]
-
-    debug_level = logging.DEBUG if args.d else logging.INFO
-
-    LogHelper.initialize_console_logging(log, debug_level)
-
-    log.info('Starting')
-    app = LogfileProcessor(modules, log)
-    app.from_file(args.logfile, args.instance, args.hostname)
-    app.log_stats(processor)
-
-    log = logging.getLogger('logger')
-
-    parser = argparse.ArgumentParser('Log analyze and report')
-    parser.add_argument(
-        '--d', action='store_true', help='Show debugging messages"')
-    parser.add_argument(
-        '--csv', action='store_true',
-        help='Write audit data for all modules to csv files')
-    parser.add_argument('--logfile', help='Log file to parse', required=True)
-    parser.add_argument('--instance', help='Instance name', required=True)
-    parser.add_argument('--hostname', help='Host name', required=True)
-
-    args = parser.parse_args()
-
-    processor = EventProcessor(log)
-    processor.register_listener(LogbackListener(log))
-    if args.csv:
-        processor.register_listener(CSVListener())
-
-    # List of modules
-
-    modules: list[Module] = [I280Queue(processor, log)]
-
-    debug_level = logging.DEBUG if args.d else logging.INFO
-
-    LogHelper.initialize_console_logging(log, debug_level)
-
-    log.info('Starting')
-    app = LogfileProcessor(modules, log)
-    app.from_file(args.logfile, args.instance, args.hostname)
-    app.log_stats(processor)
-
-if __name__ == '__main__':
-    CLI()
-
-
-
-
-
-
-
-
-
-

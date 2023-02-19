@@ -8,7 +8,7 @@ once its public API is documented.
 
 ## [Unreleased]
 
-### Added 
+### Added
 
 ### Changed
 
@@ -17,6 +17,28 @@ once its public API is documented.
 ### Deprecated
 
 ### Removed
+
+### Security
+
+
+## [0.0.2] - 2023-02-19
+
+### Added
+Started documenting code
+Syslog trailer (record separator) discovery.
+
+### Changed
+Transition from SocketServer
+Changed formats to f-strings
+
+### Fixed
+Logging
+Structured data parsing
+
+### Deprecated
+
+### Removed
+All code for proprietary systems.
 
 ### Security
 

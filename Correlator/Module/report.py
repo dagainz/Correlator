@@ -1,8 +1,10 @@
-
+import logging
 from mako.template import Template
 
 from Correlator.util import Module, format_timestamp, calculate_summary
 from Correlator.event import NoticeEvent, AuditEvent, EventProcessor
+
+log = logging.getLogger(__name__)
 
 
 class ReportStatsEvent(AuditEvent):
@@ -21,9 +23,8 @@ class ReportStatsEvent(AuditEvent):
 
 class Report(Module):
 
-    def __init__(self, processor: EventProcessor, log):
+    def __init__(self, processor: EventProcessor):
 
-        self.log = log
         self.processor = processor
         self.description = 'Report-only'
         self.identifier = 'Report'
@@ -36,15 +37,10 @@ class Report(Module):
 
     def statistics(self, reset=False):
 
-        if self.start and self.end:
-            duration = (str(self.end - self.start))
-        else:
-            duration = None
-
         data = {
             'start': format_timestamp(self.start),
             'end': format_timestamp(self.end),
-            'duration': duration,
+            'duration': self._calculate_duration(self.start, self.end),
             'messages': self.num_records,
             'size': self.size_records
         }
@@ -66,11 +62,9 @@ class Report(Module):
         if self.end is None or record.timestamp > self.end:
             self.end = record.timestamp
 
-        summary = calculate_summary('{} {} {} {}'.format(
-            record.hostname, record.appname, record.prog,
-            record.detail))
-
-        self.dispatch_event(NoticeEvent(summary, record=record))
+        self.dispatch_event(
+            NoticeEvent(
+                calculate_summary(str(record)), record=record))
 
         self.num_records += 1
         self.size_records += recordsize

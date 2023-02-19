@@ -1,27 +1,27 @@
 # Correlator
 
-Correlator is an event reading and processing system that can be used
-to analyze, report, and take action on system log events presumably generated from other systems
+Correlator is python library that facilitates the creation of python based event reading and processing systems.
+These are used to analyze, report, and take action on system log events presumably generated from other systems
 or applications.
 
-CLI scripts are provided to:
-- Process logfiles
-- Process, or capture and save, syslog log data. It can listen on the network for real-time syslog processing or processes previously captured syslog data.
+CLI's are provided to:
 
-This is currently in the prototype stage, and not much more than scaffolding. 
+- Process syslog data and logfiles from Bravura Security Inc. Identity Management products
+
+This system is currently in the prototype stage. 
 
 ## Build and install
 
 To build the python package, ensure you have build installed and then run it in the project directory:
 
-`pip install build`
-`python -m build`
+    pip install build
+    python -m build
 
 This should build a wheel file and tarball in the dist/ directory.
 
 This file can then be installed into its own virtual environment by running pip:
 
-`pip install path/to/Correlator-X.Y.Z-py3-none-any.whl`
+    pip install path/to/Correlator-X.Y.Z-py3-none-any.whl
 
 ## Architecture
 
@@ -47,9 +47,10 @@ Modules:
 There are two system modules provided: 
 - Reportonly:
   - Dispatches a Notice event for every log record
-  - Maintains statistics on how many log records processed, as well as the combined records lengths as a total length, in bytes.
+  - Maintains statistics on how many log records processed, as well as the combined records lengths as a total length,
+in bytes.
 - Capture:
-- - Essentially the same as Reportonly, with slightly different statistics
+  - Essentially the same as Reportonly, with slightly different statistics
 
 #### Theoretical example of a custom module:
 
@@ -102,9 +103,9 @@ See Module.capture.py - CaptureStatsEvent for an example.
 
 ### Event listeners
 
-An event listener does just that - its python code that can take action in response to an event. All events are currently
-dispatched to all handlers. It is up to the handler itself to filter the events to just the ones that it is interested
-in, if desired.
+An event listener does just that - its python code that can take action in response to an event. All events are
+currently dispatched to all handlers. It is up to the handler itself to filter the events to just the ones that
+it is interested in, if desired.
 
 There are 2 system event listeners that are used by the provided scripts and can be used in your code:
 
@@ -123,11 +124,13 @@ error log.
 ## Limitations
 
 CLI scripts hard coded with module/handlers stack.
+This is not resilient to exceptions at all.
 
 ## To do
 
-- Decouple proprietary logfile and syslog record formats
+- Think of overall documentation strategy
 - Standard linux syslog module
 - Add capability for listeners to register criteria for event filtering at instantiation time.
-- Refactor network server code and get rid of that metaclass nonsense
+- Exception handling
+- state Persistence
 

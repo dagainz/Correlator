@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Correlator"
-description = "log analysis system"
+description = "Log data processing library"
 readme = "README.md"
 
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
     "iso8601",
     "Mako",
@@ -23,6 +23,3 @@ maintainers = [
 [tool.setuptools.packages.find]
 include = ["Correlator*"]
 
-[project.scripts]
-syslog_server = "Correlator.syslog:CLI"
-process_idm_logfile = "Correlator.logfile:CLI"

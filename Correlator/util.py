@@ -10,25 +10,51 @@ MAX_SUMMARY = 128
 MAX_BREAK_SEARCH = 10
 
 
+class Config:
+    def __init__(self):
+        self.store = {}
+
+    def get(self, key, default=None):
+        return self.store.get(key, default)
+
+    def set(self, key, value):
+        self.store[key] = value
+
+    def validate(self, key):
+        if isinstance(key, list):
+            keys = key
+        else:
+            keys = [key]
+
+        for key in keys:
+            if key not in self.store:
+                return False
+
+        return True
+
+
+GlobalConfig = Config()
+
+
 class ParserError(Exception):
     pass
 
 
-class LogHelper:
+def setup_root_logger(log_level):
+    logger = logging.getLogger()
+    logger.setLevel(log_level)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(log_level)
 
-    @staticmethod
-    def initialize_console_logging(log, log_level):
-        ch = logging.StreamHandler(sys.stdout)
+    # noinspection SpellCheckingInspection
+    formatter = logging.Formatter(
+        '%(asctime)s %(module)s %(levelname)s: %(message)s',
+        '%Y-%m-%d %H:%M:%S')
+    ch.setFormatter(formatter)
 
-        ch.setLevel(log_level)
-        log.setLevel(log_level)
+    logger.addHandler(ch)
 
-        formatter = logging.Formatter(
-            '%(asctime)s: %(levelname)s: %(message)s',
-            '%Y-%m-%d %H:%M:%S')
-
-        ch.setFormatter(formatter)
-        log.addHandler(ch)
+    return logger
 
 
 class Module:
@@ -51,6 +77,13 @@ class Module:
     def statistics(self):
         raise NotImplemented
 
+    @staticmethod
+    def _calculate_duration(start, end):
+        try:
+            return str(end - start)
+        except TypeError:
+            return None
+
 
 def rotate_file(basename, ext, keep=DEFAULT_ROTATE_KEEP):
 
@@ -67,7 +100,6 @@ def rotate_file(basename, ext, keep=DEFAULT_ROTATE_KEEP):
         old_name = basename + '.' + ext
         new_name = basename + '_1.' + ext
         os.rename(old_name, new_name)
-        # csv_filename is now clear
 
 
 def capture_filename():

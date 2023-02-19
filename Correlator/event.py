@@ -1,7 +1,10 @@
 import csv
+import logging
 from datetime import datetime
 from io import StringIO, TextIOWrapper
 from typing import Dict
+
+log = logging.getLogger(__name__)
 
 
 class Event:
@@ -35,10 +38,10 @@ class Event:
             return self.template_html.render(**self.data)
 
     def csv_header(self):
-        return None
+        return ''
 
     def csv_row(self):
-        return None
+        return ''
 
 
 class AuditEvent(Event):
@@ -85,7 +88,7 @@ class ErrorEvent(Event):
 
 class WarningEvent(Event):
 
-    def __init__(self, summary, record, **kwargs):
+    def __init__(self, summary, **kwargs):
         super().__init__(summary, **kwargs)
         self.is_warning = True
 
@@ -105,8 +108,7 @@ class EventListener:
 
 
 class EventProcessor:
-    def __init__(self, log):
-        self.log = log
+    def __init__(self):
         self.listeners: list[EventListener] = []
 
     def register_listener(self, event_listener: EventListener):
@@ -115,29 +117,29 @@ class EventProcessor:
     def dispatch_event(self, event: Event):
         for listener in self.listeners:
             listener.process_event(event)
-        # self.log.info('Handling event {}'.format(str(event)))
 
 
 class LogbackListener(EventListener):
 
-    def __init__(self, log):
-        self.log = log
+    def __init__(self):
+        # todo: Why?
+        pass
 
     def process_event(self, event: Event):
         if event.is_error:
-            self.log.error(f'{event.system}: {event.summary}')
+            log.error(f'{event.system}: {event.summary}')
         elif event.is_warning:
-            self.log.warn(f'{event.system}: {event.summary}')
+            log.warning(f'{event.system}: {event.summary}')
         elif event.is_audit:
             text = event.render_text()
             if text:
-                self.log.info(f'{event.system}: Audit({event.audit_id}):'
-                              f' {text}')
+                log.info(f'{event.system}: Audit({event.audit_id}):'
+                         f' {text}')
             else:
-                self.log.info(f'{event.system}: Audit({event.audit_id}): '
-                              f'{event.summary}')
+                log.info(f'{event.system}: Audit({event.audit_id}): '
+                         f'{event.summary}')
         else:   # notice
-            self.log.info(f'{event.system}: {event.summary}')
+            log.info(f'{event.system}: {event.summary}')
 
 
 class CSVListener(EventListener):
@@ -153,17 +155,17 @@ class CSVListener(EventListener):
         if not row:
             return
 
-        csvname = f'{event.system}-{event.audit_id}'
-        if csvname not in self.csv_files:
+        csv_name = f'{event.system}-{event.audit_id}'
+        if csv_name not in self.csv_files:
             from Correlator.util import rotate_file  # Avoid cyclic import
-            rotate_file(csvname, 'csv')
-            filehandle = open(csvname + ".csv", "w")
-            self.csv_files[csvname] = filehandle
+            rotate_file(csv_name, 'csv')
+            filehandle = open(csv_name + ".csv", "w")
+            self.csv_files[csv_name] = filehandle
             if filehandle.tell() == 0:
                 header = event.csv_header()
                 if header:
                     filehandle.write(header + '\n')
         else:
-            filehandle = self.csv_files[csvname]
+            filehandle = self.csv_files[csv_name]
 
         filehandle.write(row + '\n')
