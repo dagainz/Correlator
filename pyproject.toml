@@ -23,6 +23,3 @@ maintainers = [
 [tool.setuptools.packages.find]
 include = ["Correlator*"]
 
-[project.scripts]
-bravura_syslog = "Correlator.bravura_syslog:cli"
-process_idm_logfile = "Correlator.bravura_logfile:cli"

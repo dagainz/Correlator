@@ -38,7 +38,7 @@ Structured data parsing
 ### Deprecated
 
 ### Removed
-All code for proprietary systems moved into a separate package.
+All code for proprietary systems.
 
 ### Security
 
