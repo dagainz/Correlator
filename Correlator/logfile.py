@@ -120,13 +120,3 @@ class LogfileProcessor:
             })
         e.system = 'logfile-processor'
         processor.dispatch_event(e)
-
-
-
-
-
-
-
-
-
-

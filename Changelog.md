@@ -9,6 +9,21 @@ once its public API is documented.
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Deprecated
+
+### Removed
+
+### Security
+
+
+## [0.0.2] - 2023-02-19
+
+### Added
 Started documenting code
 Syslog trailer (record separator) discovery.
 
@@ -23,7 +38,7 @@ Structured data parsing
 ### Deprecated
 
 ### Removed
-Most dependencies on proprietary log and syslog formats.
+All code for proprietary systems moved into a separate package.
 
 ### Security
 

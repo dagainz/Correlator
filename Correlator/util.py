@@ -48,7 +48,8 @@ def setup_root_logger(log_level):
 
     # noinspection SpellCheckingInspection
     formatter = logging.Formatter(
-        '%(asctime)s %(module)s %(levelname)s: %(message)s', '%Y-%m-%d %H:%M:%S')
+        '%(asctime)s %(module)s %(levelname)s: %(message)s',
+        '%Y-%m-%d %H:%M:%S')
     ch.setFormatter(formatter)
 
     logger.addHandler(ch)
