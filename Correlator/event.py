@@ -12,7 +12,7 @@ class Event:
 
         self.system = kwargs.get('system', 'None')
         self.record = kwargs.get('record', None)
-        self.data = kwargs.get('../data', None)
+        self.data = kwargs.get('data', None)
 
         self.is_error = False
         self.is_warning = False
