@@ -4,10 +4,6 @@ Correlator is python library that facilitates the creation of python based event
 These are used to analyze, report, and take action on system log events presumably generated from other systems
 or applications.
 
-CLI's are provided to:
-
-- Process syslog data and logfiles from Bravura Security Inc. Identity Management products
-
 This system is currently in the prototype stage. 
 
 ## Build and install
