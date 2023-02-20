@@ -26,6 +26,7 @@ once its public API is documented.
 ### Added
 Started documenting code
 Syslog trailer (record separator) discovery.
+Some captured syslog/linux data
 
 ### Changed
 Transition from SocketServer
