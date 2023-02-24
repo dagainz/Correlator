@@ -42,7 +42,8 @@ class SyslogServer:
 
     """
     def __init__(self, modules: List[Module], processor: EventProcessor,
-                 discovery_method: Callable[[RawSyslogRecord], bytes] = None):
+                 discovery_method: Callable[[RawSyslogRecord], bytes] = None,
+                 record_filter=None):
 
         self.modules = modules
         self.processor = processor
@@ -50,21 +51,27 @@ class SyslogServer:
         self.syslog_trailer = None
         self.trailer_discovery_method = discovery_method
         self.bind_retry = 1
+        self.record_num = 0
+        self.record_filter = record_filter
+        self.output_file = None
 
-    def from_file(self, file_obj: BinaryIO):
+    def from_file(self, file_obj: BinaryIO, output_file: BinaryIO = None):
         """ Processes saved syslog data from a file
 
         :param file_obj: File object of a readable binary file
+        :type file_obj: typing.BinaryIO
+        :param output_file: File object of a writable binary file
         :type file_obj: typing.BinaryIO
 
         """
 
         last = b''
+        self.output_file = output_file
         while True:
             block = file_obj.read(self.buffer_size)
 
-            # Find our trailer (syslog record seperator) if
-            # We haven't already.
+            # Determine the trailer (syslog record seperator) if
+            # we haven't already.
 
             if self.syslog_trailer is None:
                 self.syslog_trailer = self.discover_trailer(block)
@@ -121,12 +128,13 @@ class SyslogServer:
 
         last = b''
 
+        self.output_file = output_file
         while True:
             block = conn.recv(self.buffer_size)
 
             # write to capture file, if desired
-            if block and output_file is not None:
-                output_file.write(block)
+            # if block and output_file is not None:
+            #     output_file.write(block)
 
             # Find our trailer (syslog record seperator) if
             # We haven't already.
@@ -172,6 +180,18 @@ class SyslogServer:
 
     def _process_record(self, data):
         record = SyslogRecord(data)
+
+        if self.output_file is not None:
+            # Write record to capture file
+            process_record = True
+            if self.record_filter is not None:
+                # Unless were supplied a record_filter, and this record is
+                # not to be written.
+                process_record = self.record_filter[self.record_num]
+            if process_record:
+                self.output_file.write(data + self.syslog_trailer)
+
+        self.record_num += 1
         if not record.error:
             for module in self.modules:
                 module.process_record(record)

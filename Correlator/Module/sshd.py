@@ -115,8 +115,8 @@ class SSHD(Module):
     def __init__(self, processor: EventProcessor):
 
         self.processor = processor
-        self.description = 'Linux SSH Server'
-        self.identifier = 'sshd'
+        self.description = 'OpenSSH Server SSH Logins'
+        self.identifier = 'sshd_logins'
         self.module_name = self.identifier
 
         self.states = {}
@@ -265,6 +265,10 @@ class SSHD(Module):
         return None
 
     def process_record(self, record):
+
+        if record is None:
+            log.debug("Keep alive")
+            return
 
         if record.appname.lower() != 'sshd':
             return
