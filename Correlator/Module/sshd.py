@@ -59,16 +59,17 @@ from Correlator.util import (
 log = logging.getLogger(__name__)
 
 DEFAULT_FAILURE_WINDOW = 300     # 5 minutes
-FAILURE_WINDOW_PARAM = 'ssh_login_failure_window'
+FAILURE_WINDOW_PARAM = 'module.sshd.login_failure_window'
 
 DEFAULT_FAILURE_LIMIT = 5
-FAILURE_LIMIT_PARAM = 'ssh_login_failure_limit'
+FAILURE_LIMIT_PARAM = 'module.sshd.login_failure_limit'
 
 
 class SSHDLoginEvent(AuditEvent):
 
     audit_id = 'sshd_login'
-    fields = ['timestamp', 'auth', 'user', 'addr', 'port', 'key', 'failures', 'start', 'finish', 'duration']
+    fields = ['timestamp', 'auth', 'user', 'addr', 'port', 'key', 'failures',
+              'start', 'finish', 'duration']
 
     def __init__(self, data):
         super().__init__(self.audit_id, data)
