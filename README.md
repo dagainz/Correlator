@@ -1,10 +1,8 @@
 # Correlator
 
-Correlator is python library that facilitates the creation of python based event reading and processing systems.
-These are used to analyze, report, and take action on system log events presumably generated from other systems
-or applications.
-
-This system is currently in the prototype stage. 
+Correlator is a prototype python library that facilitates the creation of python based event reading and
+processing systems. These are used to analyze, report, and take action on system log events presumably
+generated from other systems or applications.
 
 ## Build and install
 
@@ -124,9 +122,8 @@ This is not resilient to exceptions at all.
 
 ## To do
 
+- Regex evaluation / optimization
 - Think of overall documentation strategy
-- Standard linux syslog module
 - Add capability for listeners to register criteria for event filtering at instantiation time.
 - Exception handling
 - state Persistence
-

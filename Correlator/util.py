@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from Correlator.event import Event, EventProcessor
 
@@ -149,3 +149,28 @@ def calculate_summary(detail: str):
     # No boundary found, simply return the max size
 
     return detail[0:MAX_SUMMARY]
+
+
+class CountOverTime:
+    def __init__(self, expiry_seconds: int):
+        self.expiry_seconds = expiry_seconds
+        self.store = {}
+
+    def add(self, identifier, timestamp):
+        if identifier not in self.store:
+            self.store[identifier] = [timestamp]
+            return 1
+
+        earliest = datetime.now() - timedelta(seconds=self.expiry_seconds)
+        new_store = [x for x in self.store[identifier] if x >= earliest]
+        now = datetime.now()
+        if now > earliest:
+            new_store.append(now)
+
+        self.store[identifier] = new_store
+
+        return len(new_store)
+
+    def clear(self, identifier: str):
+        if identifier in self.store:
+            del self.store[identifier]

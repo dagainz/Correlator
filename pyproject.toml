@@ -7,7 +7,7 @@ name = "Correlator"
 description = "Log data processing library"
 readme = "README.md"
 
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
     "iso8601",
     "Mako",
@@ -22,4 +22,8 @@ maintainers = [
 
 [tool.setuptools.packages.find]
 include = ["Correlator*"]
+
+[project.scripts]
+syslog_server = "Correlator.syslog_server:cli"
+
 

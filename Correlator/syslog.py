@@ -2,8 +2,10 @@ import iso8601
 import logging
 import re
 import socket
+
 from dataclasses import dataclass
 from mako.template import Template
+from time import sleep
 from typing import List, BinaryIO, Callable
 
 from Correlator.event import EventProcessor, ErrorEvent, AuditEvent
@@ -47,6 +49,7 @@ class SyslogServer:
         self.buffer_size: int = DEFAULT_BUFFER_SIZE
         self.syslog_trailer = None
         self.trailer_discovery_method = discovery_method
+        self.bind_retry = 1
 
     def from_file(self, file_obj: BinaryIO):
         """ Processes saved syslog data from a file
@@ -97,14 +100,24 @@ class SyslogServer:
             host = socket.gethostname()
 
         server_socket = socket.socket()
-        server_socket.bind((host, port))
-        server_socket.listen(2)
+        # server_socket.bind((host, port))
+        # server_socket.listen(2)
+
+        while True:
+            try:
+                server_socket.bind((host, port))
+                break
+            except OSError as e:
+                if e.strerror.lower() == 'address already in use':
+                    log.error(f'Address {host}:{port} already in use. Will '
+                              f'retry in {self.bind_retry} second(s)')
+                    sleep(self.bind_retry)
+                else:
+                    raise
+
+        server_socket.listen(1)
+        log.info(f'Server listening on {host}:{port}')
         conn, address = server_socket.accept()
-
-        (remote_host, remote_port) = address
-
-        if remote_host == '192.168.1.3':
-            self.syslog_trailer = b'\n'
 
         last = b''
 
@@ -133,15 +146,16 @@ class SyslogServer:
 
     def discover_trailer(self, block):
         raw_block = SyslogRecord.decode_from_raw(block)
-        try:
-            trailer = self.trailer_discovery_method(raw_block)
-            if trailer:
-                log.debug(f'Trailer discovery method returned {repr(trailer)}'
-                          f'. Using it')
-                return trailer
-        except Exception as e:
-            log.error('Trailer discovery method raised exception')
-            log.exception(e)
+        if callable(self.trailer_discovery_method):
+            try:
+                trailer = self.trailer_discovery_method(raw_block)
+                if trailer:
+                    log.debug(f'Trailer discovery method returned '
+                              f'{repr(trailer)}. Using it')
+                    return trailer
+            except Exception as e:
+                log.error('Trailer discovery method raised exception')
+                log.exception(e)
 
         log.debug(f'Using default trailer of {repr(DEFAULT_SYSLOG_TRAILER)}')
         # Default trailer
@@ -190,10 +204,12 @@ class SyslogRecord:
 
     @staticmethod
     def decode_from_raw(block):
-        """Finds the first occurrence of structured data in a raw data block.
+        """Parses the data-only* portion of a syslog record in a raw data block.
 
-        Returns a dict representation of the structured data.
-        This is used only for syslog trailer discovery.
+        This is used to parse the first block to be used for syslog trailer
+        discovery.
+
+        * data-only means all properties up to but not including detail.
 
         """
 
@@ -311,11 +327,12 @@ class SyslogRecord:
                         f'SD-DATA Key/Value {dataline} parse failed')
 
     def __repr__(self):
-        # why?
+        # todo: why?
         return f'{self.m.groupdict()} ({self.structured_data})'
 
     def __str__(self):
-        return f'{self.hostname} {self.appname} {self.proc_id} {self.detail}'
+        return (f'{self.timestamp.strftime("%Y-%m-%d %H:%M:%S")}: '
+                f'{self.hostname} {self.appname} {self.proc_id} {self.detail}')
 
     def __len__(self):
         return self.record_length
