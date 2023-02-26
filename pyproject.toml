@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Correlator"
-description = "Log data processing library"
+description = "System log data processing library"
 readme = "README.md"
 
 version = "0.0.3"
@@ -25,5 +25,6 @@ include = ["Correlator*"]
 
 [project.scripts]
 syslog_server = "Correlator.syslog_server:cli"
+caputil = "Correlator.caputil:cli"
 
 

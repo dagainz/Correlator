@@ -1,0 +1,16 @@
+<86>1 2023-02-20T15:12:47.757250-05:00 giganode1 sshd 2540460 - - Accepted publickey for timp from 192.168.1.85 port 60116 ssh2: RSA SHA256:QaxveQJbYmX1Wmx/p2A7q+CJEZEySEl3Cnk79PVUY2A
+<86>1 2023-02-20T15:12:47.771632-05:00 giganode1 sshd 2540460 - - pam_unix(sshd:session): session opened for user timp by (uid=0)
+<86>1 2023-02-20T15:14:09.070260-05:00 giganode1 sshd 2540463 - - Received disconnect from 192.168.1.85 port 60116:11: disconnected by user
+<86>1 2023-02-20T15:14:09.072310-05:00 giganode1 sshd 2540463 - - Disconnected from user timp 192.168.1.85 port 60116
+<86>1 2023-02-20T15:14:09.072459-05:00 giganode1 sshd 2540460 - - pam_unix(sshd:session): session closed for user timp
+<86>1 2023-02-20T15:14:35.425063-05:00 giganode1 sshd 2540647 - - Accepted password for testguy from 192.168.1.85 port 60138 ssh2
+<86>1 2023-02-20T15:14:35.667317-05:00 giganode1 sshd 2540647 - - pam_unix(sshd:session): session opened for user testguy by (uid=0)
+<86>1 2023-02-20T15:14:42.175226-05:00 giganode1 sshd 2540659 - - Received disconnect from 192.168.1.85 port 60138:11: disconnected by user
+<86>1 2023-02-20T15:14:42.175479-05:00 giganode1 sshd 2540659 - - Disconnected from user testguy 192.168.1.85 port 60138
+<86>1 2023-02-20T15:14:42.176438-05:00 giganode1 sshd 2540647 - - pam_unix(sshd:session): session closed for user testguy
+<85>1 2023-02-20T15:14:45.197021-05:00 giganode1 sshd 2540712 - - pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.1.85  user=testguy
+<86>1 2023-02-20T15:14:46.983114-05:00 giganode1 sshd 2540712 - - Failed password for testguy from 192.168.1.85 port 60142 ssh2
+<86>1 2023-02-20T15:14:50.758403-05:00 giganode1 sshd 2540712 - - Failed password for testguy from 192.168.1.85 port 60142 ssh2
+<86>1 2023-02-20T15:14:56.447874-05:00 giganode1 sshd 2540712 - - Failed password for testguy from 192.168.1.85 port 60142 ssh2
+<86>1 2023-02-20T15:14:58.434787-05:00 giganode1 sshd 2540712 - - Connection closed by authenticating user testguy 192.168.1.85 port 60142 [preauth]
+<85>1 2023-02-20T15:14:58.437079-05:00 giganode1 sshd 2540712 - - PAM 2 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.1.85  user=testguy
