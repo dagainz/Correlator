@@ -40,9 +40,9 @@ def cli():
         '--read-file', metavar='filename',
         help='raw syslog capture file to read and process')
 
-    parser.add_argument(
-        '--write-only', action='store_true',
-        help='If writing to a capture file, do not process data.')
+    # parser.add_argument(
+    #     '--write-only', action='store_true',
+    #     help='If writing to a capture file, do not process data.')
 
     parser.add_argument(
         '--sshd', action='store_true',
@@ -86,14 +86,11 @@ def cli():
 
     modules = []
 
-    if cmd_args.write_only:
-        modules.append(CaptureOnly(processor))
-    else:
-        if cmd_args.sshd:
-            modules.append(SSHD(processor))
-        else:
-            modules.append(Report(processor))
+    if cmd_args.sshd:
+        modules.append(SSHD(processor))
 
+    if not modules:
+        modules.append(Report(processor))
 
     server = SyslogServer(modules, processor)
 
