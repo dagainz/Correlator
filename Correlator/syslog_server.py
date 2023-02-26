@@ -45,8 +45,8 @@ def cli():
         help='If writing to a capture file, do not process data.')
 
     parser.add_argument(
-        '--report-only', action='store_true',
-        help='Report on records processed. Do not take any action')
+        '--sshd', action='store_true',
+        help='Process data with sshd module.')
 
     cmd_args = parser.parse_args()
 
@@ -89,15 +89,11 @@ def cli():
     if cmd_args.write_only:
         modules.append(CaptureOnly(processor))
     else:
-        if not cmd_args.report_only:
+        if cmd_args.sshd:
             modules.append(SSHD(processor))
-            # modules.append(I280Queue(processor, log))
-            # modules.append(Discovery(processor))
-            # todo: Fixme
-            # modules.append(Report(processor))
-
         else:
             modules.append(Report(processor))
+
 
     server = SyslogServer(modules, processor)
 

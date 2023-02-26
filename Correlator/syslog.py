@@ -4,6 +4,7 @@ import re
 import socket
 
 from dataclasses import dataclass
+from datetime import datetime
 from mako.template import Template
 from time import sleep
 from typing import List, BinaryIO, Callable
@@ -278,10 +279,12 @@ class SyslogRecord:
 
         self.timestamp_str = self.m.group('timestamp_str')
         try:
-            self.timestamp = iso8601.parse_date(self.timestamp_str)
+            timestamp_tz = iso8601.parse_date(self.timestamp_str)
         except iso8601.ParseError:
             self.error = 'Cannot parse timestamp'
             return
+
+        self.timestamp = timestamp_tz.replace(tzinfo=None)
 
         self.priority = self.m.group('priority')
         self.hostname = self.m.group('hostname')

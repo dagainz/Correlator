@@ -13,6 +13,7 @@ once its public API is documented.
 - Secure Shell login Module
 - syslog server CLI
 - Counter over time utility class
+- caputil CLI utility
 
 ### Changed
 
