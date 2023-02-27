@@ -68,9 +68,6 @@ def cli():
     elif cmd_args.write_file == '.':
         d['write_file'] = None
 
-    if cmd_args.write_only and not cmd_args.write_file:
-        parser.error('--write-only requires --write-file')
-
     debug_level = logging.DEBUG if cmd_args.d else logging.INFO
     setup_root_logger(debug_level)
     log = logging.getLogger(__name__)
