@@ -1,7 +1,6 @@
 # Quickstart
 
-The easiest way to get up and running is to set up a virtual environment, and then build and install the module
-in place. 
+This document details a process to install this library in-place into a new python virtual environment. 
 
 ## Build and install the library
 
@@ -9,7 +8,7 @@ in place.
 
 Note: Pip must be upgraded if it is < 21.3
 
-    git checkout http://path/to/Correlator.git
+    git checkout https://app.thepushors.com/gitlab/code/correlator.git
     cd Correlator
     python -m venv venv
     .venv/bin/activate
@@ -19,9 +18,12 @@ Note: Pip must be upgraded if it is < 21.3
 
 ### Install it in-place
 
+In-place means editable install. https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs
+
     pip install -e .
 
 ## CLI Recipes
+After the library is installed by pip, the syslog_server and caputil are available in the virtual environment.
 
 ### Report a summary of the records in a capture file (using syslog_server)
 This will process a capture file and take no action other than reporting a summary of each syslog message to the
