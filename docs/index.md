@@ -10,19 +10,25 @@ that process log data in real time over the network as well as after-the-fact by
 
 ## Features
 
-- Pure Python framework to develop systems that Correlate, report on, and dispatch events based on system log records
+- Pure Python framework to develop systems that correlate, report on, and dispatch events based on system log records
 and take custom actions in response to any of these events.
-- Syslog server with packet capture and replay
-- CLI to help manage captured syslog data
-- Sample logic module to report and alert on ssh login attempts.
+- CLI based syslog server with packet capture and replay
+- CLI capture tool that helps manage captured syslog data
+- OpenSSH login logic module reports and alerts on ssh login attempts. This demonstrates a simple SIEM.
 
 ## Requirements
 
 Python 3.10+
+This was developed on macOS, and I expect it work on any unix like system. It has not been tested on Microsoft Windows.
 
-## Limitations
+## Limitations and known issues
 
-- This is early in the development lifecycle. It does not yet do much, and bugs are inevitable.
-- This hjas not been tested on Microsoft Windows
+This is not an exhaustive list
+
+- This is early in the development lifecycle. It does not yet do much, and bugs are plenty.
+- The event system has no retry capability. Its fire-and-forget.
+- No state persistence. Modules must keep state for correlation and statistics gathering/reporting. Without
+persistence, if the server process is stopped or restarted for any reason, all state will be lost.
 - The server is functional but not reliable for real operational use.
+
 

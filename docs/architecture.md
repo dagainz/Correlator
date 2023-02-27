@@ -1,56 +1,84 @@
 # Architecture
- 
-This library provides a framework to create log data processing systems. A reference server is provided
-both as an example and a development tool.
 
+The original vision was a syslog server / log processing system that will dynamically scan for both system and user
+defined logic modules and event handlers, which could be configured, enabled, and disabled in real-time buy using a
+configuration file.
 
-### The engine
+It's not there yet.
 
-The  engine is responsible for reading the log data and feeding it through
-one or more Logic modules for processing, as well as requesting and reporting
-on statistics collected by all running modules. 
+A configured list of modules and event handlers together is known as a stack. To implement a custom stack, you currently
+must create your own server. This is straightforward by using Correlator.syslog_server as the base. This is the part of
+the server that creates the stack, and would need to be customized with either (or both) of your modules and event
+listeners.
+
+```python
+    processor = EventProcessor()
+    processor.register_listener(LogbackListener())
+
+    # Setup list of logic modules
+
+    modules = []
+
+    # Add all modules specified on the command line
+
+    if cmd_args.sshd:
+        modules.append(SSHD(processor))
+
+    # If any weren't added,add the Report module
+
+    if not modules:
+        modules.append(Report(processor))
+```
+
+### The front-end engine
+
+The front-end engine is responsible for reading log data and forwarding it through one or more logic modules for
+processing. 
+
+Support for, and a reference implementation of, a server that supports listening for and processing syslog data over
+the network is included. Support is included for log files as well, but there is no reference implementation.
+
+The operation of the front end is conceptually simple. It is responsible for consuming log data, modelling each record
+as a python object, and dispatches these objects to one or more logic modules for processing. Processing consists of
+record filtering, correlating, statistics gathering, and event dispatching.
 
 ### Modules 
 
-Modules process log records, collect statistics, and dispatch events. One module
-handles related log events. It is possible to have several modules running, providing insight into various processes
-at the same time.
+As stated above, logic modules perform record filtering, correlating, statistics gathering, and event dispatching. They
+would typically either handle one process or a group of related processes. 
 
-Modules:
+They:
 
-- Are python classes
-- Maintain and report on internal statistics 
-- Can maintain state to correlate log events for a higher level of business intelligence
-- Dispatch Error, Warning, or Informational events to be logged and possibly acted on
-- Dispatch Audit events: Events with guaranteed data suitable for recording (for example, a database/csv file row)
+- Maintain and report on statistics 
+- Keep state to correlate log events for a higher level of business intelligence
+- Dispatch events in response to detected situations.
+- Standard Error, Warning, or Informational event classes are provided that have appropriate default behavior.
+- Audit event class is also provided. These are events that contain a defined data dictionary. They are suitable 
+for recording in a table, as their structure is pre-defined.
 
-There is one system module provided, Report, that simply dispatches a notice event for every log record and collects
-basic overall statistics. Coupled with the lockback event listener, this will simply output a summary of the record to
-the console, via python logging.
 
-#### Example custom module:
+There is one system module provided, Report, that simply dispatches a notice event for every log record. It also
+collects basic statistics. Coupled with the Logback event listener is a stack that will simply output a summary of the
+record to the console, via python logging. In fact, when you run the reference server in this distribution without the
+--sshd option, this is the exact stack it is running.
 
-(Describe sshd-module here)
+### Event listeners
 
-A module could be created to process events from a secure shell server running on Linux.
-It could listen for both successful and failed login attempts, keeping a running total of both
-for statistical purposes. It could keep track of the number of failed attempts per source address
-within a certain time period. When this number exceeds a predetermined threshold, it could dispatch a custom event
-called (for example) SSHLoginTriesExceeded.
+An event listener is python code that listens for events that it is interested in and takes a specific action when
+it receives them. Multiple event listeners can be in use concurrently. In that case, all registered listeners will
+receive all events. It is the duty of the event listener to ignore events that it is not interested in.
 
-The event handler for that event could execute a command that would add that source IP address to a temporary
-firewall block list, for example.
-
-The daily statistics from this module could be (easily, at least):
-  - Total number of successful ssh logins
-  - Total number of failed ssh logins
-  - Total number of failed ssh logins that don't have a successful login (today)
-  - Total number of source addresses that exceeded X ssh login attempts and got blocked
+There is currently one event listener shipped with the Correlator system, the Logback Listener. This simply
+logs all events the console.
 
 ### Events
 
-Events are dispatched from the Correlator engine or one of its modules. They are implemented as
-python classes and be extended to provide additional functionality.
+Events are dispatched from the front-end engine or one of its modules. They are modeled as python objects and
+are instances of Correlator.event.Event or a subclass.
+
+Standard event types are supplied to provide appropriate default actions. For example, any custom event
+class that subclasses the Error event will generate a python log entry with a severity of error when
+being handled by the Logback listener.
 
 #### Standard events
 
@@ -64,50 +92,15 @@ The standard Event can contain quite a bit of information:
 - optionally a text/html message generated bv mako
 - Is this warning, error, or informational message
 
-the ErrorEvent, WarningEvent, and NoticeEvent are derived from events with the appropriate properties set.
+ErrorEvent, WarningEvent, and NoticeEvent are all subclasses of Event. System listeners have default actions based
+on the severity, so unless there is a good reason not to, all non-audit type events should extend one of these
+standard event classes.
 
 #### Audit events
 
-Audit events are dispatched in response to something noteworthy happening. They often will end up
-as a record in a csv file or a database table.
+Audit events are dispatched in response to something noteworthy happening. 
 
-To use audit events in your modules, they must be defined as their own class, which subclasses an audit event. An
-identifier and a list of data fields that will be present in each event must be provided in the custom by the
+To use audit events in your modules, they must be defined as a custom class which uses the Event class as its
+super. An identifier and a list of data fields that will be present in each event must be provided in the custom by the
 dispatching code.
 
-These events will often end up as records in a csv file or a database table.
-
-See Module.capture.py - CaptureStatsEvent for an example.
-
-### Event listeners
-
-An event listener does just that - its python code that can take action in response to an event. All events are
-currently dispatched to all handlers. It is up to the handler itself to filter the events to just the ones that
-it is interested in, if desired.
-
-There are 2 system event listeners that are used by the provided scripts and can be used in your code:
-
- - **LogbackListener:** Logs all events to the python log.
- - **CSVListener:** Writes audit events to CSV files
-
-Additional listeners may be created for custom actions. For example, in the case of
-the **Theoretical example of a module** example in the **Logic Modules** section:
-
-A new event listener could be created that would ignore all events except for the custom event SSHLoginTriesExceeded.
-When processing *that* event, it could add a temporary rule to the firewall to block the source IP address.
-If that event's superclass is one of the standard event classes, then other listeners may also handle that event. For
-example, if the SSHLoginTriesExceeded is a subclass of ErrorEvent, then this will also get logged to the python
-error log.
-
-## Limitations
-
-CLI scripts hard coded with module/handlers stack.
-This is not resilient to exceptions at all.
-
-## To do
-
-- Regex evaluation / optimization
-- Think of overall documentation strategy
-- Add capability for listeners to register criteria for event filtering at instantiation time.
-- Exception handling
-- state Persistence

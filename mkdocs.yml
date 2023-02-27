@@ -13,3 +13,4 @@ nav:
   - Quick start: quickstart.md
   - Architecture: architecture.md
   - Why: why.md
+  - OpenSSH login module: sshd.md

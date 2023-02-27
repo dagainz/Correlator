@@ -1,49 +1,7 @@
 """
-Correlator module for: Linux sshd
+Correlator module for: Centos 8 Linux sshd
 
 Process: logins
-
-This module handles the following situations:
-
-Standard password login / logout with no failure attempts
-
-Accepted password for testguy from 192.168.1.85 port 50759 ssh2
-pam_unix(sshd:session): session opened for user testguy by (uid=0)
-Received disconnect from 192.168.1.85 port 50759:11: disconnected by us
-Disconnected from user testguy 192.168.1.85 port 50759
-pam_unix(sshd:session): session closed for user testguy
-
-Standard password login / logout with one failure attempt
-
-pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.1.85  user=testguy
-Failed password for testguy from 192.168.1.85 port 50809 ssh2
-Accepted password for testguy from 192.168.1.85 port 50809 ssh2
-pam_unix(sshd:session): session opened for user testguy by (uid=0)
-Received disconnect from 192.168.1.85 port 50809:11: disconnected by user
-Disconnected from user testguy 192.168.1.85 port 50809
-pam_unix(sshd:session): session closed for user testguy
-
-Failed login attempt
-
-pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.1.85  user=testguy
-Failed password for testguy from 192.168.1.85 port 50930 ssh2
-Failed password for testguy from 192.168.1.85 port 50930 ssh2
-Failed password for testguy from 192.168.1.85 port 50930 ssh2
-Connection closed by authenticating user testguy 192.168.1.85 port 50930 [preauth]
-PAM 2 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.1.85  user=testguy
-
-Attempt with invalid user ID
-
-Invalid user baduser from 192.168.1.85 port 53090
-pam_unix(sshd:auth): check pass; user unknown
-pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=
-Failed password for invalid user baduser from 192.168.1.85 port 53090 ssh2
-pam_unix(sshd:auth): check pass; user unknown
-Failed password for invalid user baduser from 192.168.1.85 port 53090 ssh2
-pam_unix(sshd:auth): check pass; user unknown
-Failed password for invalid user baduser from 192.168.1.85 port 53090 ssh2
-Connection closed by invalid user baduser 192.168.1.85 port 53090 [preauth]
-PAM 2 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.1
 
 """
 

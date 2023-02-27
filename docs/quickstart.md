@@ -1,6 +1,8 @@
 # Quickstart
 
-This document details a process to install this library in-place into a new python virtual environment. 
+The following process details a method to install the library in-place into a new python virtual environment. For more
+information about in-place installs, see
+[pip editable installs](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs "Title").
 
 ## Build and install the library
 
@@ -18,12 +20,11 @@ Note: Pip must be upgraded if it is < 21.3
 
 ### Install it in-place
 
-In-place means editable install. https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs
-
     pip install -e .
 
 ## CLI Recipes
-After the library is installed by pip, the syslog_server and caputil are available in the virtual environment.
+After the library is installed by pip, the command line utilities `syslog_server` and `caputil` will be available in
+the virtual environment.
 
 ### Report a summary of the records in a capture file (using syslog_server)
 This will process a capture file and take no action other than reporting a summary of each syslog message to the
@@ -36,8 +37,9 @@ This will process a capture file using the sshd logic module. It will:
 
 - Dispatch events for both successful and failed ssh logins and attempts. 
 - Dispatch a custom lockout event if a host has had more than 5 failed password attempts in the past 5 minutes.
-- Collect and report statistics on these events 
-
+- Collect and report statistics on these events
+    
+<!-- -->
 
     syslog_server --read-file data/sshd-1.cap --sshd
 
@@ -67,6 +69,7 @@ For example, the sshd-1.cap file included with this package was created by the f
 - Edit the text file and mark the records to be included in the output file
 - Write the output file using the capture file and text file from the last step.
 
+<!-- -->
 
     caputil --in oldfile.cap > oldfile_list
     edit oldfile_list and add a hash mark (#) in front of any line that you do not want in the output file

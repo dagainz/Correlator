@@ -4,6 +4,8 @@ Correlator is a prototype python library that facilitates the creation of python
 processing systems. These are used to analyze, report, and take action on system log events presumably
 generated from other systems or applications.
 
+### Author: Tim Pushor
+
 ## Build and install
 
 To build the python package, ensure you have build installed and then run it in the project directory:
