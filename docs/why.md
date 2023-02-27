@@ -19,6 +19,8 @@ these things happened in the past. That lead to adding a syslog server front end
 logic. I could now report on historical events by processing logfiles and detect events in real time over the network
 via syslog. All using the same correlation, detection, and event dispatching logic.
 
-So with this project I'm starting to scratch an itch that I've had for a while, which is to *do something* with all this
-data we're throwing out. It's already solved a business problem of mine and provided valuable business intelligence,
-and I hope to use it for more.
+So with this project I'm starting to scratch an itch that I've had for a while, which is to get something valuable
+out of the data that is getting thrown out. That, and this kind of stuff is pretty cool.
+
+It has already helped solve a problem of mine and provided valuable business intelligence and am sure it will continue
+to do so.

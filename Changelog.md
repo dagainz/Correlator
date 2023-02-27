@@ -14,6 +14,7 @@ once its public API is documented.
 - syslog server CLI
 - Counter over time utility class
 - caputil CLI utility
+- Docs
 
 ### Changed
 
