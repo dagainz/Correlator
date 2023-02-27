@@ -4,7 +4,6 @@ import re
 import socket
 
 from dataclasses import dataclass
-from datetime import datetime
 from mako.template import Template
 from time import sleep
 from typing import List, BinaryIO, Callable
@@ -108,8 +107,6 @@ class SyslogServer:
             host = socket.gethostname()
 
         server_socket = socket.socket()
-        # server_socket.bind((host, port))
-        # server_socket.listen(2)
 
         while True:
             try:

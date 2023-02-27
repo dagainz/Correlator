@@ -13,11 +13,11 @@ import sys
 from datetime import datetime
 
 from Correlator.event import EventProcessor, LogbackListener
+from Correlator.Module.report import Report
+from Correlator.Module.sshd import SSHD
 from Correlator.syslog import SyslogServer, SyslogStatsEvent
 from Correlator.util import (
     setup_root_logger, capture_filename, format_timestamp)
-from Correlator.Module.report import Report
-from Correlator.Module.sshd import SSHD
 
 
 def cli():
