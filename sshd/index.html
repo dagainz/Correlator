@@ -1,0 +1,538 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../architecture/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.14">
+    
+    
+      
+        <title>OpenSSH login module - Correlator Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.113286f1.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.a0c5b2b5.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#openssh-login-module" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Correlator Docs" class="md-header__button md-logo" aria-label="Correlator Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Correlator Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              OpenSSH login module
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Correlator Docs" class="md-nav__button md-logo" aria-label="Correlator Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Correlator Docs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../why/" class="md-nav__link">
+        Why
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        Quick start
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        Architecture
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          OpenSSH login module
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        OpenSSH login module
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#run-the-servermodule-against-a-capture-file" class="md-nav__link">
+    Run the server/module against a capture file
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-the-servermodule-over-the-network" class="md-nav__link">
+    Run the server/module over the network
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#detection-patterns" class="md-nav__link">
+    Detection patterns
+  </a>
+  
+    <nav class="md-nav" aria-label="Detection patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detecting-a-successful-login" class="md-nav__link">
+    Detecting a successful login
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detecting-an-unsuccessful-login" class="md-nav__link">
+    Detecting an unsuccessful login
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detecting-an-attempt-using-an-invalid-id" class="md-nav__link">
+    Detecting an attempt using an invalid ID:
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#run-the-servermodule-against-a-capture-file" class="md-nav__link">
+    Run the server/module against a capture file
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-the-servermodule-over-the-network" class="md-nav__link">
+    Run the server/module over the network
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#detection-patterns" class="md-nav__link">
+    Detection patterns
+  </a>
+  
+    <nav class="md-nav" aria-label="Detection patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detecting-a-successful-login" class="md-nav__link">
+    Detecting a successful login
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detecting-an-unsuccessful-login" class="md-nav__link">
+    Detecting an unsuccessful login
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detecting-an-attempt-using-an-invalid-id" class="md-nav__link">
+    Detecting an attempt using an invalid ID:
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="openssh-login-module">OpenSSH Login module</h1>
+<p><strong>Note</strong>: This module is considered alpha quality at best. It for meant for educational purposes.</p>
+<p>An OpenSSH login module is included with this distribution. It processes log events from an OpenSSH daemon 
+to detect successful logins, unsuccessful logins, and potential hack attempts. It dispatches custom events in response.</p>
+<p>For the hack detection, it counts the number of failed password attempts from a particular host over time. If the count
+goes over a configurable threshold, an event is dispatched.</p>
+<p>The syslog server combined with this module demonstrate a simple SIEM. It monitors and reports on ssh logins.
+With an appropriate event handler, it could take a more effective action such as adding a firewall rule to bock the
+remote host temporarily, or cut a ServiceNOW ticket via it's REST API to let the network team handle it.</p>
+<p>This has been developed and tested using the OpenSSH server included with Centos 8.</p>
+<h3 id="run-the-servermodule-against-a-capture-file">Run the server/module against a capture file</h3>
+<p>Dump the contents of the capture file</p>
+<pre><code>caputil --in data/sshd-1.cap
+</code></pre>
+<pre><code>2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:12:47: giganode1 sshd 2540460 Accepted publickey for timp from 192.168.1.85 port 60116 ssh2: RSA SHA256:QaxveQJbYm
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:12:47: giganode1 sshd 2540460 pam_unix(sshd:session): session opened for user timp by (uid=0)
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:09: giganode1 sshd 2540463 Received disconnect from 192.168.1.85 port 60116:11: disconnected by user
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:09: giganode1 sshd 2540463 Disconnected from user timp 192.168.1.85 port 60116
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:09: giganode1 sshd 2540460 pam_unix(sshd:session): session closed for user timp
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:35: giganode1 sshd 2540647 Accepted password for testguy from 192.168.1.85 port 60138 ssh2
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:35: giganode1 sshd 2540647 pam_unix(sshd:session): session opened for user testguy by (uid=0)
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:42: giganode1 sshd 2540659 Received disconnect from 192.168.1.85 port 60138:11: disconnected by user
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:42: giganode1 sshd 2540659 Disconnected from user testguy 192.168.1.85 port 60138
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:42: giganode1 sshd 2540647 pam_unix(sshd:session): session closed for user testguy
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:45: giganode1 sshd 2540712 pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= 
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:46: giganode1 sshd 2540712 Failed password for testguy from 192.168.1.85 port 60142 ssh2
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:50: giganode1 sshd 2540712 Failed password for testguy from 192.168.1.85 port 60142 ssh2
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:56: giganode1 sshd 2540712 Failed password for testguy from 192.168.1.85 port 60142 ssh2
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:58: giganode1 sshd 2540712 Connection closed by authenticating user testguy 192.168.1.85 port 60142 [preauth]
+2023-02-27 13:39:26 event INFO: Report: 2023-02-20 15:14:58: giganode1 sshd 2540712 PAM 2 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.1
+</code></pre>
+<p>Run the server against the capture file using the sshd module</p>
+<pre><code>syslog_server --read-file data/sshd-1.cap --sshd
+</code></pre>
+<pre><code>2023-02-27 13:41:19 syslog_server INFO: Reading from capture file data/sshd-1.cap
+2023-02-27 13:41:19 event INFO: sshd_logins: Audit(sshd_login): Audit: timestamp=2023-02-27 13:41:19, auth=rsa, user=timp, addr=192.168.1.85, port=60116, key=SHA256:QaxveQJbYmX1Wmx/p2A7q+CJEZEySEl3Cnk79PVUY2A, failures=0, start=2023-02-20 15:12:47.771632, finish=2023-02-20 15:14:09.072459, duration=0:01:21.300827
+2023-02-27 13:41:19 event INFO: sshd_logins: Audit(sshd_login): Audit: timestamp=2023-02-27 13:41:19, auth=password, user=testguy, addr=192.168.1.85, port=60138, key=None, failures=0, start=2023-02-20 15:14:35.667317, finish=2023-02-20 15:14:42.176438, duration=0:00:06.509121
+2023-02-27 13:41:19 event INFO: sshd_logins: Audit(sshd_login_failed): Audit: timestamp=2023-02-27 13:41:19, user=testguy, addr=192.168.1.85, port=None, failures=3
+2023-02-27 13:41:19 event INFO: sshd_logins: Audit(module-stats): 2 total successful logins, 1 unsuccessful logins, 0 lockouts.
+2023-02-27 13:41:19 event INFO: syslog-server: Audit(system-stats): Sever session started at 2023-02-27 13:41:19 and ended at 2023-02-27 13:41:19 for a total duration of 0:00:00.001733
+</code></pre>
+<p>This illustrates 2 successful logins and one failed one. The successful ones comprised of one RSA auth and one password
+auth.</p>
+<h3 id="run-the-servermodule-over-the-network">Run the server/module over the network</h3>
+<p>Configure the linux syslog daemon to forward log events to you. Run the syslog_server, enabling the sshd module:</p>
+<pre><code>syslog_server --sshd
+</code></pre>
+<pre><code>2023-02-27 13:51:24 syslog INFO: Server listening on 0.0.0.0:514
+</code></pre>
+<p>Log into the linux system, wait a few seconds, and then log off</p>
+<pre><code>2023-02-27 13:53:06 event INFO: sshd_logins: Audit(sshd_login): Audit: timestamp=2023-02-27 13:53:06, auth=password, user=testguy, addr=192.168.1.85, port=57631, key=None, failures=0, start=2023-02-27 13:53:00.430366, finish=2023-02-27 13:53:06.176757, duration=0:00:05.746391
+</code></pre>
+<p>Try to log in 5 times within 5 minutes, using an invalid password.</p>
+<p>For this test I attempted to establish an ssh session from my mac to a linux VM using a username that I knew existed. 
+After 3 failed password attempts, the server closed my connection and the sshd_login_failed event was dispatched. 
+I then attempted to establish another session using the same username. After 2 failed password attempts the
+sshd_login_retry event was dispatched.</p>
+<pre><code>2023-02-27 13:55:29 event INFO: sshd_logins: Audit(sshd_login_failed): Audit: timestamp=2023-02-27 13:55:29, user=testguy, addr=192.168.1.85, port=None, failures=3
+2023-02-27 13:55:39 event INFO: sshd_logins: Audit(sshd_login_retry): Audit: timestamp=2023-02-27 13:55:39, host=192.168.1.85
+</code></pre>
+<h2 id="detection-patterns">Detection patterns</h2>
+<p>The following patterns were observed when attempting the various use-cases.</p>
+<h3 id="detecting-a-successful-login">Detecting a successful login</h3>
+<p>The module recognizes the following sequence as a straightforward successful login:</p>
+<pre><code>Accepted password for testguy from 192.168.1.85 port 50759 ssh2
+pam_unix(sshd:session): session opened for user testguy by (uid=0)
+Received disconnect from 192.168.1.85 port 50759:11: disconnected by us
+Disconnected from user testguy 192.168.1.85 port 50759
+pam_unix(sshd:session): session closed for user testguy
+</code></pre>
+<p>It recognizes the following sequence as a successful login with error retries. It counts the number of
+failures to be collected:</p>
+<pre><code>pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.1.85  user=testguy
+Failed password for testguy from 192.168.1.85 port 50809 ssh2
+Accepted password for testguy from 192.168.1.85 port 50809 ssh2
+pam_unix(sshd:session): session opened for user testguy by (uid=0)
+Received disconnect from 192.168.1.85 port 50809:11: disconnected by user
+Disconnected from user testguy 192.168.1.85 port 50809
+pam_unix(sshd:session): session closed for user testguy
+</code></pre>
+<h3 id="detecting-an-unsuccessful-login">Detecting an unsuccessful login</h3>
+<pre><code>pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.1.85  user=testguy
+Failed password for testguy from 192.168.1.85 port 50930 ssh2
+Failed password for testguy from 192.168.1.85 port 50930 ssh2
+Failed password for testguy from 192.168.1.85 port 50930 ssh2
+Connection closed by authenticating user testguy 192.168.1.85 port 50930 [preauth]
+PAM 2 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.1.85  user=testguy
+</code></pre>
+<h3 id="detecting-an-attempt-using-an-invalid-id">Detecting an attempt using an invalid ID:</h3>
+<pre><code>Invalid user baduser from 192.168.1.85 port 53090
+pam_unix(sshd:auth): check pass; user unknown
+pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=
+Failed password for invalid user baduser from 192.168.1.85 port 53090 ssh2
+pam_unix(sshd:auth): check pass; user unknown
+Failed password for invalid user baduser from 192.168.1.85 port 53090 ssh2
+pam_unix(sshd:auth): check pass; user unknown
+Failed password for invalid user baduser from 192.168.1.85 port 53090 ssh2
+Connection closed by invalid user baduser 192.168.1.85 port 53090 [preauth]
+PAM 2 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.1
+</code></pre>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.2a6f1dda.min.js"></script>
+      
+    
+  </body>
+</html>

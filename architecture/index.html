@@ -1,0 +1,526 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../quickstart/">
+      
+      
+        <link rel="next" href="../sshd/">
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.14">
+    
+    
+      
+        <title>Architecture - Correlator Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.113286f1.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.a0c5b2b5.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Correlator Docs" class="md-header__button md-logo" aria-label="Correlator Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Correlator Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Correlator Docs" class="md-nav__button md-logo" aria-label="Correlator Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Correlator Docs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../why/" class="md-nav__link">
+        Why
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        Quick start
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Architecture
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Architecture
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-front-end-engine" class="md-nav__link">
+    The front-end engine
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules" class="md-nav__link">
+    Modules
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-listeners" class="md-nav__link">
+    Event listeners
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events" class="md-nav__link">
+    Events
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#standard-events" class="md-nav__link">
+    Standard events
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-events" class="md-nav__link">
+    Audit events
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#correlator-stack" class="md-nav__link">
+    Correlator stack
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sshd/" class="md-nav__link">
+        OpenSSH login module
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-front-end-engine" class="md-nav__link">
+    The front-end engine
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules" class="md-nav__link">
+    Modules
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-listeners" class="md-nav__link">
+    Event listeners
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events" class="md-nav__link">
+    Events
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#standard-events" class="md-nav__link">
+    Standard events
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-events" class="md-nav__link">
+    Audit events
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#correlator-stack" class="md-nav__link">
+    Correlator stack
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="architecture">Architecture</h1>
+<p>The original vision was a syslog server / log processing system that would dynamically scan for both system and user
+defined logic modules and event handlers written in python which could be configured, enabled, and disabled in 
+real-time via configuration.</p>
+<p>It's not there yet. The purpose of this library is to grow to be able to build such a system.</p>
+<h2 id="the-front-end-engine">The front-end engine</h2>
+<p>The front-end engine is responsible for reading log data and forwarding it through one or more logic modules for
+processing. </p>
+<p>Support for, and a reference implementation of, a server that supports listening for and processing syslog data over
+the network is included. Support is included for log files as well, but there is no reference implementation.</p>
+<p>The operation of the front end is conceptually simple. It is responsible for consuming log data, modelling each record
+as a python object, and dispatches these objects to one or more logic modules for processing. Processing consists of
+record filtering, correlating, statistics gathering, and event dispatching.</p>
+<h2 id="modules">Modules</h2>
+<p>As stated above, logic modules perform record filtering, correlating, statistics gathering, and event dispatching. They
+would typically either handle one process or a group of related processes. </p>
+<p>They:</p>
+<ul>
+<li>Maintain and report on statistics </li>
+<li>Keep state to correlate log events for a higher level of business intelligence</li>
+<li>Dispatch events in response to detected situations.</li>
+</ul>
+<p>There is one system module provided: Report. It simply dispatches a notice event for every log record, as well 
+as collecting some basic statistics. This module coupled with the Logback event listener is a stack that will simply
+read records from the source, and output a summary of each one to the console, via python logging. In fact, 
+when you run the reference server in this distribution without the --sshd option, this is the exact stack that is
+running.</p>
+<h2 id="event-listeners">Event listeners</h2>
+<p>An event listener is a python method that gets executed with every dispatched event. This method can take a custom
+action when it receives an event that it is interested in. It is the duty of the event listener to ignore events that
+it is not. Multiple event listeners can be in use concurrently. All registered listeners receive all dispatched
+events. It is the duty of the event listener to ignore events that it is not interested in.</p>
+<p>There is one event listener currently shipped with Correlator, the Logback Listener. This simply
+logs all events to the python log, and at least in the case of the provided CLI utilities, the console.</p>
+<h2 id="events">Events</h2>
+<p>Events are dispatched from the front-end engine or one of its modules. They are modeled as python objects and
+are instances of Correlator.event.Event or a subclass.</p>
+<p>Standard event types are supplied to provide appropriate default actions. For example, any custom event
+dispatched is a subclass of ErrorEvent will generate a python log entry with a severity of error when
+being handled by the Logback listener.</p>
+<h2 id="standard-events">Standard events</h2>
+<p>The standard Event can contain quite a bit of information:</p>
+<ul>
+<li>Descriptive summary</li>
+<li>Data block - list of key/value pairs</li>
+<li>Timestamp</li>
+<li>The original log record (if applicable)</li>
+<li>System - source of the event</li>
+<li>optionally a text/html message generated bv mako</li>
+<li>Is this warning, error, or informational message</li>
+</ul>
+<p>ErrorEvent, WarningEvent, and NoticeEvent are all subclasses of Event. To reiterate a point above, unless there is a
+good reason not to, all non-audit type events should extend one of these standard event classes. </p>
+<h2 id="audit-events">Audit events</h2>
+<p>Audit events are dispatched in response to something noteworthy happening, and have a defined data schema. This makes
+these suitable to use as audit records as they can map easily to a CSV row, or database table.</p>
+<p>All audit events are custom event classes that extend AuditEvent. An identifier and a list of data fields that will
+be present in each event must be provided in the class defition.</p>
+<p>See Correlator.sshd.SSHDLoginEvent for an example.</p>
+<h2 id="correlator-stack">Correlator stack</h2>
+<p>As described above in "It's not there yet", developing modules or handlers needs to start with a custom
+server script.</p>
+<p>Central to doing that is the concept of a correlator stack. A configured list of modules and event handlers together
+is known as a stack. Even though there may be many logic modules and event handlers available to the system, they
+should not always be active. </p>
+<p>So for the SIEM example illustrated in ?????: The stack would be Modules: sshd, Handlers: logback.</p>
+<p>Here is the relevant code snippet from Correlator.syslog_server:</p>
+<pre><code class="language-python">    processor = EventProcessor()
+    processor.register_listener(LogbackListener())
+
+    # Setup list of logic modules
+
+    modules = []
+
+    # Add all modules specified on the command line
+
+    if cmd_args.sshd:
+        modules.append(SSHD(processor))
+
+    # If any weren't added,add the Report module
+
+    if not modules:
+        modules.append(Report(processor))
+</code></pre>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.2a6f1dda.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,574 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../why/">
+      
+      
+        <link rel="next" href="../architecture/">
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.14">
+    
+    
+      
+        <title>Quick start - Correlator Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.113286f1.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.a0c5b2b5.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#quickstart" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Correlator Docs" class="md-header__button md-logo" aria-label="Correlator Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Correlator Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Quick start
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Correlator Docs" class="md-nav__button md-logo" aria-label="Correlator Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Correlator Docs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../why/" class="md-nav__link">
+        Why
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Quick start
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Quick start
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#build-and-install-the-library" class="md-nav__link">
+    Build and install the library
+  </a>
+  
+    <nav class="md-nav" aria-label="Build and install the library">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checkout-and-build" class="md-nav__link">
+    Checkout and build
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-it-in-place" class="md-nav__link">
+    Install it in-place
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-recipes" class="md-nav__link">
+    CLI Recipes
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI Recipes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#report-a-summary-of-the-records-in-a-capture-file-using-syslog_server" class="md-nav__link">
+    Report a summary of the records in a capture file (using syslog_server)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-syslog-server-with-sshd-logic-module-with-a-capture-file-as-input" class="md-nav__link">
+    Run syslog server with sshd logic module with a capture file as input
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-syslog-server-on-the-network-reporting-on-syslog-messages-received" class="md-nav__link">
+    Run syslog server on the network, reporting on syslog messages received
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#record-syslog-messages-to-a-capture-file" class="md-nav__link">
+    Record syslog messages to a capture file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#report-a-summary-of-the-records-in-a-capture-file-using-caputil" class="md-nav__link">
+    Report a summary of the records in a capture file (using caputil)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-new-capture-file-from-a-subset-of-records-in-an-existing-one" class="md-nav__link">
+    Create a new capture file from a subset of records in an existing one.
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        Architecture
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sshd/" class="md-nav__link">
+        OpenSSH login module
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#build-and-install-the-library" class="md-nav__link">
+    Build and install the library
+  </a>
+  
+    <nav class="md-nav" aria-label="Build and install the library">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checkout-and-build" class="md-nav__link">
+    Checkout and build
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-it-in-place" class="md-nav__link">
+    Install it in-place
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-recipes" class="md-nav__link">
+    CLI Recipes
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI Recipes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#report-a-summary-of-the-records-in-a-capture-file-using-syslog_server" class="md-nav__link">
+    Report a summary of the records in a capture file (using syslog_server)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-syslog-server-with-sshd-logic-module-with-a-capture-file-as-input" class="md-nav__link">
+    Run syslog server with sshd logic module with a capture file as input
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-syslog-server-on-the-network-reporting-on-syslog-messages-received" class="md-nav__link">
+    Run syslog server on the network, reporting on syslog messages received
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#record-syslog-messages-to-a-capture-file" class="md-nav__link">
+    Record syslog messages to a capture file
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#report-a-summary-of-the-records-in-a-capture-file-using-caputil" class="md-nav__link">
+    Report a summary of the records in a capture file (using caputil)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-new-capture-file-from-a-subset-of-records-in-an-existing-one" class="md-nav__link">
+    Create a new capture file from a subset of records in an existing one.
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="quickstart">Quickstart</h1>
+<p>The following process details a method to install the library in-place into a new python virtual environment. For more
+information about in-place installs, see
+<a href="https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs" title="Title">pip editable installs</a>.</p>
+<h2 id="build-and-install-the-library">Build and install the library</h2>
+<h3 id="checkout-and-build">Checkout and build</h3>
+<p>Note: Pip must be upgraded if it is &lt; 21.3</p>
+<pre><code>git checkout https://app.thepushors.com/gitlab/code/correlator.git
+cd Correlator
+python -m venv venv
+.venv/bin/activate
+pip install --upgrade pip
+pip install build
+python -m build
+</code></pre>
+<h3 id="install-it-in-place">Install it in-place</h3>
+<pre><code>pip install -e .
+</code></pre>
+<h2 id="cli-recipes">CLI Recipes</h2>
+<p>After the library is installed by pip, the command line utilities <code>syslog_server</code> and <code>caputil</code> will be available in
+the virtual environment.</p>
+<h3 id="report-a-summary-of-the-records-in-a-capture-file-using-syslog_server">Report a summary of the records in a capture file (using syslog_server)</h3>
+<p>This will process a capture file and take no action other than reporting a summary of each syslog message to the
+console.</p>
+<pre><code>syslog_server --read-file data/sshd-1.cap
+</code></pre>
+<h3 id="run-syslog-server-with-sshd-logic-module-with-a-capture-file-as-input">Run syslog server with sshd logic module with a capture file as input</h3>
+<p>This will process a capture file using the sshd logic module. It will:</p>
+<ul>
+<li>Dispatch events for both successful and failed ssh logins and attempts. </li>
+<li>Dispatch a custom lockout event if a host has had more than 5 failed password attempts in the past 5 minutes.</li>
+<li>Collect and report statistics on these events</li>
+</ul>
+<!-- -->
+
+<pre><code>syslog_server --read-file data/sshd-1.cap --sshd
+</code></pre>
+<h3 id="run-syslog-server-on-the-network-reporting-on-syslog-messages-received">Run syslog server on the network, reporting on syslog messages received</h3>
+<p>Run a server on port 514 (overridable with --port). Take no action other than reporting a summary of each syslog
+message received to the console.</p>
+<pre><code>syslog_server [--port x]
+</code></pre>
+<h3 id="record-syslog-messages-to-a-capture-file">Record syslog messages to a capture file</h3>
+<p>Run a server on port 514 (overridable with --port). Take no action other than reporting a summary of each syslog
+message received on the console, and also write each record received to a capture file.</p>
+<pre><code>syslog_server [--port x] --write-file
+</code></pre>
+<h3 id="report-a-summary-of-the-records-in-a-capture-file-using-caputil">Report a summary of the records in a capture file (using caputil)</h3>
+<p>Although performs identically to syslog_server --read-file, that behavior is not guaranteed to remain. captuil should
+be used to read and write capture files.</p>
+<pre><code>caputil --in capture.cap
+</code></pre>
+<h3 id="create-a-new-capture-file-from-a-subset-of-records-in-an-existing-one">Create a new capture file from a subset of records in an existing one.</h3>
+<p>This can be used to create individual capture files for tests that contain only the records necessary for the test.
+For example, the sshd-1.cap file included with this package was created by the following process:</p>
+<ul>
+<li>Dump the summary of the packets into a text file</li>
+<li>Edit the text file and mark the records to be included in the output file</li>
+<li>Write the output file using the capture file and text file from the last step.</li>
+</ul>
+<!-- -->
+
+<pre><code>caputil --in oldfile.cap &gt; oldfile_list
+edit oldfile_list and add a hash mark (#) in front of any line that you do not want in the output file
+caputil --in oldfile.cap --out newfile.cap --record oldfile_list
+</code></pre>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.2a6f1dda.min.js"></script>
+      
+    
+  </body>
+</html>
