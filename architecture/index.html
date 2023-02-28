@@ -460,8 +460,9 @@ server script.</p>
 <p>Central to doing that is the concept of a correlator stack. A configured list of modules and event handlers together
 is known as a stack. Even though there may be many logic modules and event handlers available to the system, they
 should not always be active. </p>
-<p>So for the SIEM example illustrated in ?????: The stack would be Modules: sshd, Handlers: logback.</p>
-<p>Here is the relevant code snippet from Correlator.syslog_server:</p>
+<p>For the SIEM example demonstrated in <a href="../sshd/">OpenSSH login module</a>, the stack would be Modules: sshd,
+Handlers: logback.</p>
+<p>This is the relevant code snippet from Correlator.syslog_server:</p>
 <pre><code class="language-python">    processor = EventProcessor()
     processor.register_listener(LogbackListener())
 
