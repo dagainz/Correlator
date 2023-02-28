@@ -20,6 +20,26 @@ once its public API is documented.
 
 ### Security
 
+## [0.0.3]
+
+### Added
+
+- Secure Shell login Module
+- syslog server CLI
+- Counter over time utility class
+- caputil CLI utility
+- Docs
+
+### Changed
+
+### Fixed
+
+### Deprecated
+
+### Removed
+
+### Security
+
 
 ## [0.0.2] - 2023-02-19
 
