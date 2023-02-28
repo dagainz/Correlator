@@ -1,21 +1,7 @@
 # Correlator
 
-Correlator is a prototype python library that facilitates the creation of python based event reading and
-processing systems. These are used to analyze, report, and take action on system log events presumably
-generated from other systems or applications.
+Correlator is a log processing system written in Python. 
 
-### Author: Tim Pushor
-
-## Build and install
-
-To build the python package, ensure you have build installed and then run it in the project directory:
-
-    pip install build
-    python -m build
-
-This should build a wheel file and tarball in the dist/ directory.
-
-This file can then be installed into its own virtual environment by running pip:
-
-    pip install path/to/Correlator-X.Y.Z-py3-none-any.whl
-
+It consists of a Python library and collection of utilities that collectively facilitate the creation of log event
+processing systems. Functionality and scaffolding is provided to create systems that process log data in real time over
+the network as well as after-the-fact by reading and processing log files.

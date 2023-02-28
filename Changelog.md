@@ -10,6 +10,20 @@ once its public API is documented.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Deprecated
+
+### Removed
+
+### Security
+
+## [0.0.3]
+
+### Added
+
 - Secure Shell login Module
 - syslog server CLI
 - Counter over time utility class
