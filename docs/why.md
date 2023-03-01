@@ -21,10 +21,10 @@ front end that drove the same analysis logic. After configuring the system to fo
 server, I could now detect events in real time over the network as well as on historical events by processing logfiles.
 All using the same correlation, detection, and event dispatching logic.
 
-I've always been interested in network, server, and application management. I've worked with many open source and
-commercial monitoring systems, during both time working both in and out of the data center and have a few greenfield
-implementations under my belt. It always bothered me that our customers seldom do anything with the log data
-that our product produces. This project is a proof of concept of a management system that can provide context aware
-remote real-time monitoring capability to a mission-critical deployment of security software through the
-existing logging system.
+I've always been interested in network, server, and application management. I've worked with several open source and
+commercial monitoring systems and have a few greenfield implementations under my belt. Having a data center background
+It always bothered me that our customers implementations often do nothing with the log data that our product produces.
+This project scratch the itch that I've had for while, which was demonstrating a proof of concept of a management
+system that can provide context aware remote real-time monitoring capability to a mission-critical deployment of
+security software through the existing logging system.
 
