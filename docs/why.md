@@ -12,16 +12,19 @@ a way to identify the failed request, so that the failed transactions could be r
 records needed to be correlated together and tied to the same transaction, with information pulled from each.
 
 After trying for a while to visually correlate the log data to get this information, I decided to write a log file 
-parser and correlator to automate the process. I wrote the script, keeping the mechanics of log record handling
-separate from the analysis and action logic, so that it could easily be extended to solve other problems.
+parser that would perform the correlation and automate the process. I wrote the script, keeping the mechanics of log
+record handling separate from the analysis and action logic, so that it could easily be extended to solve other problems.
 
-It provided the intelligence that the customer was looking for, plus some additional valuable metrics. Howeve, I felt
+It provided the intelligence that the customer was looking for, plus some additional valuable metrics. However, I felt
 that we could do better than detecting when problems happened in the past. That lead to the addition of a syslog server
 front end that drove the same analysis logic. After configuring the system to forward log events to the syslog
 server, I could now detect events in real time over the network as well as on historical events by processing logfiles.
 All using the same correlation, detection, and event dispatching logic.
 
-So with this project I'm starting to scratch an itch that I've had for a while, which is to build a framework to do
-more advanced log analysis to help me solve some of these types of problems where the logic may be used one day
-to also detect these sorts of things in real-time as well as provide additional valuable statistics pertaining
-to the operation of the system. Plus, I find this data center stuff kinda cool.
+I've always been interested in network, server, and application management. I've worked with many open source and
+commercial monitoring systems, during both time working both in and out of the data center and have a few greenfield
+implementations under my belt. It always bothered me that our customers seldom do anything with the log data
+that our product produces. This project is a proof of concept of a management system that can provide context aware
+remote real-time monitoring capability to a mission-critical deployment of security software through the
+existing logging system.
+

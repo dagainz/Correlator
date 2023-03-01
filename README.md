@@ -11,7 +11,7 @@ the network as well as after-the-fact by reading and processing log files.
 MkDocs compliant documentation is provided in /doc.
 [Read the HTML version online](https://timmy-bbb.github.io/Correlator/)
 
-# Credits
+# Credits and blame
 
 Lead Developer - Tim Pushor
 
