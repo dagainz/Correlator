@@ -396,10 +396,10 @@
 
 
 <h1 id="architecture">Architecture</h1>
-<p>The original vision was a syslog server / log processing system that would dynamically scan for both system and user
-defined logic modules and event handlers written in python which could be configured, enabled, and disabled in 
-real-time via configuration.</p>
-<p>It's not there yet. The purpose of this library is to grow to be able to build such a system.</p>
+<p>The original vision was a syslog server / log processing system that is easily extendable by writing logic modules
+and handlers in python, which the system could detect and import automatically, and then configured and enabled via
+configuration.</p>
+<p>It's not there yet. This library's purpose is to provide support to build such a system.</p>
 <h2 id="the-front-end-engine">The front-end engine</h2>
 <p>The front-end engine is responsible for reading log data and forwarding it through one or more logic modules for
 processing. </p>
@@ -452,7 +452,7 @@ good reason not to, all non-audit type events should extend one of these standar
 <p>Audit events are dispatched in response to something noteworthy happening, and have a defined data schema. This makes
 these suitable to use as audit records as they can map easily to a CSV row, or database table.</p>
 <p>All audit events are custom event classes that extend AuditEvent. An identifier and a list of data fields that will
-be present in each event must be provided in the class defition.</p>
+be present in each event must be provided in the class defintion.</p>
 <p>See Correlator.sshd.SSHDLoginEvent for an example.</p>
 <h2 id="correlator-stack">Correlator stack</h2>
 <p>As described above in "It's not there yet", developing modules or handlers needs to start with a custom
@@ -460,8 +460,11 @@ server script.</p>
 <p>Central to doing that is the concept of a correlator stack. A configured list of modules and event handlers together
 is known as a stack. Even though there may be many logic modules and event handlers available to the system, they
 should not always be active. </p>
-<p>For the SIEM example demonstrated in <a href="../sshd/">OpenSSH login module</a>, the stack would be Modules: sshd,
-Handlers: logback.</p>
+<p>For the SIEM example demonstrated in <a href="../sshd/">OpenSSH login module</a>, the stack would be:</p>
+<ul>
+<li>Modules: sshd</li>
+<li>Handlers: logback</li>
+</ul>
 <p>This is the relevant code snippet from Correlator.syslog_server:</p>
 <pre><code class="language-python">    processor = EventProcessor()
     processor.register_listener(LogbackListener())
