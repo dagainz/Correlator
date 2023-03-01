@@ -1,10 +1,10 @@
 # Architecture
 
-The original vision was a syslog server / log processing system that would dynamically scan for both system and user
-defined logic modules and event handlers written in python which could be configured, enabled, and disabled in 
-real-time via configuration.
+The original vision was a syslog server / log processing system that is easily extendable by writing logic modules
+and handlers in python, which the system could detect and import automatically, and then configured and enabled via
+configuration.
 
-It's not there yet. The purpose of this library is to grow to be able to build such a system.
+It's not there yet. This library's purpose is to provide support to build such a system.
 
 ## The front-end engine
 
@@ -75,7 +75,7 @@ Audit events are dispatched in response to something noteworthy happening, and h
 these suitable to use as audit records as they can map easily to a CSV row, or database table.
 
 All audit events are custom event classes that extend AuditEvent. An identifier and a list of data fields that will
-be present in each event must be provided in the class defition.
+be present in each event must be provided in the class defintion.
 
 See Correlator.sshd.SSHDLoginEvent for an example.
 

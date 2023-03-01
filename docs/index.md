@@ -4,9 +4,9 @@ A log event processing system written in Python.
 
 ## Overview
 
-Correlator is a Python library and collection of utilities that collectively
-facilitate the creation of log event processing systems. Functionality and scaffolding is provided to create systems
-that process log data in real time over the network as well as after-the-fact by reading and processing log files. 
+Correlator is a Python library and collection of utilities that collectively facilitate the creation of log event
+processing systems. Functionality and scaffolding is provided to create systems that process log data in real time
+over the network as well as after-the-fact by reading and processing log files. 
 
 ## Features
 
