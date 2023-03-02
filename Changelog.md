@@ -20,49 +20,40 @@ once its public API is documented.
 
 ### Security
 
-## [0.0.3]
+## [0.0.3] - 2023-03-01
 
 ### Added
 
+- Release to GitHub
 - Secure Shell login Module
-- syslog server CLI
-- Counter over time utility class
-- caputil CLI utility
-- Docs
-
-### Changed
+- Syslog server CLI
+- CounterOverTime utility class
+- Caputil CLI utility
+- Initial docs
 
 ### Fixed
-
-### Deprecated
+- lots of stuff
 
 ### Removed
-
-### Security
-
+- GlobalConfig class
 
 ## [0.0.2] - 2023-02-19
 
 ### Added
-Started documenting code
-Syslog trailer (record separator) discovery.
-Some captured syslog/linux data
+- Started documenting code
+- Syslog trailer (record separator) discovery.
+- Some captured syslog/linux data
 
 ### Changed
-Transition from SocketServer
-Changed formats to f-strings
+- Transition from SocketServer
+- Changed formats to f-strings
 
 ### Fixed
-Logging
-Structured data parsing
-
-### Deprecated
+- Logging
+- Structured data parsing
 
 ### Removed
-All code for proprietary systems.
-
-### Security
-
+- All code for proprietary systems.
 
 ## [0.0.1] - 2023-02-13
 
