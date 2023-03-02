@@ -225,7 +225,7 @@ class SSHD(Module):
     def process_record(self, record):
 
         if record is None:
-            log.debug("Keep alive")
+            log.debug("Received heartbeat. No maintenance for this module")
             return
 
         if record.appname.lower() != 'sshd':

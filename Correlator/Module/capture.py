@@ -56,6 +56,11 @@ class CaptureOnly(Module):
             self.end = None
 
     def process_record(self, record):
+
+        if record is None:
+            log.debug("Received heartbeat. No maintenance for this module")
+            return
+
         recordsize = len(record)
 
         if self.start is None or record.timestamp < self.start:

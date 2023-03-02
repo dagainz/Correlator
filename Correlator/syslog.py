@@ -1,20 +1,27 @@
 import iso8601
 import logging
 import re
+import select
 import socket
 
 from dataclasses import dataclass
 from mako.template import Template
-from time import sleep
+from time import time, sleep
 from typing import List, BinaryIO, Callable
 
 from Correlator.event import EventProcessor, ErrorEvent, AuditEvent
-from Correlator.util import ParserError, Module
+from Correlator.util import ParserError, Module, GlobalConfig
 
 DEFAULT_SYSLOG_TRAILER = b'\n'
 
+DEFAULT_ACCEPT_HEARTBEAT_INTERVAL = 5     # 5 seconds
+ACCEPT_HEARTBEAT_INTERVAL_PARAM = 'syslog_server.accept_heartbeat_interval'
+
+DEFAULT_RECV_HEARTBEAT_INTERVAL = 5     # 5 seconds
+RECV_HEARTBEAT_INTERVAL_PARAM = 'syslog_server.recv_heartbeat_interval'
+
 # This must be big enough to hold enough of a syslog record to guarantee that
-# it contains the entire structured data for trailer discovery.
+# it contains the entire structured data field for trailer discovery.
 
 DEFAULT_BUFFER_SIZE = 4096
 
@@ -33,12 +40,16 @@ class RawSyslogRecord:
 
 
 class SyslogServer:
-    """ Handles listening for and processing Syslog data from the network.
+    """ Read and process syslog records.
 
-    :param modules: A list of Correlator Modules
-    :type modules: List[Module]
-    :param processor: The event processor object
-    :type processor: EventProcessor
+    Reads from either the network or a capture file. Also handles
+    writing data read from the network to a capture file, if desired.
+
+    Args:
+        modules: List of Correlator modules in this stack
+        processor: Instance of EventProcessor with registered event handlers
+        discovery_method: Callable that can help determine the syslog trailer
+        record_filter:  Record filter list
 
     """
     def __init__(self, modules: List[Module], processor: EventProcessor,
@@ -54,21 +65,31 @@ class SyslogServer:
         self.record_num = 0
         self.record_filter = record_filter
         self.output_file = None
+        self.accept_heartbeat_interval = GlobalConfig.get(
+            ACCEPT_HEARTBEAT_INTERVAL_PARAM, DEFAULT_ACCEPT_HEARTBEAT_INTERVAL)
+        self.recv_heartbeat_interval = GlobalConfig.get(
+            RECV_HEARTBEAT_INTERVAL_PARAM, DEFAULT_RECV_HEARTBEAT_INTERVAL)
 
-    def from_file(self, file_obj: BinaryIO, output_file: BinaryIO = None):
+    def from_file(self, input_file: BinaryIO, output_file: BinaryIO = None):
         """ Processes saved syslog data from a file
 
-        :param file_obj: File object of a readable binary file
-        :type file_obj: typing.BinaryIO
-        :param output_file: File object of a writable binary file
-        :type file_obj: typing.BinaryIO
+        The main purpose of this method is to take a capture file as input
+        rather than reading from the network. This does however, also have
+        the capability to write to a file. Combined with the record_filter
+        argument, this makes the way for utilities to create a new file
+        from a subset of an old one.
+
+        Args:
+            input_file: File object of readable binary file
+            output_file: File object of writable binary file
 
         """
 
         last = b''
         self.output_file = output_file
+
         while True:
-            block = file_obj.read(self.buffer_size)
+            block = input_file.read(self.buffer_size)
 
             # Determine the trailer (syslog record seperator) if
             # we haven't already.
@@ -86,21 +107,27 @@ class SyslogServer:
                 return
             last = self._handle_records(data)
 
+    def _heartbeat(self, message):
+        log.debug(f'Heartbeat: {message}')
+        for module in self.modules:
+            module.process_record(None)
+
     def listen_single(self, host: str = None,
                       port: int = 514,
                       output_file: BinaryIO = None):
 
-        """ Single threaded network listener.
+        """ Run a single thread TCP network listener and process syslog records
 
-         Will write captured network data to the opened for writing binary
-         file output_file if provided.
+        This method will listen for and accept a connection, and then process
+        records as they are received, forever.
 
-         :param host: hostname or interface to listen on
-         :type host: str
-         :param port: Port number to listen on (default 514)
-         :type port: int
-         :param output_file: File to write captured data to
-         :type output_file: typing.BinaryIO
+        If a file object of binary file open for writing is provided in
+        output_file, received packets will also be written to this file.
+
+        Args:
+            host:   host to listen on (valid AF_INET host) or None for default
+            port:   port to listen on (valid AF_INET port)
+            output_file:  Binary file open for writing to save received data
 
          """
         if host is None:
@@ -121,18 +148,40 @@ class SyslogServer:
                     raise
 
         server_socket.listen(1)
+        server_socket.setblocking(False)
         log.info(f'Server listening on {host}:{port}')
-        conn, address = server_socket.accept()
+
+        # Nonblocking accept and recv to ensure we can provide heartbeats
+        # to our modules
+
+        while True:
+            readable, writable, errored = select.select(
+                [server_socket], [], [], self.accept_heartbeat_interval)
+            if not readable:
+                self._heartbeat('Accept')
+                continue
+            else:
+                conn, (remote_host, remote_port) = server_socket.accept()
+                log.info(f'Connection from: {remote_host}:{remote_port}')
+                break
+
+        # conn, address = server_socket.accept()
 
         last = b''
 
         self.output_file = output_file
+
         while True:
+            readable, writable, errored = select.select(
+                [conn], [], [], self.recv_heartbeat_interval)
+            if not readable:
+                self._heartbeat('Recv')
+                continue
             block = conn.recv(self.buffer_size)
 
-            # write to capture file, if desired
-            # if block and output_file is not None:
-            #     output_file.write(block)
+            if not block:
+                log.error("read block evaluated false")
+                break
 
             # Find our trailer (syslog record seperator) if
             # We haven't already.

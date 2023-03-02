@@ -112,13 +112,16 @@ def cli():
         server.from_file(open(cmd_args.read_file, 'rb'))
 
     else:
-        try:
-            server.listen_single(
-                port=cmd_args.port,
-                output_file=output_file,
-                host=cmd_args.host)
-        except KeyboardInterrupt:
-            pass
+        stop = False
+        while not stop:
+            try:
+                server.listen_single(
+                    port=cmd_args.port,
+                    output_file=output_file,
+                    host=cmd_args.host)
+            except KeyboardInterrupt:
+                log.info('Shutting down')
+                stop = True
 
     end = datetime.now()
 

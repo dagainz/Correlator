@@ -9,6 +9,7 @@ once its public API is documented.
 ## [Unreleased]
 
 ### Added
+- Heartbeats
 
 ### Changed
 
