@@ -36,22 +36,44 @@ def setup_root_logger(log_level):
 class Module:
 
     module_name = 'System'
-    processor: EventProcessor = None
     description: str = ''
+
+    def __init__(self):
+        self._processor = None
+        self.state = None
+
+    @property
+    def event_processor(self):
+        return self._processor
+
+    @event_processor.setter
+    def event_processor(self, value):
+        self._processor = value
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, value):
+        self._state = value
 
     def dispatch_event(self, event: Event):
 
-        if not self.processor:
-            raise NotImplemented
+        if not self._processor:
+            raise NotImplementedError
 
         event.system = self.module_name
-        self.processor.dispatch_event(event)
+        self._processor.dispatch_event(event)
+
+    def init_state(self, state: {}):
+        raise NotImplementedError
 
     def process_record(self, record):
-        raise NotImplemented
+        raise NotImplementedError
 
     def statistics(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     @staticmethod
     def _calculate_duration(start, end):

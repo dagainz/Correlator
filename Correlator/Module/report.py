@@ -1,4 +1,6 @@
 import logging
+from dataclasses import dataclass
+from datetime import datetime
 from mako.template import Template
 
 from Correlator.util import Module, format_timestamp, calculate_summary
@@ -21,39 +23,62 @@ class ReportStatsEvent(AuditEvent):
             '(${size} bytes) were processed.')
 
 
+@dataclass
+class ReportState:
+    start: datetime = None
+    end: datetime = None
+    num_records: int = 0
+    size_records: int = 0
+
+
 class Report(Module):
 
-    def __init__(self, processor: EventProcessor):
+    def __init__(self):
 
-        self.processor = processor
+        super().__init__()
+
         self.description = 'Report-only'
         self.identifier = 'Report'
         self.module_name = self.identifier
 
-        self.num_records = 0
-        self.size_records = 0
-        self.start = None
-        self.end = None
+    def init_state(self, state: dict):
+
+        if 'data' not in state:
+            state['data'] = ReportState()
+            log.debug('Initialized new state')
+        else:
+            log.debug('Initialized previous state')
+
+        self.state = state['data']
+
+    def _clear_stats(self):
+        log.debug('Clear Stats')
+        self.state.num_records = 0
+        self.state.size_records = 0
+        self.state.start = None
+        self.state.end = None
 
     def statistics(self, reset=False):
 
         data = {
-            'start': format_timestamp(self.start),
-            'end': format_timestamp(self.end),
-            'duration': self._calculate_duration(self.start, self.end),
-            'messages': self.num_records,
-            'size': self.size_records
+            'start': format_timestamp(self.state.start),
+            'end': format_timestamp(self.state.end),
+            'duration': self._calculate_duration(
+                self.state.start, self.state.end),
+            'messages': self.state.num_records,
+            'size': self.state.size_records,
+            'reset': reset
         }
 
         self.dispatch_event(ReportStatsEvent(data))
 
         if reset:
-            self.num_records = 0
-            self.size_records = 0
-            self.start = None
-            self.end = None
+            self._clear_stats()
 
     def process_record(self, record):
+
+        if self.state is None:
+            raise ValueError("No module state")
 
         if record is None:
             log.debug("Received heartbeat. No maintenance for this module")
@@ -61,17 +86,18 @@ class Report(Module):
 
         recordsize = len(record)
 
-        if self.start is None or record.timestamp < self.start:
-            self.start = record.timestamp
+        if self.state.start is None or record.timestamp < self.state.start:
+            self.state.start = record.timestamp
 
-        if self.end is None or record.timestamp > self.end:
-            self.end = record.timestamp
+        if self.state.end is None or record.timestamp > self.state.end:
+            self.state.end = record.timestamp
 
         self.dispatch_event(
             NoticeEvent(
                 calculate_summary(str(record)), record=record))
 
-        self.num_records += 1
-        self.size_records += recordsize
+        self.state.num_records += 1
+        self.state.size_records += recordsize
 
         return True
+

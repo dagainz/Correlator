@@ -6,6 +6,7 @@
 
 
 """
+
 import argparse
 import logging
 import os
@@ -57,6 +58,11 @@ def cli():
         '--sshd',
         action='store_true', help='Activate ssh login module')
 
+    parser.add_argument(
+        '--state-file',
+        metavar='filename', help='State file'
+    )
+
     cmd_args = parser.parse_args()
 
     # Give a default value to write_file if not provided
@@ -91,18 +97,19 @@ def cli():
     # Setup list of logic modules
 
     modules = []
+    state = {}
 
     # Add all modules specified on the command line
 
     if cmd_args.sshd:
-        modules.append(SSHD(processor))
+        modules.append(SSHD())
 
     # If any weren't added,add the Report module
 
     if not modules:
-        modules.append(Report(processor))
+        modules.append(Report())
 
-    server = SyslogServer(modules, processor)
+    server = SyslogServer(modules, processor, state_file=cmd_args.state_file)
 
     start = datetime.now()
 
@@ -121,6 +128,8 @@ def cli():
                     host=cmd_args.host)
             except KeyboardInterrupt:
                 log.info('Shutting down')
+                server.save_state()
+                log.debug(f'Final state: {server.all_state}')
                 stop = True
 
     end = datetime.now()

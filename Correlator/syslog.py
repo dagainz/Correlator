@@ -3,8 +3,10 @@ import logging
 import re
 import select
 import socket
+import pickle
 
 from dataclasses import dataclass
+from datetime import datetime
 from mako.template import Template
 from time import time, sleep
 from typing import List, BinaryIO, Callable
@@ -19,6 +21,9 @@ ACCEPT_HEARTBEAT_INTERVAL_PARAM = 'syslog_server.accept_heartbeat_interval'
 
 DEFAULT_RECV_HEARTBEAT_INTERVAL = 5     # 5 seconds
 RECV_HEARTBEAT_INTERVAL_PARAM = 'syslog_server.recv_heartbeat_interval'
+
+DEFAULT_SAVE_STATE_INTERVAL = 5     # 5 seconds
+SAVE_STATE_INTERVAL_PARAM = 'syslog_server.save_state_param'
 
 # This must be big enough to hold enough of a syslog record to guarantee that
 # it contains the entire structured data field for trailer discovery.
@@ -54,7 +59,7 @@ class SyslogServer:
     """
     def __init__(self, modules: List[Module], processor: EventProcessor,
                  discovery_method: Callable[[RawSyslogRecord], bytes] = None,
-                 record_filter=None):
+                 record_filter=None, state_file=None):
 
         self.modules = modules
         self.processor = processor
@@ -65,10 +70,54 @@ class SyslogServer:
         self.record_num = 0
         self.record_filter = record_filter
         self.output_file = None
+        self.state_file = state_file
+        self.all_state = {}
+        self.state_timestamp = None
+
+        if state_file is not None:
+            self.load_state()
+
+        for module in modules:
+            module.event_processor = processor
+            if module.module_name not in self.all_state:
+                self.all_state[module.module_name] = {}
+            module.init_state(self.all_state[module.module_name])
+
         self.accept_heartbeat_interval = GlobalConfig.get(
             ACCEPT_HEARTBEAT_INTERVAL_PARAM, DEFAULT_ACCEPT_HEARTBEAT_INTERVAL)
         self.recv_heartbeat_interval = GlobalConfig.get(
             RECV_HEARTBEAT_INTERVAL_PARAM, DEFAULT_RECV_HEARTBEAT_INTERVAL)
+        self.save_state_interval = GlobalConfig.get(
+            SAVE_STATE_INTERVAL_PARAM, DEFAULT_SAVE_STATE_INTERVAL)
+
+    def debug_dump_state(self):
+        print(self.all_state)
+
+    def save_state(self):
+
+        if not self.state_file:
+            log.info('Save state: Persistence not enabled')
+            return
+
+        with open(self.state_file, 'wb') as output_file:
+            pickle.dump(self.all_state, output_file, pickle.HIGHEST_PROTOCOL)
+            log.info(f'Save state: state written to {self.state_file}')
+            self.state_timestamp = datetime.now()
+
+    def load_state(self):
+        if not self.state_file:
+            log.info("Load state: Persistence not enabled.")
+            return
+
+        try:
+            with open(self.state_file, 'rb') as input_file:
+                self.all_state = pickle.load(input_file)
+                log.info(f'Load state: State loaded from file '
+                         f'{self.state_file}.')
+        except FileNotFoundError:
+            log.info(
+                f'Load state: State file {self.state_file} does not exist. '
+                f'Initializing new state')
 
     def from_file(self, input_file: BinaryIO, output_file: BinaryIO = None):
         """ Processes saved syslog data from a file
@@ -151,31 +200,39 @@ class SyslogServer:
         server_socket.setblocking(False)
         log.info(f'Server listening on {host}:{port}')
 
-        # Nonblocking accept and recv to ensure we can provide heartbeats
-        # to our modules
+        # Don't block on accept forever - process heartbeats
 
         while True:
             readable, writable, errored = select.select(
                 [server_socket], [], [], self.accept_heartbeat_interval)
             if not readable:
-                self._heartbeat('Accept')
+                self._heartbeat('Waiting for connection establishment')
                 continue
             else:
                 conn, (remote_host, remote_port) = server_socket.accept()
                 log.info(f'Connection from: {remote_host}:{remote_port}')
                 break
 
-        # conn, address = server_socket.accept()
-
         last = b''
 
         self.output_file = output_file
+        self.save_state()
 
         while True:
+            # Nonblocking reads, for the same reason.
             readable, writable, errored = select.select(
                 [conn], [], [], self.recv_heartbeat_interval)
+
+            # Check to see if we need to save state
+
+            seconds_delta = (
+                    datetime.now() - self.state_timestamp).total_seconds()
+
+            if seconds_delta > self.save_state_interval:
+                self.save_state()
+
             if not readable:
-                self._heartbeat('Recv')
+                self._heartbeat('Waiting for data')
                 continue
             block = conn.recv(self.buffer_size)
 
