@@ -8,6 +8,7 @@ Process: logins
 import logging
 import re
 from datetime import datetime
+from dataclasses import dataclass
 from mako.template import Template
 
 from Correlator.event import EventProcessor, AuditEvent
@@ -68,40 +69,65 @@ class SSHDStatsEvent(AuditEvent):
             ' logins, ${lockouts} lockouts.')
 
 
+@dataclass
+class SSHDState:
+
+    host_store: dict
+    states: dict
+    transactions: dict
+    login_sessions: int = 0
+    denied: int = 0
+    lockouts: int = 0
+
+    def __init__(self):
+        self.states = {}
+        self.transactions = {}
+        self.host_store = {}
+
+
 class SSHD(Module):
 
-    def __init__(self, processor: EventProcessor):
+    def __init__(self):
 
-        self.processor = processor
+        super().__init__()
+
         self.description = 'OpenSSH Server SSH Logins'
         self.identifier = 'sshd_logins'
         self.module_name = self.identifier
-
-        self.states = {}
-        self.transactions = {}
 
         self.expiry_seconds = GlobalConfig.get(
             FAILURE_WINDOW_PARAM, DEFAULT_FAILURE_WINDOW)
         self.failure_limit = GlobalConfig.get(
             FAILURE_LIMIT_PARAM, DEFAULT_FAILURE_LIMIT)
 
-        self.address_store = CountOverTime(self.expiry_seconds)
+        self.address_store = None
 
-        self.login_sessions = 0
-        self.denied = 0
-        self.lockouts = 0
+        # CountOverTime(self.expiry_seconds)
+
+    def init_state(self, state: dict):
+
+        if 'data' not in state:
+            state['data'] = SSHDState()
+            log.debug('Initialized new state')
+        else:
+            log.debug('Initialized previous state')
+
+        self.state = state['data']
+
+        self.address_store = CountOverTime(
+            self.expiry_seconds, self.state.host_store)
 
     def clear_statistics(self):
-        self.login_sessions = 0
-        self.denied = 0
-        self.lockouts = 0
+        self.state.login_sessions = 0
+        self.state.denied = 0
+        self.state.lockouts = 0
 
     def statistics(self, reset=False):
 
         data = {
-            'login_sessions': self.login_sessions,
-            'denied': self.denied,
-            'lockouts': self.lockouts,
+            'login_sessions': self.state.login_sessions,
+            'denied': self.state.denied,
+            'lockouts': self.state.lockouts,
 
         }
         self.dispatch_event(SSHDStatsEvent(data))
@@ -110,17 +136,17 @@ class SSHD(Module):
             self.clear_statistics()
 
     def _has_state(self, identifier):
-        if self.states.get(identifier) is not None:
+        if self.state.states.get(identifier) is not None:
             return True
         return False
 
     def _set_state(self, identifier, state):
-        self.states[identifier] = state
+        self.state.states[identifier] = state
         return state
 
     def _get_state(self, identifier):
 
-        state = self.states.get(identifier)
+        state = self.state.states.get(identifier)
         if state is None:
             return self._set_state(identifier, 0)
         return state
@@ -224,6 +250,9 @@ class SSHD(Module):
 
     def process_record(self, record):
 
+        if self.state is None:
+            raise ValueError("Hey! State is None")
+
         if record is None:
             log.debug("Received heartbeat. No maintenance for this module")
             return
@@ -239,7 +268,7 @@ class SSHD(Module):
             if props:
                 self._set_state(identifier, 0)
                 addr = props.get('addr')
-                self.transactions[identifier] = {
+                self.state.transactions[identifier] = {
                     'auth': props.get('auth'),
                     'user': props.get('user'),
                     'addr': addr,
@@ -257,7 +286,7 @@ class SSHD(Module):
             if props is not None:
                 self._set_state(identifier, 0)
 
-                self.transactions[identifier] = {
+                self.state.transactions[identifier] = {
                     'auth': None,
                     'user': props.get('user'),
                     'addr': props.get('rhost'),
@@ -271,7 +300,7 @@ class SSHD(Module):
             props = self.detect_invalid_user(record.detail)
             if props is not None:
                 self._set_state(identifier, 0)
-                self.transactions[identifier] = {
+                self.state.transactions[identifier] = {
                     'auth': None,
                     'user': props.get('user'),
                     'addr': props.get('addr'),
@@ -287,7 +316,7 @@ class SSHD(Module):
             return True
 
         state = self._get_state(identifier)
-        trans = self.transactions[identifier]
+        trans = self.state.transactions[identifier]
 
         if state == 0:
             props = self.detect_passwordfailure(record.detail)
@@ -304,7 +333,7 @@ class SSHD(Module):
                     }
                     self.dispatch_event(
                         SSHDLoginsExceededEvent(data))
-                    self.lockouts += 1
+                    self.state.lockouts += 1
                 return
             props = self.detect_open(record.detail)
             if props is not None:
@@ -321,7 +350,7 @@ class SSHD(Module):
 
             props = self.detect_close(record.detail)
             if props is not None:
-                self.denied += 1
+                self.state.denied += 1
                 # Dispatch SSHDLoginFailedEvent
                 data = {
                     'timestamp': format_timestamp(datetime.now())
@@ -336,7 +365,7 @@ class SSHD(Module):
             props = self.detect_close(record.detail)
             if props is not None:
                 trans['finish'] = record.timestamp
-                self.login_sessions += 1
+                self.state.login_sessions += 1
                 # Dispatch SSHDLoginEvent
                 data = {
                     'timestamp': format_timestamp(datetime.now())
@@ -350,7 +379,7 @@ class SSHD(Module):
                 self.dispatch_event(
                     SSHDLoginEvent(data))
 
-                del self.transactions[identifier]
-                del self.states[identifier]
+                del self.state.transactions[identifier]
+                del self.state.states[identifier]
                 return
             log.debug(f'Skipping State 1 record: {str(record)}')

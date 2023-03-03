@@ -150,9 +150,9 @@ def calculate_summary(detail: str):
 
 
 class CountOverTime:
-    def __init__(self, expiry_seconds: int):
+    def __init__(self, expiry_seconds: int, store: dict):
         self.expiry_seconds = expiry_seconds
-        self.store = {}
+        self.store = store
 
     def add(self, identifier, timestamp):
         if identifier not in self.store:

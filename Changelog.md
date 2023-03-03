@@ -10,14 +10,17 @@ once its public API is documented.
 
 ### Added
 - Heartbeats
+- Basic state support
 
 ### Changed
+- simplify module __init__
 
 ### Fixed
 
 ### Deprecated
 
 ### Removed
+- The capture module
 
 ### Security
 
