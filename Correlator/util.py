@@ -3,13 +3,13 @@ import os
 import sys
 from datetime import datetime, timedelta
 
-from Correlator.event import Event, EventProcessor
+from Correlator.event import Event
 
 DEFAULT_ROTATE_KEEP = 10
 MAX_SUMMARY = 128
 MAX_BREAK_SEARCH = 10
 
-GlobalConfig = {}
+log = logging.getLogger(__name__)
 
 
 class ParserError(Exception):
@@ -41,6 +41,7 @@ class Module:
     def __init__(self):
         self._processor = None
         self.state = None
+        self.model = None
 
     @property
     def event_processor(self):
@@ -49,6 +50,8 @@ class Module:
     @event_processor.setter
     def event_processor(self, value):
         self._processor = value
+
+    #todo: What was I thinking?
 
     @property
     def state(self):
@@ -66,8 +69,17 @@ class Module:
         event.system = self.module_name
         self._processor.dispatch_event(event)
 
-    def init_state(self, state: {}):
-        raise NotImplementedError
+    def post_init_state(self):
+        log.debug('In base class post_init_state')
+        return
+
+    def heartbeat(self):
+        log.debug('In base class heartbeat')
+
+    def handle_record(self, record):
+        if self._state is None:
+            raise ValueError('No State!')
+        self.process_record(record)
 
     def process_record(self, record):
         raise NotImplementedError

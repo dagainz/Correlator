@@ -4,7 +4,7 @@ from datetime import datetime
 from mako.template import Template
 
 from Correlator.util import Module, format_timestamp, calculate_summary
-from Correlator.event import NoticeEvent, AuditEvent, EventProcessor
+from Correlator.event import NoticeEvent, AuditEvent
 
 log = logging.getLogger(__name__)
 
@@ -40,16 +40,7 @@ class Report(Module):
         self.description = 'Report-only'
         self.identifier = 'Report'
         self.module_name = self.identifier
-
-    def init_state(self, state: dict):
-
-        if 'data' not in state:
-            state['data'] = ReportState()
-            log.debug('Initialized new state')
-        else:
-            log.debug('Initialized previous state')
-
-        self.state = state['data']
+        self.model = ReportState
 
     def _clear_stats(self):
         log.debug('Clear Stats')
@@ -76,13 +67,6 @@ class Report(Module):
             self._clear_stats()
 
     def process_record(self, record):
-
-        if self.state is None:
-            raise ValueError("No module state")
-
-        if record is None:
-            log.debug("Received heartbeat. No maintenance for this module")
-            return
 
         recordsize = len(record)
 

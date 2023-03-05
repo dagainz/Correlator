@@ -8,14 +8,32 @@ Process: logins
 import logging
 import re
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from mako.template import Template
 
-from Correlator.event import EventProcessor, AuditEvent
+from Correlator.event import AuditEvent
 from Correlator.util import (
-    Module, CountOverTime, GlobalConfig, format_timestamp)
+    Module, CountOverTime, format_timestamp)
+from Correlator.config import GlobalConfig
 
 log = logging.getLogger(__name__)
+
+GlobalConfig.add(
+    [
+        {
+            'module.sshd.login_failure_window': {
+                'default': 300,
+                'desc': 'Amount of time in seconds to remember the login failures,'
+                        'per host'
+            }
+        },
+        {
+            'module.sshd.login_failure_limit': {
+                'default': 5,
+                'desc': 'Number of login failures per host per module.sshd.login_failure_window seconds'
+            }
+        }
+    ])
 
 DEFAULT_FAILURE_WINDOW = 300     # 5 minutes
 FAILURE_WINDOW_PARAM = 'module.sshd.login_failure_window'
@@ -55,7 +73,7 @@ class SSHDLoginsExceededEvent(AuditEvent):
 class SSHDStatsEvent(AuditEvent):
 
     audit_id = 'module-stats'
-    fields = [
+    ields = [
         'login_sessions',
         'denied',
         'lockouts'
@@ -72,17 +90,12 @@ class SSHDStatsEvent(AuditEvent):
 @dataclass
 class SSHDState:
 
-    host_store: dict
-    states: dict
-    transactions: dict
+    host_store: dict = field(default_factory=lambda: {})
+    states: dict = field(default_factory=lambda: {})
+    transactions: dict = field(default_factory=lambda: {})
     login_sessions: int = 0
     denied: int = 0
     lockouts: int = 0
-
-    def __init__(self):
-        self.states = {}
-        self.transactions = {}
-        self.host_store = {}
 
 
 class SSHD(Module):
@@ -94,26 +107,15 @@ class SSHD(Module):
         self.description = 'OpenSSH Server SSH Logins'
         self.identifier = 'sshd_logins'
         self.module_name = self.identifier
+        self.model = SSHDState
 
-        self.expiry_seconds = GlobalConfig.get(
-            FAILURE_WINDOW_PARAM, DEFAULT_FAILURE_WINDOW)
-        self.failure_limit = GlobalConfig.get(
-            FAILURE_LIMIT_PARAM, DEFAULT_FAILURE_LIMIT)
+        self.expiry_seconds = GlobalConfig.get('module.sshd.login_failure_window')
+        self.failure_limit = GlobalConfig.get('module.sshd.login_failure_limit')
 
         self.address_store = None
 
-        # CountOverTime(self.expiry_seconds)
-
-    def init_state(self, state: dict):
-
-        if 'data' not in state:
-            state['data'] = SSHDState()
-            log.debug('Initialized new state')
-        else:
-            log.debug('Initialized previous state')
-
-        self.state = state['data']
-
+    def post_init_state(self):
+        log.debug('In module post_init_state')
         self.address_store = CountOverTime(
             self.expiry_seconds, self.state.host_store)
 
@@ -248,14 +250,11 @@ class SSHD(Module):
 
         return None
 
+    def heartbeat(self):
+
+        log.debug('Received module level heartbeat. Nothing to do')
+
     def process_record(self, record):
-
-        if self.state is None:
-            raise ValueError("Hey! State is None")
-
-        if record is None:
-            log.debug("Received heartbeat. No maintenance for this module")
-            return
 
         if record.appname.lower() != 'sshd':
             return

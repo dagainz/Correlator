@@ -11,24 +11,10 @@ from mako.template import Template
 from time import time, sleep
 from typing import List, BinaryIO, Callable
 
+from Correlator.config import GlobalConfig
 from Correlator.event import EventProcessor, ErrorEvent, AuditEvent
-from Correlator.util import ParserError, Module, GlobalConfig
+from Correlator.util import ParserError, Module
 
-DEFAULT_SYSLOG_TRAILER = b'\n'
-
-DEFAULT_ACCEPT_HEARTBEAT_INTERVAL = 5     # 5 seconds
-ACCEPT_HEARTBEAT_INTERVAL_PARAM = 'syslog_server.accept_heartbeat_interval'
-
-DEFAULT_RECV_HEARTBEAT_INTERVAL = 5     # 5 seconds
-RECV_HEARTBEAT_INTERVAL_PARAM = 'syslog_server.recv_heartbeat_interval'
-
-DEFAULT_SAVE_STATE_INTERVAL = 5     # 5 seconds
-SAVE_STATE_INTERVAL_PARAM = 'syslog_server.save_state_param'
-
-# This must be big enough to hold enough of a syslog record to guarantee that
-# it contains the entire structured data field for trailer discovery.
-
-DEFAULT_BUFFER_SIZE = 4096
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +49,7 @@ class SyslogServer:
 
         self.modules = modules
         self.processor = processor
-        self.buffer_size: int = DEFAULT_BUFFER_SIZE
+        # self.buffer_size: int = DEFAULT_BUFFER_SIZE
         self.syslog_trailer = None
         self.trailer_discovery_method = discovery_method
         self.bind_retry = 1
@@ -80,18 +66,23 @@ class SyslogServer:
         for module in modules:
             module.event_processor = processor
             if module.module_name not in self.all_state:
-                self.all_state[module.module_name] = {}
-            module.init_state(self.all_state[module.module_name])
+                self.all_state[module.module_name] = module.model()
+            module.state = self.all_state[module.module_name]
+            module.post_init_state()
 
         self.accept_heartbeat_interval = GlobalConfig.get(
-            ACCEPT_HEARTBEAT_INTERVAL_PARAM, DEFAULT_ACCEPT_HEARTBEAT_INTERVAL)
+            'syslog_server.accept_heartbeat_interval')
         self.recv_heartbeat_interval = GlobalConfig.get(
-            RECV_HEARTBEAT_INTERVAL_PARAM, DEFAULT_RECV_HEARTBEAT_INTERVAL)
+            'syslog_server.recv_heartbeat_interval')
         self.save_state_interval = GlobalConfig.get(
-            SAVE_STATE_INTERVAL_PARAM, DEFAULT_SAVE_STATE_INTERVAL)
+            'syslog_server.save_state_interval')
+        self.buffer_size=GlobalConfig.get('syslog_server.default_buffer_size')
+
+        self.default_syslog_trailer = GlobalConfig.get(
+            'syslog_server.default_trailer').encode('utf-8')
 
     def debug_dump_state(self):
-        print(self.all_state)
+        log.debug(repr(self.all_state))
 
     def save_state(self):
 
@@ -159,7 +150,7 @@ class SyslogServer:
     def _heartbeat(self, message):
         log.debug(f'Heartbeat: {message}')
         for module in self.modules:
-            module.process_record(None)
+            module.heartbeat()
 
     def listen_single(self, host: str = None,
                       port: int = 514,
@@ -198,6 +189,8 @@ class SyslogServer:
 
         server_socket.listen(1)
         server_socket.setblocking(False)
+        GlobalConfig.debug()
+
         log.info(f'Server listening on {host}:{port}')
 
         # Don't block on accept forever - process heartbeats
@@ -269,9 +262,9 @@ class SyslogServer:
                 log.error('Trailer discovery method raised exception')
                 log.exception(e)
 
-        log.debug(f'Using default trailer of {repr(DEFAULT_SYSLOG_TRAILER)}')
+        log.debug(f'Using default trailer of {repr(self.default_syslog_trailer)}')
         # Default trailer
-        return DEFAULT_SYSLOG_TRAILER
+        return self.default_syslog_trailer
 
     def _handle_records(self, data):
 
@@ -298,7 +291,7 @@ class SyslogServer:
         self.record_num += 1
         if not record.error:
             for module in self.modules:
-                module.process_record(record)
+                module.handle_record(record)
         else:
             self.processor.dispatch_event(
                 ErrorEvent(
