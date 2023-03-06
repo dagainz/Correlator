@@ -60,20 +60,39 @@ def cli():
         metavar='filename', help='State file'
     )
 
+    parser.add_argument(
+        '--csv',
+        metavar='filename', nargs='?', default='.',
+        help='Write audit records as rows in CSV files'
+    )
+
     cmd_args = parser.parse_args()
 
     # Give a default value to write_file if not provided
 
     d = vars(cmd_args)
 
+    # First, setup logging
+
+    debug_level = logging.DEBUG if cmd_args.d else logging.INFO
+    setup_root_logger(debug_level)
+    log = logging.getLogger(__name__)
+
     if cmd_args.write_file is None:
         d['write_file'] = capture_filename()
     elif cmd_args.write_file == '.':
         d['write_file'] = None
 
-    debug_level = logging.DEBUG if cmd_args.d else logging.INFO
-    setup_root_logger(debug_level)
-    log = logging.getLogger(__name__)
+    csv_module = None
+
+    if cmd_args.csv != '.':     # . = not on command line
+        from Correlator.Event.csv import CSVListener
+        if cmd_args.csv is not None:
+            log.info(f'Writing CSV files: {cmd_args.csv}')
+            csv_module = CSVListener([x.strip() for x in cmd_args.csv.split()])
+        else:
+            log.info('Writing CSV files: All')
+            csv_module = CSVListener()
 
     output_file = None
 
@@ -91,6 +110,9 @@ def cli():
     processor = EventProcessor()
     from Correlator.Event.log import LogbackListener
     processor.register_listener(LogbackListener())
+
+    if csv_module is not None:
+        processor.register_listener(csv_module)
 
     # Setup list of logic modules
 

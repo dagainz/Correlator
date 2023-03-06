@@ -58,7 +58,6 @@ class Report(Module):
                 self.state.start, self.state.end),
             'messages': self.state.num_records,
             'size': self.state.size_records,
-            'reset': reset
         }
 
         self.dispatch_event(ReportStatsEvent(data))

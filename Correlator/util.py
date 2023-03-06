@@ -94,6 +94,13 @@ class Module:
             return None
 
 
+def listize(item):
+    if isinstance(item, list):
+        return item
+
+    return [item]
+
+
 def rotate_file(basename, ext, keep=DEFAULT_ROTATE_KEEP):
 
     # Check if the file exists, and if so, rotates old files

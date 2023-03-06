@@ -1,4 +1,4 @@
-import csv
+import csv as CSV
 import logging
 from datetime import datetime
 from io import StringIO
@@ -55,7 +55,7 @@ class AuditEvent(Event):
         self.is_audit = True
         self.audit_id = audit_id
         self.buffer = StringIO()
-        self.writer = csv.DictWriter(self.buffer, self.fields)
+        self.writer = CSV.DictWriter(self.buffer, self.fields)
 
     def __repr__(self):
         return self.repr

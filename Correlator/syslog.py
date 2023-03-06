@@ -273,12 +273,16 @@ class SyslogServer:
             readable, writable, errored = select.select(
                 [conn], [], [], self.recv_heartbeat_interval)
 
-            # Check to see if we need to save state
+            # Check to see if we need to save our state to disk.
+            # If either save_state_interval seconds have elapsed since
+            # last save, or if we haven't yet saved state, do it.
 
-            seconds_delta = (
-                    datetime.now() - self.state_timestamp).total_seconds()
-
-            if seconds_delta > self.save_state_interval:
+            if self.state_timestamp:
+                seconds_delta = (
+                        datetime.now() - self.state_timestamp).total_seconds()
+                if seconds_delta > self.save_state_interval:
+                    self.save_state()
+            else:
                 self.save_state()
 
             if not readable:

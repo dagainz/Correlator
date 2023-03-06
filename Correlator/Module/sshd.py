@@ -73,7 +73,7 @@ class SSHDLoginsExceededEvent(AuditEvent):
 class SSHDStatsEvent(AuditEvent):
 
     audit_id = 'module-stats'
-    ields = [
+    fields = [
         'login_sessions',
         'denied',
         'lockouts'
