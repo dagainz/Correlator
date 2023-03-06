@@ -13,18 +13,15 @@ import os
 import sys
 from datetime import datetime
 
-from Correlator.event import EventProcessor, LogbackListener
+from Correlator.Event.core import EventProcessor
 from Correlator.Module.report import Report
-from Correlator.Module.sshd import SSHD
-from Correlator.syslog import SyslogServer, SyslogStatsEvent
+from Correlator.syslog import SyslogServer, SyslogStatsEvent, SyslogConfig
 from Correlator.util import (
     setup_root_logger, capture_filename, format_timestamp)
+from Correlator.config import GlobalConfig
 
 
 def cli():
-
-    default_port = 514
-    default_bind_addr = '0.0.0.0'
 
     parser = argparse.ArgumentParser(
         'Correlator Syslog CLI utility',
@@ -37,11 +34,11 @@ def cli():
     )
     parser.add_argument(
         '--port',
-        help='TCP port to listen on', type=int, default=default_port
-    )
+        help='TCP port to listen on', type=int)
+
     parser.add_argument(
         '--host',
-        help='Address to listen on', type=str, default=default_bind_addr)
+        help='Address to listen on', type=str)
 
     group = parser.add_mutually_exclusive_group()
 
@@ -92,6 +89,7 @@ def cli():
     # Initialize event processor, and add event listeners
 
     processor = EventProcessor()
+    from Correlator.Event.log import LogbackListener
     processor.register_listener(LogbackListener())
 
     # Setup list of logic modules
@@ -102,12 +100,18 @@ def cli():
     # Add all modules specified on the command line
 
     if cmd_args.sshd:
+        from Correlator.Module.sshd import SSHD
         modules.append(SSHD())
 
     # If any weren't added,add the Report module
 
     if not modules:
         modules.append(Report())
+
+    if cmd_args.port:
+        GlobalConfig.set('syslog_server.listen_port', int(cmd_args.port))
+    if cmd_args.host:
+        GlobalConfig.set('syslog_server.listen_address', cmd_args.host)
 
     server = SyslogServer(modules, processor, state_file=cmd_args.state_file)
 
@@ -122,14 +126,11 @@ def cli():
         stop = False
         while not stop:
             try:
-                server.listen_single(
-                    port=cmd_args.port,
-                    output_file=output_file,
-                    host=cmd_args.host)
+                server.listen_single(output_file=output_file)
             except KeyboardInterrupt:
                 log.info('Shutting down')
                 server.save_state()
-                log.debug(f'Final state: {server.all_state}')
+                log.debug(f'Final state: {server.full_state}')
                 stop = True
 
     end = datetime.now()

@@ -1,44 +1,15 @@
 import logging
-from copy import deepcopy
 
 log = logging.getLogger(__name__)
 
 
-ConfigConfig = {
-
-    'syslog_server.accept_heartbeat_interval': {
-        'default': 5,
-        'desc': 'approximate time in seconds between heartbeats while waiting'
-                ' for a connection'
-    },
-    'syslog_server.recv_heartbeat_interval': {
-        'default': 5,
-        'desc': 'approximate time in seconds between heartbeats while waiting'
-                ' for syslog data'
-    },
-    'syslog_server.save_state_interval': {
-        'default': 5,
-        'desc': 'approximate time in seconds between state saves'
-    },
-    'syslog_server.default_buffer_size': {
-        'default': 4096,
-        'desc': 'Read buffer size. This must be large enough so that an '
-                'entire header and structured data can fit.'
-    },
-    'syslog_server.default_trailer': {
-        'default': '\n',
-        'desc': 'The default syslog trailer.'
-    },
-
-}
-
-
 class ConfigStore:
     def __init__(self):
-        self.store = deepcopy(ConfigConfig)
+        self.store = {}
         pass
 
     def add(self, item):
+        log.debug(f'In add: {item}')
 
         if isinstance(item, list):
             items = item
@@ -81,7 +52,7 @@ class ConfigStore:
         ]
 
     @staticmethod
-    def debug(description=True):
+    def debug_log(description=True):
 
         log.debug(f'{"Parameter":<45} {"Value":<10} {"Default":<10} '
                   f'{"Description":<14}')
@@ -93,4 +64,5 @@ class ConfigStore:
                       f'{repr(default or ""):<10} {description or "":<14}')
 
 
+# Setup global application configuration store
 GlobalConfig = ConfigStore()

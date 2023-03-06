@@ -4,7 +4,7 @@ from datetime import datetime
 from mako.template import Template
 
 from Correlator.util import Module, format_timestamp, calculate_summary
-from Correlator.event import NoticeEvent, AuditEvent
+from Correlator.Event.core import NoticeEvent, AuditEvent
 
 log = logging.getLogger(__name__)
 

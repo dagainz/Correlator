@@ -11,29 +11,29 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from mako.template import Template
 
-from Correlator.event import AuditEvent
+from Correlator.Event.core import AuditEvent
 from Correlator.util import (
     Module, CountOverTime, format_timestamp)
 from Correlator.config import GlobalConfig
 
 log = logging.getLogger(__name__)
 
-GlobalConfig.add(
-    [
-        {
-            'module.sshd.login_failure_window': {
-                'default': 300,
-                'desc': 'Amount of time in seconds to remember the login failures,'
-                        'per host'
-            }
-        },
-        {
-            'module.sshd.login_failure_limit': {
-                'default': 5,
-                'desc': 'Number of login failures per host per module.sshd.login_failure_window seconds'
-            }
+SSHDConfig = [
+    {
+        'module.sshd.login_failure_window': {
+            'default': 300,
+            'desc': 'Amount of time in seconds to remember the login failures,'
+                    'per host'
         }
-    ])
+    },
+    {
+        'module.sshd.login_failure_limit': {
+            'default': 5,
+            'desc': 'Number of login failures per host per module.sshd.login_'
+                    'failure_window seconds'
+        }
+    }
+]
 
 DEFAULT_FAILURE_WINDOW = 300     # 5 minutes
 FAILURE_WINDOW_PARAM = 'module.sshd.login_failure_window'
@@ -100,6 +100,8 @@ class SSHDState:
 
 class SSHD(Module):
 
+    GlobalConfig.add(SSHDConfig)
+
     def __init__(self):
 
         super().__init__()
@@ -109,8 +111,10 @@ class SSHD(Module):
         self.module_name = self.identifier
         self.model = SSHDState
 
-        self.expiry_seconds = GlobalConfig.get('module.sshd.login_failure_window')
-        self.failure_limit = GlobalConfig.get('module.sshd.login_failure_limit')
+        self.expiry_seconds = GlobalConfig.get(
+            'module.sshd.login_failure_window')
+        self.failure_limit = GlobalConfig.get(
+            'module.sshd.login_failure_limit')
 
         self.address_store = None
 

@@ -3,7 +3,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 
-from Correlator.event import Event
+from Correlator.Event.core import Event
 
 DEFAULT_ROTATE_KEEP = 10
 MAX_SUMMARY = 128
@@ -70,11 +70,10 @@ class Module:
         self._processor.dispatch_event(event)
 
     def post_init_state(self):
-        log.debug('In base class post_init_state')
         return
 
     def heartbeat(self):
-        log.debug('In base class heartbeat')
+        return
 
     def handle_record(self, record):
         if self._state is None:

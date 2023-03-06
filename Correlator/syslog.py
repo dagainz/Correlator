@@ -8,15 +8,67 @@ import pickle
 from dataclasses import dataclass
 from datetime import datetime
 from mako.template import Template
-from time import time, sleep
+from time import sleep
 from typing import List, BinaryIO, Callable
 
 from Correlator.config import GlobalConfig
-from Correlator.event import EventProcessor, ErrorEvent, AuditEvent
+from Correlator.Event.core import EventProcessor, ErrorEvent, AuditEvent
 from Correlator.util import ParserError, Module
 
 
 log = logging.getLogger(__name__)
+
+SyslogConfig = [
+    {
+
+        'syslog_server.accept_heartbeat_interval': {
+            'default': 5,
+            'desc': 'approximate time in seconds between heartbeats while '
+                    'waiting for a connection'
+        }
+    },
+    {
+        'syslog_server.recv_heartbeat_interval': {
+            'default': 5,
+            'desc': 'approximate time in seconds between heartbeats while '
+                    'waiting for syslog data'
+        }
+    },
+    {
+        'syslog_server.save_state_interval': {
+           'default': 5,
+           'desc': 'approximate time in seconds between state saves'
+        }
+    },
+    {
+        'syslog_server.buffer_size': {
+            'default': 4096,
+            'desc': 'Read buffer size. This must be large enough so that an '
+                    'entire header and structured data can fit.'
+        }
+    },
+    {
+        'syslog_server.default_trailer': {
+            'default': '\n',
+            'desc': 'The syslog trailer to use if syslog trailer discovery '
+                    'cannot determine the trailer.'
+        }
+    },
+    {
+        'syslog_server.listen_address': {
+            'default': '0.0.0.0',
+            'desc': 'The IPv4 address of the interface to listen on. 0.0.0.0 '
+                    'means listen on all interfaces.'
+        }
+    },
+    {
+        'syslog_server.listen_port': {
+            'default': 514,
+            'desc': 'The TCP port number to listen on.'
+        }
+    }
+
+]
 
 
 @dataclass
@@ -31,6 +83,9 @@ class RawSyslogRecord:
 
 
 class SyslogServer:
+
+    GlobalConfig.add(SyslogConfig)
+
     """ Read and process syslog records.
 
     Reads from either the network or a capture file. Also handles
@@ -57,7 +112,7 @@ class SyslogServer:
         self.record_filter = record_filter
         self.output_file = None
         self.state_file = state_file
-        self.all_state = {}
+        self.full_state = {}
         self.state_timestamp = None
 
         if state_file is not None:
@@ -65,9 +120,9 @@ class SyslogServer:
 
         for module in modules:
             module.event_processor = processor
-            if module.module_name not in self.all_state:
-                self.all_state[module.module_name] = module.model()
-            module.state = self.all_state[module.module_name]
+            if module.module_name not in self.full_state:
+                self.full_state[module.module_name] = module.model()
+            module.state = self.full_state[module.module_name]
             module.post_init_state()
 
         self.accept_heartbeat_interval = GlobalConfig.get(
@@ -76,13 +131,13 @@ class SyslogServer:
             'syslog_server.recv_heartbeat_interval')
         self.save_state_interval = GlobalConfig.get(
             'syslog_server.save_state_interval')
-        self.buffer_size=GlobalConfig.get('syslog_server.default_buffer_size')
+        self.buffer_size=GlobalConfig.get('syslog_server.buffer_size')
 
         self.default_syslog_trailer = GlobalConfig.get(
             'syslog_server.default_trailer').encode('utf-8')
 
     def debug_dump_state(self):
-        log.debug(repr(self.all_state))
+        log.debug(repr(self.full_state))
 
     def save_state(self):
 
@@ -91,7 +146,7 @@ class SyslogServer:
             return
 
         with open(self.state_file, 'wb') as output_file:
-            pickle.dump(self.all_state, output_file, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.full_state, output_file, pickle.HIGHEST_PROTOCOL)
             log.info(f'Save state: state written to {self.state_file}')
             self.state_timestamp = datetime.now()
 
@@ -102,7 +157,7 @@ class SyslogServer:
 
         try:
             with open(self.state_file, 'rb') as input_file:
-                self.all_state = pickle.load(input_file)
+                self.full_state = pickle.load(input_file)
                 log.info(f'Load state: State loaded from file '
                          f'{self.state_file}.')
         except FileNotFoundError:
@@ -152,9 +207,7 @@ class SyslogServer:
         for module in self.modules:
             module.heartbeat()
 
-    def listen_single(self, host: str = None,
-                      port: int = 514,
-                      output_file: BinaryIO = None):
+    def listen_single(self, output_file: BinaryIO = None):
 
         """ Run a single thread TCP network listener and process syslog records
 
@@ -165,13 +218,18 @@ class SyslogServer:
         output_file, received packets will also be written to this file.
 
         Args:
-            host:   host to listen on (valid AF_INET host) or None for default
-            port:   port to listen on (valid AF_INET port)
             output_file:  Binary file open for writing to save received data
 
          """
+
+        host = GlobalConfig.get('syslog_server.listen_address')
+        port = GlobalConfig.get('syslog_server.listen_port')
+
+        # todo: Why?
+
         if host is None:
             host = socket.gethostname()
+        GlobalConfig.debug_log()
 
         server_socket = socket.socket()
 
@@ -189,7 +247,6 @@ class SyslogServer:
 
         server_socket.listen(1)
         server_socket.setblocking(False)
-        GlobalConfig.debug()
 
         log.info(f'Server listening on {host}:{port}')
 

@@ -11,6 +11,7 @@ once its public API is documented.
 ### Added
 - Heartbeats
 - Basic state support
+- Better configuration support.
 
 ### Changed
 - simplify module __init__

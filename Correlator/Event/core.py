@@ -1,8 +1,7 @@
 import csv
 import logging
 from datetime import datetime
-from io import StringIO, TextIOWrapper
-from typing import Dict
+from io import StringIO
 
 log = logging.getLogger(__name__)
 
@@ -119,53 +118,3 @@ class EventProcessor:
             listener.process_event(event)
 
 
-class LogbackListener(EventListener):
-
-    def __init__(self):
-        # todo: Why?
-        pass
-
-    def process_event(self, event: Event):
-        if event.is_error:
-            log.error(f'{event.system}: {event.summary}')
-        elif event.is_warning:
-            log.warning(f'{event.system}: {event.summary}')
-        elif event.is_audit:
-            text = event.render_text()
-            if text:
-                log.info(f'{event.system}: Audit({event.audit_id}):'
-                         f' {text}')
-            else:
-                log.info(f'{event.system}: Audit({event.audit_id}): '
-                         f'{event.summary}')
-        else:   # notice
-            log.info(f'{event.system}: {event.summary}')
-
-
-class CSVListener(EventListener):
-
-    def __init__(self):
-        self.csv_files: Dict[str: TextIOWrapper] = {}
-
-    def process_event(self, event: Event):
-        if not event.is_audit:
-            return
-
-        row = event.csv_row()
-        if not row:
-            return
-
-        csv_name = f'{event.system}-{event.audit_id}'
-        if csv_name not in self.csv_files:
-            from Correlator.util import rotate_file  # Avoid cyclic import
-            rotate_file(csv_name, 'csv')
-            filehandle = open(csv_name + ".csv", "w")
-            self.csv_files[csv_name] = filehandle
-            if filehandle.tell() == 0:
-                header = event.csv_header()
-                if header:
-                    filehandle.write(header + '\n')
-        else:
-            filehandle = self.csv_files[csv_name]
-
-        filehandle.write(row + '\n')
