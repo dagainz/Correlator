@@ -72,9 +72,6 @@ class Module:
     def post_init_state(self):
         return
 
-    def heartbeat(self):
-        return
-
     def handle_record(self, record):
         if self._state is None:
             raise ValueError('No State!')

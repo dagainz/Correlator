@@ -4,9 +4,8 @@ import re
 import select
 import socket
 import pickle
-
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from mako.template import Template
 from time import sleep
 from typing import List, BinaryIO, Callable
@@ -19,25 +18,10 @@ from Correlator.util import ParserError, Module
 log = logging.getLogger(__name__)
 
 SyslogConfig = [
-    {
-
-        'syslog_server.accept_heartbeat_interval': {
-            'default': 5,
-            'desc': 'approximate time in seconds between heartbeats while '
-                    'waiting for a connection'
-        }
-    },
-    {
-        'syslog_server.recv_heartbeat_interval': {
-            'default': 5,
-            'desc': 'approximate time in seconds between heartbeats while '
-                    'waiting for syslog data'
-        }
-    },
-    {
+     {
         'syslog_server.save_state_interval': {
            'default': 5,
-           'desc': 'approximate time in seconds between state saves'
+           'desc': 'Approximate time in minutes between state saves'
         }
     },
     {
@@ -112,8 +96,10 @@ class SyslogServer:
         self.record_filter = record_filter
         self.output_file = None
         self.state_file = state_file
+        self.skip_save_state = False
         self.full_state = {}
         self.state_timestamp = None
+        self.last_tick = None
 
         if state_file is not None:
             self.load_state()
@@ -125,13 +111,9 @@ class SyslogServer:
             module.state = self.full_state[module.module_name]
             module.post_init_state()
 
-        self.accept_heartbeat_interval = GlobalConfig.get(
-            'syslog_server.accept_heartbeat_interval')
-        self.recv_heartbeat_interval = GlobalConfig.get(
-            'syslog_server.recv_heartbeat_interval')
         self.save_state_interval = GlobalConfig.get(
             'syslog_server.save_state_interval')
-        self.buffer_size=GlobalConfig.get('syslog_server.buffer_size')
+        self.buffer_size = GlobalConfig.get('syslog_server.buffer_size')
 
         self.default_syslog_trailer = GlobalConfig.get(
             'syslog_server.default_trailer').encode('utf-8')
@@ -141,14 +123,18 @@ class SyslogServer:
 
     def save_state(self):
 
+        if self.skip_save_state:
+            return
+
         if not self.state_file:
             log.info('Save state: Persistence not enabled')
+            self.skip_save_state = True
             return
 
         with open(self.state_file, 'wb') as output_file:
             pickle.dump(self.full_state, output_file, pickle.HIGHEST_PROTOCOL)
             log.info(f'Save state: state written to {self.state_file}')
-            self.state_timestamp = datetime.now()
+            # self.state_timestamp = datetime.now()
 
     def load_state(self):
         if not self.state_file:
@@ -200,12 +186,7 @@ class SyslogServer:
             data = last + block
             if not data:
                 return
-            last = self._handle_records(data)
-
-    def _heartbeat(self, message):
-        log.debug(f'Heartbeat: {message}')
-        for module in self.modules:
-            module.heartbeat()
+            last = self._process_block(data)
 
     def listen_single(self, output_file: BinaryIO = None):
 
@@ -250,52 +231,54 @@ class SyslogServer:
 
         log.info(f'Server listening on {host}:{port}')
 
-        # Don't block on accept forever - process heartbeats
+        self.last_tick = datetime.now()
 
         while True:
+            timeout = self._seconds_remaining()
             readable, writable, errored = select.select(
-                [server_socket], [], [], self.accept_heartbeat_interval)
+                [server_socket], [], [], timeout)
+
+            now = datetime.now()
+
             if not readable:
-                self._heartbeat('Waiting for connection establishment')
+                # Always tick if we time out, chances are we are at a boundary
+                self._tick(now)
                 continue
-            else:
-                conn, (remote_host, remote_port) = server_socket.accept()
-                log.info(f'Connection from: {remote_host}:{remote_port}')
-                break
+
+            if self.last_tick.minute != now.minute:
+                self._tick(now)
+
+            conn, (remote_host, remote_port) = server_socket.accept()
+            log.info(f'Connection from: {remote_host}:{remote_port}')
+            break
 
         last = b''
 
         self.output_file = output_file
-        self.save_state()
 
         while True:
+            timeout = self._seconds_remaining()
             # Nonblocking reads, for the same reason.
             readable, writable, errored = select.select(
-                [conn], [], [], self.recv_heartbeat_interval)
+                [conn], [], [], timeout)
 
-            # Check to see if we need to save our state to disk.
-            # If either save_state_interval seconds have elapsed since
-            # last save, or if we haven't yet saved state, do it.
-
-            if self.state_timestamp:
-                seconds_delta = (
-                        datetime.now() - self.state_timestamp).total_seconds()
-                if seconds_delta > self.save_state_interval:
-                    self.save_state()
-            else:
-                self.save_state()
+            now = datetime.now()
+            if self.last_tick.minute != now.minute:
+                self._tick(now)
 
             if not readable:
-                self._heartbeat('Waiting for data')
                 continue
+
+            # Otherwise, read
+
             block = conn.recv(self.buffer_size)
 
             if not block:
                 log.error("read block evaluated false")
                 break
 
-            # Find our trailer (syslog record seperator) if
-            # We haven't already.
+            # Determine the syslog trailer (record separator) if we haven't
+            # already
 
             if self.syslog_trailer is None:
                 self.syslog_trailer = self.discover_trailer(block)
@@ -305,10 +288,74 @@ class SyslogServer:
                             'Cannot locate structured data in raw block'))
                     return
 
+            # Combine this new block with whatever was left from the last block
+            # (if any), and process any complete syslog records within it
+
             data = last + block
+
             if not data:
+                # no data to proces, all done
                 break
-            last = self._handle_records(data)
+
+            last = self._process_block(data)
+
+    def _seconds_remaining(self):
+        """Calculate the number of seconds until the minute rolls over"""
+
+        now = datetime.now()
+
+        then = (now + timedelta(minutes=1)).replace(second=0)
+        value = (then-now).seconds
+
+        return value
+
+    def _tick(self, now: datetime):
+        """Processes a tick of the clock.
+
+        If a minute boundary is crossed, it performs its per-minute
+        tasks:
+
+        - Determine if it's time to save state
+        - Run any appropriate task handlers if they were defined by the module
+
+        This is meant to be called at the top of every minute.
+
+        """
+
+        # Check to make sure its necessary. This makes it zero risk to be run
+        # from anywhere
+
+        last_minute = int(self.last_tick.timestamp() / 60)
+        this_minute = int(now.timestamp() / 60)
+
+        if this_minute == last_minute:
+            log.debug('Tick called within the same minute. Ignoring.')
+            return
+
+        self.last_tick = now
+
+        if now.minute % self.save_state_interval == 0:
+            self.save_state()
+
+        # Setup array of actions that are valid for this minute
+
+        actions = [
+            [True, 'task_minute'],
+            [now.minute % 5 == 0, 'task_5_minute'],
+            [now.minute % 10 == 0, 'task_10_minute'],
+            [now.minute % 15 == 0, 'task_15_minute'],
+            [now.minute % 30 == 0, 'task_30_minute'],
+            [now.minute == 0,  'task_1_hour'],
+        ]
+
+        # Go through the modules and call the handlers if they are defined
+
+        for module in self.modules:
+            for (flag, method) in actions:
+                if flag:
+                    handler = getattr(module, method, None)
+                    if callable(handler):
+                        handler(now)
 
     def discover_trailer(self, block):
         raw_block = SyslogRecord.decode_from_raw(block)
@@ -327,7 +374,7 @@ class SyslogServer:
         # Default trailer
         return self.default_syslog_trailer
 
-    def _handle_records(self, data):
+    def _process_block(self, data):
 
         while True:
             pos = data.find(self.syslog_trailer)

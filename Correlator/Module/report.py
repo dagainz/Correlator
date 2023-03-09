@@ -84,3 +84,6 @@ class Report(Module):
 
         return True
 
+    def task_5_minute(self, now):
+        log.debug("In Task 5 minute!!!!!")
+

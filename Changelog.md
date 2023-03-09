@@ -9,14 +9,16 @@ once its public API is documented.
 ## [Unreleased]
 
 ### Added
-- Heartbeats
-- Basic state support
-- Better configuration support.
+- Timed event system for modules
+- Early / basic state support
+- Enhanced configuration support
 
 ### Changed
 - simplify module __init__
+- Event handling file structure
 
 ### Fixed
+- CSV output
 
 ### Deprecated
 

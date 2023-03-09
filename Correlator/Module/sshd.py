@@ -254,10 +254,6 @@ class SSHD(Module):
 
         return None
 
-    def heartbeat(self):
-
-        log.debug('Received module level heartbeat. Nothing to do')
-
     def process_record(self, record):
 
         if record.appname.lower() != 'sshd':
