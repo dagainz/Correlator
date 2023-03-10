@@ -7,7 +7,7 @@ Process: logins
 
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from mako.template import Template
 
@@ -32,14 +32,14 @@ SSHDConfig = [
             'desc': 'Number of login failures per host per module.sshd.login_'
                     'failure_window seconds'
         }
+    },
+    {
+        'module.sshd.max_transaction_age': {
+            'default': 2,
+            'desc': 'How many minutes after creation a transaction is valid for'
+        }
     }
 ]
-
-DEFAULT_FAILURE_WINDOW = 300     # 5 minutes
-FAILURE_WINDOW_PARAM = 'module.sshd.login_failure_window'
-
-DEFAULT_FAILURE_LIMIT = 5
-FAILURE_LIMIT_PARAM = 'module.sshd.login_failure_limit'
 
 
 class SSHDLoginEvent(AuditEvent):
@@ -76,15 +76,18 @@ class SSHDStatsEvent(AuditEvent):
     fields = [
         'login_sessions',
         'denied',
-        'lockouts'
+        'lockouts',
+        'expired',
+        'partial'
     ]
 
     def __init__(self, data):
         super().__init__(self.audit_id, data)
 
         self.template_txt = Template(
-            '${login_sessions} total successful logins, ${denied} unsuccessful'
-            ' logins, ${lockouts} lockouts.')
+            '${login_sessions} total successful login(s), ${denied} '
+            'unsuccessful login(s), ${lockouts} lockout(s). ${expired} '
+            'expired transaction(s), ${partial} partial transaction(s)')
 
 
 @dataclass
@@ -96,6 +99,7 @@ class SSHDState:
     login_sessions: int = 0
     denied: int = 0
     lockouts: int = 0
+    expired: int = 0
 
 
 class SSHD(Module):
@@ -109,14 +113,48 @@ class SSHD(Module):
         self.description = 'OpenSSH Server SSH Logins'
         self.identifier = 'sshd_logins'
         self.module_name = self.identifier
+
         self.model = SSHDState
 
         self.expiry_seconds = GlobalConfig.get(
             'module.sshd.login_failure_window')
         self.failure_limit = GlobalConfig.get(
             'module.sshd.login_failure_limit')
+        self.max_transaction_age = GlobalConfig.get(
+            'module.sshd.max_transaction_age')
 
         self.address_store = None
+
+    def maintenance(self):
+        """Module maintenance
+
+        Remove old transactions from the store.
+
+        """
+
+        log.debug('Running maintenance')
+        total_transactions = 0
+        expired_transactions = 0
+
+        now = datetime.now()
+
+        for transaction in list(self.state.transactions.keys()):
+            total_transactions += 1
+            expires_on = (self.state.transactions[transaction]['timestamp'] +
+                          timedelta(minutes=self.max_transaction_age))
+
+            if now > expires_on:
+                expired_transactions += 1
+                self.state.expired += 1
+                self._clear_state(transaction)
+                log.debug(f'Expired transaction {transaction}')
+
+        if expired_transactions > 0:
+            log.info(f'Expired {expired_transactions} transactions out of '
+                     f'{total_transactions}.')
+
+    def task_minute(self, now):
+        self.maintenance()
 
     def post_init_state(self):
         log.debug('In module post_init_state')
@@ -127,6 +165,7 @@ class SSHD(Module):
         self.state.login_sessions = 0
         self.state.denied = 0
         self.state.lockouts = 0
+        self.state.expired = 0
 
     def statistics(self, reset=False):
 
@@ -134,6 +173,8 @@ class SSHD(Module):
             'login_sessions': self.state.login_sessions,
             'denied': self.state.denied,
             'lockouts': self.state.lockouts,
+            'expired': self.state.expired,
+            'partial': len(self.state.transactions)
 
         }
         self.dispatch_event(SSHDStatsEvent(data))
@@ -156,6 +197,13 @@ class SSHD(Module):
         if state is None:
             return self._set_state(identifier, 0)
         return state
+
+    def _clear_state(self, identifier):
+
+        if self.state.states.get(identifier):
+            del self.state.states[identifier]
+        if self.state.transactions.get(identifier):
+            del self.state.transactions[identifier]
 
     @staticmethod
     def tostring(record):
@@ -268,6 +316,7 @@ class SSHD(Module):
                 self._set_state(identifier, 0)
                 addr = props.get('addr')
                 self.state.transactions[identifier] = {
+                    'timestamp': datetime.now(),
                     'auth': props.get('auth'),
                     'user': props.get('user'),
                     'addr': addr,
@@ -286,6 +335,7 @@ class SSHD(Module):
                 self._set_state(identifier, 0)
 
                 self.state.transactions[identifier] = {
+                    'timestamp': datetime.now(),
                     'auth': None,
                     'user': props.get('user'),
                     'addr': props.get('rhost'),
@@ -300,6 +350,7 @@ class SSHD(Module):
             if props is not None:
                 self._set_state(identifier, 0)
                 self.state.transactions[identifier] = {
+                    'timestamp': datetime.now(),
                     'auth': None,
                     'user': props.get('user'),
                     'addr': props.get('addr'),
