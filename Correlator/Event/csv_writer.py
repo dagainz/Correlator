@@ -62,3 +62,4 @@ class CSVListener(EventListener):
             filehandle = self.csv_files[csv_name]
 
         filehandle.write(row + '\n')
+        filehandle.flush()

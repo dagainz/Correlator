@@ -44,20 +44,20 @@ class Report(Module):
 
     def _clear_stats(self):
         log.debug('Clear Stats')
-        self.state.num_records = 0
-        self.state.size_records = 0
-        self.state.start = None
-        self.state.end = None
+        self.store.num_records = 0
+        self.store.size_records = 0
+        self.store.start = None
+        self.store.end = None
 
     def statistics(self, reset=False):
 
         data = {
-            'start': format_timestamp(self.state.start),
-            'end': format_timestamp(self.state.end),
+            'start': format_timestamp(self.store.start),
+            'end': format_timestamp(self.store.end),
             'duration': self._calculate_duration(
-                self.state.start, self.state.end),
-            'messages': self.state.num_records,
-            'size': self.state.size_records,
+                self.store.start, self.store.end),
+            'messages': self.store.num_records,
+            'size': self.store.size_records,
         }
 
         self.dispatch_event(ReportStatsEvent(data))
@@ -69,21 +69,18 @@ class Report(Module):
 
         recordsize = len(record)
 
-        if self.state.start is None or record.timestamp < self.state.start:
-            self.state.start = record.timestamp
+        if self.store.start is None or record.timestamp < self.store.start:
+            self.store.start = record.timestamp
 
-        if self.state.end is None or record.timestamp > self.state.end:
-            self.state.end = record.timestamp
+        if self.store.end is None or record.timestamp > self.store.end:
+            self.store.end = record.timestamp
 
         self.dispatch_event(
             NoticeEvent(
                 calculate_summary(str(record)), record=record))
 
-        self.state.num_records += 1
-        self.state.size_records += recordsize
+        self.store.num_records += 1
+        self.store.size_records += recordsize
 
         return True
-
-    def task_5_minute(self, now):
-        log.debug("In Task 5 minute!!!!!")
 

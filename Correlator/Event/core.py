@@ -8,10 +8,11 @@ log = logging.getLogger(__name__)
 
 class Event:
     def __init__(self, summary, **kwargs):
+        # todo: Review arg usage
 
         self.system = kwargs.get('system', 'None')
         self.record = kwargs.get('record', None)
-        self.data = kwargs.get('data', None)
+        self.payload = kwargs.get('payload', None)
 
         self.is_error = False
         self.is_warning = False
@@ -22,19 +23,18 @@ class Event:
         self.audit_id = None
 
         self.summary = summary
-        self.datetime_obj = datetime.now()
-        self.timestamp = self.datetime_obj.strftime('%Y-%m-%d %H:%M:%S')
+        self.timestamp = datetime.now()
 
     def __repr__(self):
         raise NotImplementedError
 
     def render_text(self):
-        if self.data and self.template_txt:
-            return self.template_txt.render(**self.data)
+        if self.payload and self.template_txt:
+            return self.template_txt.render(**self.payload)
 
     def render_html(self):
-        if self.data and self.template_html:
-            return self.template_html.render(**self.data)
+        if self.payload and self.template_html:
+            return self.template_html.render(**self.payload)
 
     def csv_header(self):
         return ''
@@ -47,15 +47,54 @@ class AuditEvent(Event):
 
     fields = []
 
-    def __init__(self, audit_id, data):
-        kv = [f'{field}={data[field]}' for field in self.fields]
+    def __init__(self, audit_id, payload):
+
+        # 'timestamp' is mandatory but overridable
+
+        # Ensure it will always be the first field
+
+        self._fields = self.fields.copy()
+
+        try:
+            self._fields.remove('timestamp')
+        except ValueError:
+            pass
+
+        self._fields = ['timestamp'] + self.fields
+
+        # If it has not been set in the payload, set it to now.
+
+        if 'timestamp' not in payload:
+            payload['timestamp'] = datetime.now()
+
+        # CSV module requires strings or numbers. Resolve any other types
+
+        payload = self._resolve_payload(payload)
+
+        kv = [f'{field}={payload[field]}' for field in self._fields]
         self.repr = 'Audit: ' + ', '.join(kv)
 
-        super().__init__(self.repr, data=data)
+        super().__init__(self.repr, payload=payload)
         self.is_audit = True
         self.audit_id = audit_id
         self.buffer = StringIO()
-        self.writer = CSV.DictWriter(self.buffer, self.fields)
+
+        self.writer = CSV.DictWriter(self.buffer, self._fields)
+
+    @staticmethod
+    def _resolve_payload(payload):
+        resolved = {}
+
+        for key in payload:
+            if isinstance(payload[key], (str, int)):
+                resolved[key] = payload[key]
+            elif isinstance(payload[key], datetime):
+                from Correlator.util import format_timestamp
+                resolved[key] = format_timestamp(payload[key])
+            else:
+                raise ValueError('Cannot translate type')
+
+        return resolved
 
     def __repr__(self):
         return self.repr
@@ -68,7 +107,7 @@ class AuditEvent(Event):
         return value
 
     def csv_row(self):
-        self.writer.writerow(self.data)
+        self.writer.writerow(self.payload)
         value = self.buffer.getvalue().strip("\r\n")
         self.buffer.seek(0)
         self.buffer.truncate(0)

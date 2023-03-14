@@ -35,10 +35,11 @@ SSHDConfig = [
     },
     {
         'module.sshd.max_transaction_age': {
-            'default': 2,
+            'default': 2880,
             'desc': 'How many minutes after creation a transaction is valid for'
         }
     }
+
 ]
 
 
@@ -91,7 +92,7 @@ class SSHDStatsEvent(AuditEvent):
 
 
 @dataclass
-class SSHDState:
+class SSHDStore:
 
     host_store: dict = field(default_factory=lambda: {})
     states: dict = field(default_factory=lambda: {})
@@ -114,7 +115,7 @@ class SSHD(Module):
         self.identifier = 'sshd_logins'
         self.module_name = self.identifier
 
-        self.model = SSHDState
+        self.model = SSHDStore
 
         self.expiry_seconds = GlobalConfig.get(
             'module.sshd.login_failure_window')
@@ -138,14 +139,14 @@ class SSHD(Module):
 
         now = datetime.now()
 
-        for transaction in list(self.state.transactions.keys()):
+        for transaction in list(self.store.transactions.keys()):
             total_transactions += 1
-            expires_on = (self.state.transactions[transaction]['timestamp'] +
+            expires_on = (self.store.transactions[transaction]['timestamp'] +
                           timedelta(minutes=self.max_transaction_age))
 
             if now > expires_on:
                 expired_transactions += 1
-                self.state.expired += 1
+                self.store.expired += 1
                 self._clear_state(transaction)
                 log.debug(f'Expired transaction {transaction}')
 
@@ -153,28 +154,32 @@ class SSHD(Module):
             log.info(f'Expired {expired_transactions} transactions out of '
                      f'{total_transactions}.')
 
-    def task_minute(self, now):
+    def timer_handler_hour(self, now):
         self.maintenance()
 
-    def post_init_state(self):
+    def timer_handler_0_0(self, now):
+        log.info('Running nightly maintenance')
+        self.statistics(reset=True)
+
+    def post_init_store(self):
         log.debug('In module post_init_state')
         self.address_store = CountOverTime(
-            self.expiry_seconds, self.state.host_store)
+            self.expiry_seconds, self.store.host_store)
 
     def clear_statistics(self):
-        self.state.login_sessions = 0
-        self.state.denied = 0
-        self.state.lockouts = 0
-        self.state.expired = 0
+        self.store.login_sessions = 0
+        self.store.denied = 0
+        self.store.lockouts = 0
+        self.store.expired = 0
 
     def statistics(self, reset=False):
 
         data = {
-            'login_sessions': self.state.login_sessions,
-            'denied': self.state.denied,
-            'lockouts': self.state.lockouts,
-            'expired': self.state.expired,
-            'partial': len(self.state.transactions)
+            'login_sessions': self.store.login_sessions,
+            'denied': self.store.denied,
+            'lockouts': self.store.lockouts,
+            'expired': self.store.expired,
+            'partial': len(self.store.transactions)
 
         }
         self.dispatch_event(SSHDStatsEvent(data))
@@ -183,27 +188,27 @@ class SSHD(Module):
             self.clear_statistics()
 
     def _has_state(self, identifier):
-        if self.state.states.get(identifier) is not None:
+        if self.store.states.get(identifier) is not None:
             return True
         return False
 
     def _set_state(self, identifier, state):
-        self.state.states[identifier] = state
+        self.store.states[identifier] = state
         return state
 
     def _get_state(self, identifier):
 
-        state = self.state.states.get(identifier)
+        state = self.store.states.get(identifier)
         if state is None:
             return self._set_state(identifier, 0)
         return state
 
     def _clear_state(self, identifier):
 
-        if self.state.states.get(identifier):
-            del self.state.states[identifier]
-        if self.state.transactions.get(identifier):
-            del self.state.transactions[identifier]
+        if self.store.states.get(identifier):
+            del self.store.states[identifier]
+        if self.store.transactions.get(identifier):
+            del self.store.transactions[identifier]
 
     @staticmethod
     def tostring(record):
@@ -315,7 +320,7 @@ class SSHD(Module):
             if props:
                 self._set_state(identifier, 0)
                 addr = props.get('addr')
-                self.state.transactions[identifier] = {
+                self.store.transactions[identifier] = {
                     'timestamp': datetime.now(),
                     'auth': props.get('auth'),
                     'user': props.get('user'),
@@ -334,7 +339,7 @@ class SSHD(Module):
             if props is not None:
                 self._set_state(identifier, 0)
 
-                self.state.transactions[identifier] = {
+                self.store.transactions[identifier] = {
                     'timestamp': datetime.now(),
                     'auth': None,
                     'user': props.get('user'),
@@ -349,7 +354,7 @@ class SSHD(Module):
             props = self.detect_invalid_user(record.detail)
             if props is not None:
                 self._set_state(identifier, 0)
-                self.state.transactions[identifier] = {
+                self.store.transactions[identifier] = {
                     'timestamp': datetime.now(),
                     'auth': None,
                     'user': props.get('user'),
@@ -366,7 +371,7 @@ class SSHD(Module):
             return True
 
         state = self._get_state(identifier)
-        trans = self.state.transactions[identifier]
+        trans = self.store.transactions[identifier]
 
         if state == 0:
             props = self.detect_passwordfailure(record.detail)
@@ -383,7 +388,7 @@ class SSHD(Module):
                     }
                     self.dispatch_event(
                         SSHDLoginsExceededEvent(data))
-                    self.state.lockouts += 1
+                    self.store.lockouts += 1
                 return
             props = self.detect_open(record.detail)
             if props is not None:
@@ -400,7 +405,7 @@ class SSHD(Module):
 
             props = self.detect_close(record.detail)
             if props is not None:
-                self.state.denied += 1
+                self.store.denied += 1
                 # Dispatch SSHDLoginFailedEvent
                 data = {
                     'timestamp': format_timestamp(datetime.now())
@@ -415,7 +420,7 @@ class SSHD(Module):
             props = self.detect_close(record.detail)
             if props is not None:
                 trans['finish'] = record.timestamp
-                self.state.login_sessions += 1
+                self.store.login_sessions += 1
                 # Dispatch SSHDLoginEvent
                 data = {
                     'timestamp': format_timestamp(datetime.now())
@@ -429,7 +434,7 @@ class SSHD(Module):
                 self.dispatch_event(
                     SSHDLoginEvent(data))
 
-                del self.state.transactions[identifier]
-                del self.state.states[identifier]
+                del self.store.transactions[identifier]
+                del self.store.states[identifier]
                 return
             log.debug(f'Skipping State 1 record: {str(record)}')

@@ -40,7 +40,7 @@ class Module:
 
     def __init__(self):
         self._processor = None
-        self.state = None
+        self._store = None
         self.model = None
 
     @property
@@ -51,15 +51,15 @@ class Module:
     def event_processor(self, value):
         self._processor = value
 
-    #todo: What was I thinking?
+    # todo: What was I thinking?
 
     @property
-    def state(self):
-        return self._state
+    def store(self):
+        return self._store
 
-    @state.setter
-    def state(self, value):
-        self._state = value
+    @store.setter
+    def store (self, value):
+        self._store = value
 
     def dispatch_event(self, event: Event):
 
@@ -69,12 +69,12 @@ class Module:
         event.system = self.module_name
         self._processor.dispatch_event(event)
 
-    def post_init_state(self):
+    def post_init_store(self):
         return
 
     def handle_record(self, record):
-        if self._state is None:
-            raise ValueError('No State!')
+        if self._store is None:
+            raise ValueError('No Store!')
         self.process_record(record)
 
     def process_record(self, record):

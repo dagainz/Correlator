@@ -10,6 +10,7 @@ plugins:
 
 nav:
   - Home: index.md
+  - Features: features.md
   - Why: why.md
   - Quick start: quickstart.md
   - Architecture: architecture.md

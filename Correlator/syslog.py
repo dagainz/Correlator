@@ -1,9 +1,9 @@
 import iso8601
 import logging
+import pickle
 import re
 import select
 import socket
-import pickle
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from mako.template import Template
@@ -19,9 +19,9 @@ log = logging.getLogger(__name__)
 
 SyslogConfig = [
      {
-        'syslog_server.save_state_interval': {
+        'syslog_server.save_store_interval': {
            'default': 5,
-           'desc': 'Approximate time in minutes between state saves'
+           'desc': 'Time in minutes in between saves of the persistence store'
         }
     },
     {
@@ -84,72 +84,71 @@ class SyslogServer:
     """
     def __init__(self, modules: List[Module], processor: EventProcessor,
                  discovery_method: Callable[[RawSyslogRecord], bytes] = None,
-                 record_filter=None, state_file=None):
+                 record_filter=None, store_file: str = None):
 
         self.modules = modules
         self.processor = processor
         # self.buffer_size: int = DEFAULT_BUFFER_SIZE
         self.syslog_trailer = None
         self.trailer_discovery_method = discovery_method
-        self.bind_retry = 1
         self.record_num = 0
         self.record_filter = record_filter
         self.output_file = None
-        self.state_file = state_file
-        self.skip_save_state = False
-        self.full_state = {}
-        self.state_timestamp = None
+        self.store_file: str = store_file
+        self.skip_save_store = False
+        self.full_store = {}
+        self.store_timestamp = None
         self.last_tick = None
 
-        if state_file is not None:
-            self.load_state()
+        if store_file is not None:
+            self.load_store()
 
         for module in modules:
             module.event_processor = processor
-            if module.module_name not in self.full_state:
-                self.full_state[module.module_name] = module.model()
-            module.state = self.full_state[module.module_name]
-            module.post_init_state()
+            if module.module_name not in self.full_store:
+                self.full_store[module.module_name] = module.model()
+            module.store = self.full_store[module.module_name]
+            module.post_init_store()
 
-        self.save_state_interval = GlobalConfig.get(
-            'syslog_server.save_state_interval')
+        self.save_store_interval = GlobalConfig.get(
+            'syslog_server.save_store_interval')
         self.buffer_size = GlobalConfig.get('syslog_server.buffer_size')
 
         self.default_syslog_trailer = GlobalConfig.get(
             'syslog_server.default_trailer').encode('utf-8')
 
-    def debug_dump_state(self):
-        log.debug(repr(self.full_state))
+    def debug_dump_store(self):
+        log.debug(repr(self.full_store))
 
-    def save_state(self):
+    def save_store(self):
 
-        if self.skip_save_state:
+        if self.skip_save_store:
             return
 
-        if not self.state_file:
-            log.info('Save state: Persistence not enabled')
-            self.skip_save_state = True
+        if not self.store_file:
+            log.info('Save store: Persistence not enabled')
+            self.skip_save_store = True
             return
 
-        with open(self.state_file, 'wb') as output_file:
-            pickle.dump(self.full_state, output_file, pickle.HIGHEST_PROTOCOL)
-            log.info(f'Save state: state written to {self.state_file}')
-            # self.state_timestamp = datetime.now()
+        with open(self.store_file, 'wb') as output_file:
+            pickle.dump(self.full_store, output_file, pickle.HIGHEST_PROTOCOL)
+            log.info(f'Save store: store written to {self.store_file}')
+            # self.store_timestamp = datetime.now()
 
-    def load_state(self):
-        if not self.state_file:
-            log.info("Load state: Persistence not enabled.")
+    def load_store(self):
+        if not self.store_file:
+            log.info("Load store: Persistence not enabled.")
             return
 
         try:
-            with open(self.state_file, 'rb') as input_file:
-                self.full_state = pickle.load(input_file)
-                log.info(f'Load state: State loaded from file '
-                         f'{self.state_file}.')
+            with open(self.store_file, 'rb') as input_file:
+                self.full_store = pickle.load(input_file)
+                log.info(f'Load store: Store loaded from file '
+                         f'{self.store_file}.')
         except FileNotFoundError:
             log.info(
-                f'Load state: State file {self.state_file} does not exist. '
-                f'Initializing new state')
+                f'Load store: Store file {self.store_file} does not exist. '
+                f'Initializing new store')
 
     def from_file(self, input_file: BinaryIO, output_file: BinaryIO = None):
         """ Processes saved syslog data from a file
@@ -213,18 +212,8 @@ class SyslogServer:
         GlobalConfig.debug_log()
 
         server_socket = socket.socket()
-
-        while True:
-            try:
-                server_socket.bind((host, port))
-                break
-            except OSError as e:
-                if e.strerror.lower() == 'address already in use':
-                    log.error(f'Address {host}:{port} already in use. Will '
-                              f'retry in {self.bind_retry} second(s)')
-                    sleep(self.bind_retry)
-                else:
-                    raise
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.bind((host, port))
 
         server_socket.listen(1)
         server_socket.setblocking(False)
@@ -315,7 +304,7 @@ class SyslogServer:
         If a minute boundary is crossed, it performs its per-minute
         tasks:
 
-        - Determine if it's time to save state
+        - Determine if it's time to save store
         - Run any appropriate task handlers if they were defined by the module
 
         This is meant to be called at the top of every minute.
@@ -323,7 +312,8 @@ class SyslogServer:
         """
 
         # Check to make sure its necessary. This makes it zero risk to be run
-        # from anywhere
+        # from anywhere, even if it may have been called already for this
+        # minute.
 
         last_minute = int(self.last_tick.timestamp() / 60)
         this_minute = int(now.timestamp() / 60)
@@ -334,18 +324,22 @@ class SyslogServer:
 
         self.last_tick = now
 
-        if now.minute % self.save_state_interval == 0:
-            self.save_state()
+        # check to see if it's time to save the persistence store
+
+        if now.minute % self.save_store_interval == 0:
+            self.save_store()
 
         # Setup array of actions that are valid for this minute
 
         actions = [
-            [True, 'task_minute'],
-            [now.minute % 5 == 0, 'task_5_minute'],
-            [now.minute % 10 == 0, 'task_10_minute'],
-            [now.minute % 15 == 0, 'task_15_minute'],
-            [now.minute % 30 == 0, 'task_30_minute'],
-            [now.minute == 0,  'task_1_hour'],
+            [True, 'timer_handler_minute'],
+            [True, f'timer_handler_{now.hour}_{now.minute}'],
+            [now.minute % 5 == 0, 'timer_handler_5_minutes'],
+            [now.minute % 10 == 0, 'timer_handler_10_minutes'],
+            [now.minute % 15 == 0, 'timer_handler_15_minutes'],
+            [now.minute % 30 == 0, 'timer_handler_30_minutes'],
+            [now.minute == 0,  'timer_handler_1_hour'],
+
         ]
 
         # Go through the modules and call the handlers if they are defined

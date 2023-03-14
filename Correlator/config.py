@@ -9,7 +9,6 @@ class ConfigStore:
         pass
 
     def add(self, item):
-        log.debug(f'In add: {item}')
 
         if isinstance(item, list):
             items = item

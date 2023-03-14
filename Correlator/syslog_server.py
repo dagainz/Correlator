@@ -13,12 +13,12 @@ import os
 import sys
 from datetime import datetime
 
+from Correlator.config import GlobalConfig
 from Correlator.Event.core import EventProcessor
 from Correlator.Module.report import Report
-from Correlator.syslog import SyslogServer, SyslogStatsEvent, SyslogConfig
+from Correlator.syslog import SyslogServer, SyslogStatsEvent
 from Correlator.util import (
     setup_root_logger, capture_filename, format_timestamp)
-from Correlator.config import GlobalConfig
 
 
 def cli():
@@ -56,9 +56,9 @@ def cli():
         action='store_true', help='Activate ssh login module')
 
     parser.add_argument(
-        '--state-file',
-        metavar='filename', help='State file'
-    )
+        '--store-file',
+        metavar='filename', help='File to save and load the persistence store '
+                                 'from')
 
     parser.add_argument(
         '--csv',
@@ -86,7 +86,7 @@ def cli():
     csv_module = None
 
     if cmd_args.csv != '.':     # . = not on command line
-        from Correlator.Event.csv import CSVListener
+        from Correlator.Event.csv_writer import CSVListener
         if cmd_args.csv is not None:
             log.info(f'Writing CSV files: {cmd_args.csv}')
             csv_module = CSVListener([x.strip() for x in cmd_args.csv.split()])
@@ -117,7 +117,6 @@ def cli():
     # Setup list of logic modules
 
     modules = []
-    state = {}
 
     # Add all modules specified on the command line
 
@@ -135,7 +134,7 @@ def cli():
     if cmd_args.host:
         GlobalConfig.set('syslog_server.listen_address', cmd_args.host)
 
-    server = SyslogServer(modules, processor, state_file=cmd_args.state_file)
+    server = SyslogServer(modules, processor, store_file=cmd_args.store_file)
 
     start = datetime.now()
 
@@ -151,8 +150,7 @@ def cli():
                 server.listen_single(output_file=output_file)
             except KeyboardInterrupt:
                 log.info('Shutting down')
-                server.save_state()
-                log.debug(f'Final state: {server.full_state}')
+                server.save_store()
                 stop = True
 
     end = datetime.now()
