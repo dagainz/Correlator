@@ -127,13 +127,14 @@ class SSHD(Module):
         self.address_store = None
 
     def maintenance(self):
-        """Module maintenance
+        """ perform module maintenance
 
-        Remove old transactions from the store.
+        Gaps in logs can result in transactions sticking around forever.
+        This code removes old transactions from the store.
 
         """
 
-        log.debug('Running maintenance')
+        log.debug('Running maintenance: Expiring old transactions')
         total_transactions = 0
         expired_transactions = 0
 
@@ -153,7 +154,9 @@ class SSHD(Module):
         if expired_transactions > 0:
             log.info(f'Expired {expired_transactions} transactions out of '
                      f'{total_transactions}.')
-
+            # todo: Evaluate sending an event with details of all expired
+            #  transactions.
+            
     def timer_handler_hour(self, now):
         self.maintenance()
 
@@ -162,7 +165,8 @@ class SSHD(Module):
         self.statistics(reset=True)
 
     def post_init_store(self):
-        log.debug('In module post_init_state')
+        log.debug(
+            'post_init_store: Initializing host counter from persistence store')
         self.address_store = CountOverTime(
             self.expiry_seconds, self.store.host_store)
 

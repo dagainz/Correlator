@@ -34,8 +34,9 @@ SyslogConfig = [
     {
         'syslog_server.default_trailer': {
             'default': '\n',
-            'desc': 'The syslog trailer to use if syslog trailer discovery '
-                    'cannot determine the trailer.'
+            'desc': 'The default syslog record separator to use if trailer '
+                    'discovery can\'t conclusively determine the record '
+                    'separator in use'
         }
     },
     {

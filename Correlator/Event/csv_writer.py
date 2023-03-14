@@ -32,7 +32,7 @@ class CSVListener(EventListener):
                 self.write_files.add(file)
 
         self.csv_dir = abspath(GlobalConfig.get('csv.output_directory'))
-        log.debug(f'Writing CSV files to: {self.csv_dir}')
+        log.debug(f'Calculated CSV path: {self.csv_dir}')
 
     def process_event(self, event: Event):
         if not event.is_audit:
