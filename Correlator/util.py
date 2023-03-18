@@ -12,6 +12,9 @@ MAX_BREAK_SEARCH = 10
 log = logging.getLogger(__name__)
 
 
+class Instance:
+    Version = '0.0.4'
+
 class ParserError(Exception):
     pass
 
@@ -127,6 +130,12 @@ def format_timestamp(date: datetime):
         return date.strftime('%Y-%m-%d %H:%M:%S')
 
 
+def template_dir():
+    return os.path.join(
+        os.path.dirname(__file__),
+        'Templates')
+
+
 def calculate_summary(detail: str):
     """Generates a summary line from a string
 
@@ -150,16 +159,19 @@ def calculate_summary(detail: str):
     # if a word boundary is found in the last MAX_BREAK_SEARCH characters,
     # use it to trim the string.
 
+
     first = MAX_SUMMARY-1
     last = first - MAX_BREAK_SEARCH
     if last < 0:
         last = 0
 
+    # todo: .rfind()
+
     for i in range(first, last, -1):
         if detail[i] == ' ':
             return detail[0:i+1]
 
-    # No boundary found, simply return the max size
+    # No boundary found, return the max size
 
     return detail[0:MAX_SUMMARY]
 

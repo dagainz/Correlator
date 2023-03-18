@@ -45,30 +45,58 @@ SSHDConfig = [
 
 class SSHDLoginEvent(AuditEvent):
 
-    audit_id = 'sshd_login'
+    audit_id = 'sshd.login'
     fields = ['timestamp', 'auth', 'user', 'addr', 'port', 'key', 'failures',
               'start', 'finish', 'duration']
 
     def __init__(self, data):
-        super().__init__(self.audit_id, data)
+
+        table = [
+                ['Login ID:', '${user}'],
+                ['Remote host:', '${addr}:${port}'],
+                ['Key fingerprint:', '${key}'],
+                ['Auth type:', '${auth}'],
+                ['Number of failures:', '${failures}'],
+                ['Session start:', '${start}'],
+                ['Session end:', '${finish}'],
+                ['Session duration:', '${duration}'],
+            ]
+
+        super().__init__(self.audit_id, data, table_data=table)
+        self.audit_desc = ('A user ssh login session was established and '
+                           'terminated normally')
 
 
 class SSHDLoginFailedEvent(AuditEvent):
 
-    audit_id = 'sshd_login_failed'
+    audit_id = 'sshd.login-failed'
     fields = ['timestamp', 'user', 'addr', 'port', 'failures']
 
     def __init__(self, data):
-        super().__init__(self.audit_id, data)
+        table_data = [
+            ['Attempted login ID:', '${user}'],
+            ['Remote host:', '${addr}:${port}'],
+            ['Number of failures:', '${failures}'],
+        ]
+        super().__init__(self.audit_id, data, table_data=table_data)
+
+        self.is_error = True
+        self.audit_desc = ('A login attempt was rejected because of too many '
+                           'attempts with an incorrect password')
 
 
 class SSHDLoginsExceededEvent(AuditEvent):
 
-    audit_id = 'sshd_login_retry'
+    audit_id = 'sshd.login-retry'
     fields = ['timestamp', 'host']
 
     def __init__(self, data):
-        super().__init__(self.audit_id, data)
+        table_data = [
+            ['Remote Host:', '${host}']
+        ]
+        super().__init__(self.audit_id, data, table_data=table_data)
+        self.audit_desc = (
+            'A remote host has exceeded the allowed number of login attempts')
 
 
 class SSHDStatsEvent(AuditEvent):
@@ -83,12 +111,22 @@ class SSHDStatsEvent(AuditEvent):
     ]
 
     def __init__(self, data):
-        super().__init__(self.audit_id, data)
+        table_data = [
+            ['Login sessions:', '${login_sessions}'],
+            ['Denied logins:', '${denied}'],
+            ['Host lockouts:', '${lockouts}'],
+            ['Expired transactions', '${expired}'],
+            ['Partial transactions', '${partial}'],
+        ]
 
-        self.template_txt = Template(
-            '${login_sessions} total successful login(s), ${denied} '
-            'unsuccessful login(s), ${lockouts} lockout(s). ${expired} '
-            'expired transaction(s), ${partial} partial transaction(s)')
+        super().__init__(self.audit_id, data, table_data=table_data)
+
+        self.audit_desc = 'Statistics for the SSH Logins module'
+
+        # self.template_txt = Template(
+        #     '${login_sessions} total successful login(s), ${denied} '
+        #     'unsuccessful login(s), ${lockouts} lockout(s). ${expired} '
+        #     'expired transaction(s), ${partial} partial transaction(s)')
 
 
 @dataclass
@@ -156,7 +194,7 @@ class SSHD(Module):
                      f'{total_transactions}.')
             # todo: Evaluate sending an event with details of all expired
             #  transactions.
-            
+
     def timer_handler_hour(self, now):
         self.maintenance()
 

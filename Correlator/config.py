@@ -22,14 +22,23 @@ class ConfigStore:
         if parameter not in self.store:
             raise ValueError(f'Unknown configuration parameter: {parameter}')
 
-    def set(self, parameter, value):
+    def set(self, parameter: str, value):
         self._assert_parameter(parameter)
         self.store[parameter]['value'] = value
 
-    def get(self, parameter):
+    def get(self, parameter: str):
         self._assert_parameter(parameter)
         return self.store[parameter].get(
             'value', self.store[parameter].get('default'))
+
+    def get_values(self, parameters: list):
+        ret = []
+        for parameter in parameters:
+            self._assert_parameter(parameter)
+            ret.append(
+                self.store[parameter].get(
+                    'value', self.store[parameter].get('default')))
+        return ret
 
     def list(self):
         """Returns list of list all configuration parameters

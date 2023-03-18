@@ -408,11 +408,20 @@ class SyslogStatsEvent(AuditEvent):
     fields = ['start', 'end', 'duration']
 
     def __init__(self, data):
-        super().__init__(self.audit_id, data)
 
-        self.template_txt = Template(
-            'Sever session started at ${start} and ended at ${end} for a '
-            'total duration of ${duration}')
+        table_data = [
+            ['Session Started:', '${start}'],
+            ['Session Ended:', '${end}'],
+            ['Session Duration:', '${duration}'],
+        ]
+
+        super().__init__(self.audit_id, data, table_data)
+
+        self.audit_desc = 'Statistics for the Syslog server'
+
+        # self.template_txt = Template(
+        #     'Sever session started at ${start} and ended at ${end} for a '
+        #     'total duration of ${duration}')
 
 
 class SyslogRecord:

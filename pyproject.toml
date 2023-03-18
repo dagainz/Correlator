@@ -11,7 +11,9 @@ version = "0.0.4"
 dependencies = [
     "iso8601",
     "Mako",
-    "MarkupSafe"
+    "MarkupSafe",
+    "setuptools>=67.0.0",
+
 ]
 authors = [
     { name = "Tim Pushor", email = 'tim.pushor@gmail.com' }
@@ -19,6 +21,9 @@ authors = [
 maintainers = [
     { name = "Tim Pushor", email = 'tim.pushor@gmail.com' }
 ]
+
+[tool.setuptools.package-data]
+"*" = ["*.mako"]
 
 [tool.setuptools.packages.find]
 include = ["Correlator*"]

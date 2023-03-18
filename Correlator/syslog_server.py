@@ -61,6 +61,10 @@ def cli():
                                  'from')
 
     parser.add_argument(
+        '--email',
+        metavar='address', help='Enable email handler and send emails to this '
+                                'address')
+    parser.add_argument(
         '--csv',
         metavar='filename', nargs='?', default='.',
         help='Write audit records as rows in CSV files'
@@ -113,6 +117,10 @@ def cli():
 
     if csv_module is not None:
         processor.register_listener(csv_module)
+    if cmd_args.email:
+        from Correlator.Event.mail_sender import Email
+        GlobalConfig.set('email.to', cmd_args.email)
+        processor.register_listener(Email())
 
     # Setup list of logic modules
 

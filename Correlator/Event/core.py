@@ -2,6 +2,8 @@ import csv as CSV
 import logging
 from datetime import datetime
 from io import StringIO
+from mako.template import Template
+
 
 log = logging.getLogger(__name__)
 
@@ -13,17 +15,26 @@ class Event:
         self.system = kwargs.get('system', 'None')
         self.record = kwargs.get('record', None)
         self.payload = kwargs.get('payload', None)
+        self.table_data = kwargs.get('table_data', None)
 
         self.is_error = False
         self.is_warning = False
         self.is_audit = False
 
-        self.template_txt = None
-        self.template_html = None
         self.audit_id = None
+        self.audit_desc = None
 
         self.summary = summary
         self.timestamp = datetime.now()
+
+        # Auto generate text and html tables
+
+        if self.table_data is not None:
+            self.template_txt = Template(self.text_datatable(self.table_data))
+            self.template_html = Template(self.html_datatable(self.table_data))
+        else:
+            self.template_txt = None
+            self.template_html = None
 
     def __repr__(self):
         raise NotImplementedError
@@ -42,12 +53,39 @@ class Event:
     def csv_row(self):
         return ''
 
+    @staticmethod
+    def html_datatable(rows, cssclass='datatable', header=None):
+        html = f'<table class="{cssclass}">'
+        if header is not None:
+            html += "<tr>"
+            for cell in header:
+                html += f"<th>{cell}</th>"
+            html += "</tr>"
+
+        for row in rows:
+            html += "<tr>"
+            for cell in row:
+                html += f"<td>{cell}</td>"
+            html += "</tr>"
+
+        html += "</table>"
+        return html
+
+    @staticmethod
+    def text_datatable(rows):
+        text = ''
+        for row in rows:
+            for cell in row:
+                text += cell + " "
+            text += "\n"
+        return text
+
 
 class AuditEvent(Event):
 
     fields = []
 
-    def __init__(self, audit_id, payload):
+    def __init__(self, audit_id, payload, table_data):
 
         # 'timestamp' is mandatory but overridable
 
@@ -72,9 +110,9 @@ class AuditEvent(Event):
         payload = self._resolve_payload(payload)
 
         kv = [f'{field}={payload[field]}' for field in self._fields]
-        self.repr = 'Audit: ' + ', '.join(kv)
+        self.repr = audit_id + ': ' + ', '.join(kv)
 
-        super().__init__(self.repr, payload=payload)
+        super().__init__(self.repr, payload=payload, table_data=table_data)
         self.is_audit = True
         self.audit_id = audit_id
         self.buffer = StringIO()
@@ -91,8 +129,10 @@ class AuditEvent(Event):
             elif isinstance(payload[key], datetime):
                 from Correlator.util import format_timestamp
                 resolved[key] = format_timestamp(payload[key])
+            elif payload[key] is None:
+                resolved[key] = 'None'
             else:
-                raise ValueError('Cannot translate type')
+                raise ValueError(f'Cannot translate type: {type(payload[key])}')
 
         return resolved
 

@@ -13,12 +13,6 @@ class LogbackListener(EventListener):
         elif event.is_warning:
             log.warning(f'{event.system}: {event.summary}')
         elif event.is_audit:
-            text = event.render_text()
-            if text:
-                log.info(f'{event.system}: Audit({event.audit_id}):'
-                         f' {text}')
-            else:
-                log.info(f'{event.system}: Audit({event.audit_id}): '
-                         f'{event.summary}')
+            log.info(repr(event))
         else:   # notice
             log.info(f'{event.system}: {event.summary}')
