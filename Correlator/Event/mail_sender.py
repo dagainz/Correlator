@@ -2,6 +2,7 @@ import logging
 import smtplib
 import os
 
+import mako.runtime
 from mako.template import Template
 from email import message
 from email.mime.multipart import MIMEMultipart
@@ -12,6 +13,8 @@ from Correlator.config import GlobalConfig
 from Correlator.util import template_dir, Instance
 
 log = logging.getLogger(__name__)
+
+mako.runtime.UNDEFINED = ''
 
 EmailConfig = {
         'email.smtp_server': {
@@ -58,17 +61,19 @@ class Email(EventListener):
             if not self.handle_error:
                 log.debug('Ignoring event type ERROR')
                 return
-            template_name = 'email-error.mako'
+            base_def = 'error'
         elif event.is_warning:
             if not self.handle_warning:
                 log.debug('Ignoring event type WARNING')
                 return
-            template_name = 'email-warming.mako'
+            base_def = 'warning'
         else:
             if not self.handle_notice:
                 log.debug('Ignoring event type NOTICE')
                 return
-            template_name = 'email-notice.mako'
+            base_def = 'notice'
+
+        template_name = 'email.mako'
 
         html_detail = event.render_html()
         text_detail = event.render_text()
@@ -99,11 +104,11 @@ class Email(EventListener):
         if html_detail and self.html_email:
             # Render HTML message body
             html_content = Template(
-                filename=template_path).get_def('body_html').render(**data)
+                filename=template_path).get_def(f'{base_def}_html').render(**data)
 
         email_template = Template(filename=template_path)
-        text_content = email_template.get_def('body_text').render(**data)
-        subject = email_template.get_def('subject').render(**data)
+        text_content = email_template.get_def(f'{base_def}_text').render(**data)
+        subject = email_template.get_def(f'{base_def}_subject').render(**data)
 
         if html_content:
             msg = MIMEMultipart('alternative')
