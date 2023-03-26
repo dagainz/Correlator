@@ -29,6 +29,10 @@ EmailConfig = {
             'default': 'nobody',
             'desc': 'Value of the Email To: Field'
         },
+        'email.html': {
+            'default': True,
+            'desc': 'Send HTML formatted email'
+        },
 }
 
 
@@ -40,7 +44,8 @@ class Email(EventListener):
                  handle_notice=True):
 
         self.template_dir = template_dir()
-        self.html_email = True
+        self.html_email = GlobalConfig.get(
+            'email.html')
 
         self.smtp_server = GlobalConfig.get(
             'email.smtp_server')
@@ -104,7 +109,8 @@ class Email(EventListener):
         if html_detail and self.html_email:
             # Render HTML message body
             html_content = Template(
-                filename=template_path).get_def(f'{base_def}_html').render(**data)
+                filename=template_path).get_def(
+                f'{base_def}_html').render(**data)
 
         email_template = Template(filename=template_path)
         text_content = email_template.get_def(f'{base_def}_text').render(**data)

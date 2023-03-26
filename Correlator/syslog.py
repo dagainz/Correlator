@@ -6,8 +6,6 @@ import select
 import socket
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from mako.template import Template
-from time import sleep
 from typing import List, BinaryIO, Callable
 
 from Correlator.config import GlobalConfig
@@ -418,10 +416,6 @@ class SyslogStatsEvent(AuditEvent):
         super().__init__(self.audit_id, data, table_data)
 
         self.audit_desc = 'Statistics for the Syslog server'
-
-        # self.template_txt = Template(
-        #     'Sever session started at ${start} and ended at ${end} for a '
-        #     'total duration of ${duration}')
 
 
 class SyslogRecord:

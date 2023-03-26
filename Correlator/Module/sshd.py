@@ -9,7 +9,6 @@ import logging
 import re
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
-from mako.template import Template
 
 from Correlator.Event.core import AuditEvent
 from Correlator.util import (
@@ -111,6 +110,7 @@ class SSHDStatsEvent(AuditEvent):
     ]
 
     def __init__(self, data):
+
         table_data = [
             ['Login sessions:', '${login_sessions}'],
             ['Denied logins:', '${denied}'],
@@ -122,11 +122,6 @@ class SSHDStatsEvent(AuditEvent):
         super().__init__(self.audit_id, data, table_data=table_data)
 
         self.audit_desc = 'Statistics for the SSH Logins module'
-
-        # self.template_txt = Template(
-        #     '${login_sessions} total successful login(s), ${denied} '
-        #     'unsuccessful login(s), ${lockouts} lockout(s). ${expired} '
-        #     'expired transaction(s), ${partial} partial transaction(s)')
 
 
 @dataclass

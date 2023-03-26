@@ -1,7 +1,6 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from mako.template import Template
 
 from Correlator.util import Module, format_timestamp, calculate_summary
 from Correlator.Event.core import NoticeEvent, AuditEvent
@@ -15,12 +14,18 @@ class ReportStatsEvent(AuditEvent):
     fields = ['start', 'end', 'duration', 'messages', 'size']
 
     def __init__(self, data):
-        super().__init__(self.audit_id, data)
 
-        self.template_txt = Template(
-            'Syslog record reporting started at ${start} and ended at ${end} '
-            'for a duration of ${duration}. ${messages} total messages '
-            '(${size} bytes) were processed.')
+        table = [
+                ['Session start:', '${start}'],
+                ['Session end:', '${end}'],
+                ['Session duration:', '${duration}'],
+                ['Number of log records:', '${messages}'],
+                ['Total size (bytes):', '${size}']
+            ]
+
+        super().__init__(self.audit_id, data, table_data=table)
+
+        self.audit_desc = 'Statistics for the report-only module'
 
 
 @dataclass
