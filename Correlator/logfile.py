@@ -1,7 +1,7 @@
 import re
 from mako.template import Template
 
-from Correlator.Event.event import (AuditEvent, EventProcessor)
+from Correlator.Event.core import (AuditEvent, EventProcessor)
 from Correlator.util import ParserError, Module, format_timestamp
 
 

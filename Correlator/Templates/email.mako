@@ -57,7 +57,7 @@
 </head>
 <body>
 <p>Hello</p>
-<p>This is a automated notification. Please do not reply, as this email address is not monitored.</p>
+<p>This is an automated notification. Please do not reply, as this email address is not monitored.</p>
 <p>The notification severity is: <span class="${severity}">${description}</span>.</p>
 <hr />
 <p><strong>${summary}</strong></p>

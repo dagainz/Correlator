@@ -16,7 +16,7 @@ from Correlator.util import ParserError, Module
 log = logging.getLogger(__name__)
 
 SyslogConfig = [
-     {
+    {
         'syslog_server.save_store_interval': {
            'default': 5,
            'desc': 'Time in minutes in between saves of the persistence store'
@@ -54,6 +54,151 @@ SyslogConfig = [
 ]
 
 
+class SyslogRecord:
+
+    main_regex = (
+            r'<(?P<priority>\d+?)>(?P<version>\d) (?P<timestamp_str>.+?) '
+            r'(?P<hostname>.+?) (?P<appname>.+?) (?P<proc_id>.+?) '
+            r'(?P<msg_id>.+?) (?P<rest>.+)')
+
+    @staticmethod
+    def decode_from_raw(block):
+        """Parses the data-only* portion of a syslog record in a raw data block.
+
+        This is used to parse the first block to be used for syslog trailer
+        discovery.
+
+        * data-only means all properties up to but not including detail.
+
+        """
+
+        decoded = block.decode('utf-8')
+        m = re.match(SyslogRecord.main_regex, decoded)
+        if not m:
+            return None
+
+        try:
+            _, structured_data = SyslogRecord._parse_sdata(m.group('rest'))
+        except ParserError:
+            structured_data = {}
+
+        return RawSyslogRecord(
+            timestamp=m.group('timestamp_str'),
+            priority=m.group('priority'),
+            hostname=m.group('hostname'),
+            appname=m.group('appname'),
+            proc_id=m.group('proc_id'),
+            msg_id=m.group('msg_id'),
+            structured_data=structured_data
+        )
+
+    def __init__(self, record):
+
+        self.original_record = record
+        self.record_length = len(record)
+        self.error = None
+
+        # todo This needs to be handled better
+
+        pos = record.find(b'\xef\xbb\xbf')
+
+        if pos >= 0:
+            decoded_record = (
+                    record[0:pos].decode('utf-8')
+                    + record[pos + 3:].decode('utf-8'))
+        else:
+            decoded_record = record.decode('utf-8')
+
+        self.m = re.match(self.main_regex, decoded_record)
+
+        if not self.m:
+            self.error = "1st stage parse failure"
+            return
+
+        self.timestamp_str = self.m.group('timestamp_str')
+        try:
+            timestamp_tz = iso8601.parse_date(self.timestamp_str)
+        except iso8601.ParseError:
+            self.error = 'Cannot parse timestamp'
+            return
+
+        self.timestamp = timestamp_tz.replace(tzinfo=None)
+
+        self.priority = self.m.group('priority')
+        self.hostname = self.m.group('hostname')
+        self.appname = self.m.group('appname')
+        self.proc_id = self.m.group('proc_id')
+        self.msg_id = self.m.group('msg_id')
+
+        try:
+            self.detail, self.structured_data = self._parse_sdata(
+                self.m.group('rest'))
+        except ParserError as e:
+            self.error = f'Cannot parse structured data: {e}'
+            return
+
+    @staticmethod
+    def _parse_sdata(dataline):
+
+        has_structured_data = False
+        element_id = None
+        state = 1
+        parsed_struc = {}
+
+        def add_param(eid, param_key, param_value):
+            if element_id not in parsed_struc:
+                parsed_struc[eid] = {}
+
+            parsed_struc[eid][param_key] = param_value
+
+        while True:
+            if not dataline:
+                raise ParserError('Ran out of content')
+            if state == 1:
+
+                if not has_structured_data and dataline[0:2] == '- ':
+                    return dataline[2:], {}
+
+                m = re.match(r'\[(\w+) (.*)', dataline)
+                if not m:
+                    if not has_structured_data:
+                        raise ParserError(
+                            f'SD-DATA {dataline} parse failed ')
+                    else:
+                        return dataline.lstrip(), parsed_struc
+                element_id = m.group(1)
+                dataline = m.group(2)
+                state = 2
+                continue
+            elif state == 2:
+                m = re.match(r'](.*)', dataline)
+                if m:
+                    dataline = m.group(1)
+                    state = 1
+                    continue
+                m = re.match(r'(.+?)="([^"]*)"\s*(.*)', dataline)
+
+                if m:
+                    add_param(element_id, m.group(1), m.group(2))
+                    has_structured_data = True
+                    dataline = m.group(3)
+                    continue
+                else:
+                    raise ParserError(
+                        f'SD-DATA Key/Value {dataline} parse failed')
+
+    def __repr__(self):
+        # todo: why?
+        return f'{self.m.groupdict()} ({self.structured_data})'
+
+    def __str__(self):
+        return (f'{self.timestamp.strftime("%Y-%m-%d %H:%M:%S")}: '
+                f'{self.hostname} {self.appname} {self.proc_id} {self.detail}')
+
+    def __len__(self):
+        return self.record_length
+
+
 @dataclass
 class RawSyslogRecord:
     timestamp: str
@@ -83,11 +228,11 @@ class SyslogServer:
     """
     def __init__(self, modules: List[Module], processor: EventProcessor,
                  discovery_method: Callable[[RawSyslogRecord], bytes] = None,
-                 record_filter=None, store_file: str = None):
+                 record_filter=None, store_file: str = None,
+                 record: type = SyslogRecord):
 
         self.modules = modules
         self.processor = processor
-        # self.buffer_size: int = DEFAULT_BUFFER_SIZE
         self.syslog_trailer = None
         self.trailer_discovery_method = discovery_method
         self.record_num = 0
@@ -98,6 +243,7 @@ class SyslogServer:
         self.full_store = {}
         self.store_timestamp = None
         self.last_tick = None
+        self.record = record
 
         if store_file is not None:
             self.load_store()
@@ -287,7 +433,8 @@ class SyslogServer:
 
             last = self._process_block(data)
 
-    def _seconds_remaining(self):
+    @staticmethod
+    def _seconds_remaining():
         """Calculate the number of seconds until the minute rolls over"""
 
         now = datetime.now()
@@ -363,7 +510,8 @@ class SyslogServer:
                 log.error('Trailer discovery method raised exception')
                 log.exception(e)
 
-        log.debug(f'Using default trailer of {repr(self.default_syslog_trailer)}')
+        log.debug(
+            f'Using default trailer of {repr(self.default_syslog_trailer)}')
         # Default trailer
         return self.default_syslog_trailer
 
@@ -377,7 +525,7 @@ class SyslogServer:
             data = data[pos + 1:]
 
     def _process_record(self, data):
-        record = SyslogRecord(data)
+        record = self.record(data)
 
         if self.output_file is not None:
             # Write record to capture file
@@ -416,148 +564,3 @@ class SyslogStatsEvent(AuditEvent):
         super().__init__(self.audit_id, data, table_data)
 
         self.audit_desc = 'Statistics for the Syslog server'
-
-
-class SyslogRecord:
-
-    main_regex = (
-            r'<(?P<priority>\d+?)>(?P<version>\d) (?P<timestamp_str>.+?) '
-            r'(?P<hostname>.+?) (?P<appname>.+?) (?P<proc_id>.+?) '
-            r'(?P<msg_id>.+?) (?P<rest>.+)')
-
-    @staticmethod
-    def decode_from_raw(block):
-        """Parses the data-only* portion of a syslog record in a raw data block.
-
-        This is used to parse the first block to be used for syslog trailer
-        discovery.
-
-        * data-only means all properties up to but not including detail.
-
-        """
-
-        decoded = block.decode('utf-8')
-        m = re.match(SyslogRecord.main_regex, decoded)
-        if not m:
-            return None
-
-        try:
-            _, structured_data = SyslogRecord._parse_sdata(m.group('rest'))
-        except ParserError:
-            structured_data = {}
-
-        return RawSyslogRecord(
-            timestamp=m.group('timestamp_str'),
-            priority=m.group('priority'),
-            hostname=m.group('hostname'),
-            appname=m.group('appname'),
-            proc_id=m.group('proc_id'),
-            msg_id=m.group('msg_id'),
-            structured_data=structured_data
-        )
-
-    def __init__(self, record):
-
-        self.original_record = record
-        self.record_length = len(record)
-        self.error = None
-
-        # todo This needs to be handled better
-
-        pos = record.find(b'\xef\xbb\xbf')
-
-        if pos >= 0:
-            decoded_record = (
-                    record[0:pos].decode('utf-8')
-                    + record[pos + 3:].decode('utf-8'))
-        else:
-            decoded_record = record.decode('utf-8')
-
-        self.m = re.match(self.main_regex, decoded_record)
-
-        if not self.m:
-            self.error = "1st stage parse failure"
-            return
-
-        self.timestamp_str = self.m.group('timestamp_str')
-        try:
-            timestamp_tz = iso8601.parse_date(self.timestamp_str)
-        except iso8601.ParseError:
-            self.error = 'Cannot parse timestamp'
-            return
-
-        self.timestamp = timestamp_tz.replace(tzinfo=None)
-
-        self.priority = self.m.group('priority')
-        self.hostname = self.m.group('hostname')
-        self.appname = self.m.group('appname')
-        self.proc_id = self.m.group('proc_id')
-        self.msg_id = self.m.group('msg_id')
-
-        try:
-            self.detail, self.structured_data = self._parse_sdata(
-                self.m.group('rest'))
-        except ParserError as e:
-            self.error = f'Cannot parse structured data: {e}'
-            return
-
-    @staticmethod
-    def _parse_sdata(dataline):
-
-        has_structured_data = False
-        element_id = None
-        state = 1
-        parsed_struc = {}
-
-        def add_param(eid, param_key, param_value):
-            if element_id not in parsed_struc:
-                parsed_struc[eid] = {}
-
-            parsed_struc[eid][param_key] = param_value
-
-        while True:
-            if not dataline:
-                raise ParserError('Ran out of content')
-            if state == 1:
-
-                if not has_structured_data and dataline[0:2] == '- ':
-                    return dataline[2:], {}
-
-                m = re.match(r'\[(\w+) (.*)', dataline)
-                if not m:
-                    if not has_structured_data:
-                        raise ParserError(
-                            f'SD-DATA {dataline} parse failed ')
-                    else:
-                        return dataline.lstrip(), parsed_struc
-                element_id = m.group(1)
-                dataline = m.group(2)
-                state = 2
-                continue
-            elif state == 2:
-                m = re.match(r'](.*)', dataline)
-                if m:
-                    dataline = m.group(1)
-                    state = 1
-                    continue
-                m = re.match(r'(.+?)="([^"]*)"\s*(.*)', dataline)
-
-                if m:
-                    add_param(element_id, m.group(1), m.group(2))
-                    has_structured_data = True
-                    dataline = m.group(3)
-                    continue
-                else:
-                    raise ParserError(
-                        f'SD-DATA Key/Value {dataline} parse failed')
-
-    def __repr__(self):
-        # todo: why?
-        return f'{self.m.groupdict()} ({self.structured_data})'
-
-    def __str__(self):
-        return (f'{self.timestamp.strftime("%Y-%m-%d %H:%M:%S")}: '
-                f'{self.hostname} {self.appname} {self.proc_id} {self.detail}')
-
-    def __len__(self):
-        return self.record_length

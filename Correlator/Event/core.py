@@ -124,7 +124,7 @@ class AuditEvent(Event):
         resolved = {}
 
         for key in payload:
-            if isinstance(payload[key], (str, int)):
+            if isinstance(payload[key], (str, int, float)):
                 resolved[key] = payload[key]
             elif isinstance(payload[key], datetime):
                 from Correlator.util import format_timestamp

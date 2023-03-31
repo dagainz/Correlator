@@ -72,15 +72,15 @@ def cli():
 
     cmd_args = parser.parse_args()
 
-    # Give a default value to write_file if not provided
-
-    d = vars(cmd_args)
-
-    # First, setup logging
+    # Setup logging
 
     debug_level = logging.DEBUG if cmd_args.d else logging.INFO
     setup_root_logger(debug_level)
     log = logging.getLogger(__name__)
+
+    # Give a default value to write_file if not provided
+
+    d = vars(cmd_args)
 
     if cmd_args.write_file is None:
         d['write_file'] = capture_filename()

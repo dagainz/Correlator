@@ -48,6 +48,7 @@ class Report(Module):
         self.model = ReportState
 
     def _clear_stats(self):
+
         log.debug('Clear Stats')
         self.store.num_records = 0
         self.store.size_records = 0
@@ -88,4 +89,3 @@ class Report(Module):
         self.store.size_records += recordsize
 
         return True
-
