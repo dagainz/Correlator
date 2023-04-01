@@ -15,11 +15,16 @@ class LogfileStatsEvent(AuditEvent):
     fields = ['start', 'end', 'duration']
 
     def __init__(self, data):
-        super().__init__(self.audit_id, data)
 
-        self.template_txt = Template(
-            'Logfile processing session started at ${start} and ended at '
-            '${end} for a total duration of ${duration}')
+        table = [
+            ['Session Start:', '${start}'],
+            ['Session End:', '${end}'],
+            ['Session Duration:', '${duration}'],
+        ]
+
+        super().__init__(self.audit_id, data, table_data=table)
+
+        self.audit_desc = ('A log file has been completely processed')
 
 
 class LogRecord:
@@ -55,14 +60,25 @@ class RecordResult:
 
 
 class LogfileProcessor:
-    def __init__(self, log_record, modules: list[Module], log):
+    def __init__(self, log_record, modules: list[Module],
+                 processor: EventProcessor):
 
-        self.log = log
         self.start = None
         self.end = None
 
         self.modules = modules
         self.log_record = log_record
+
+        # No persistence with logfiles
+
+        self.full_store = {}
+
+        for module in modules:
+            module.event_processor = processor
+            if module.module_name not in self.full_store:
+                self.full_store[module.module_name] = module.model()
+            module.store = self.full_store[module.module_name]
+            module.post_init_store()
 
     def logfile_reader(self, file_object):
         record = ''

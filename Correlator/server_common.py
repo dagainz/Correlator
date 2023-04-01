@@ -21,8 +21,11 @@ class BaseCLI:
     def add_arguments(self, parser: argparse.ArgumentParser):
         raise NotImplementedError
 
-    def modify_stack(self, cmd_args: argparse.Namespace, modules: List[Module], processor: EventProcessor):
+    def modify_stack(self, cmd_args: argparse.Namespace,
+                     modules: List[Module], processor: EventProcessor):
         raise NotImplementedError
+
+    # todo Customize epilog
 
     def __init__(self):
 
@@ -54,10 +57,6 @@ class BaseCLI:
             '--read-file',
             metavar='filename',
             help='raw syslog capture file to read and process')
-
-        # parser.add_argument(
-        #     '--sshd',
-        #     action='store_true', help='Activate ssh login module')
 
         parser.add_argument(
             '--store-file',
@@ -139,7 +138,7 @@ class BaseCLI:
 
         self.modify_stack(cmd_args, modules, processor)
 
-        # If any weren't added,add the Report module
+        # If any weren't added, add the Report module
 
         if not modules:
             modules.append(Report())

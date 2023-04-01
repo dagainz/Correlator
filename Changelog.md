@@ -10,12 +10,17 @@ once its public API is documented.
 
 ### Added
 - Timed event system for modules
-- Early / basic state support
-- Enhanced configuration support
+- Persistence
+- Enhanced configuration
+- Email event handler
+- SSHD Module maintenance
 
 ### Changed
 - simplify module __init__
 - Event handling file structure
+- Audit event templating
+- Provide base class to easily create customizable syslog servers
+
 
 ### Fixed
 - CSV output
