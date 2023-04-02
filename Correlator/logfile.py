@@ -1,8 +1,10 @@
+import logging
 import re
-from mako.template import Template
 
 from Correlator.Event.core import (AuditEvent, EventProcessor)
 from Correlator.util import ParserError, Module, format_timestamp
+
+log = logging.getLogger(__name__)
 
 
 class LogError(Exception):
@@ -24,7 +26,7 @@ class LogfileStatsEvent(AuditEvent):
 
         super().__init__(self.audit_id, data, table_data=table)
 
-        self.audit_desc = ('A log file has been completely processed')
+        self.audit_desc = 'A log file has been completely processed'
 
 
 class LogRecord:
@@ -105,8 +107,7 @@ class LogfileProcessor:
         with open(filename) as logfile:
             for result in self.logfile_reader(logfile):
                 if result.is_error:
-                    self.log.error(
-                        f'Error reading entry: {result.message}')
+                    log.error(f'Error reading entry: {result.message}')
                 else:
                     if (self.start is None or
                             result.record.timestamp < self.start):

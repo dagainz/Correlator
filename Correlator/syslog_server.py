@@ -1,8 +1,9 @@
-""" Correlator library syslog server
+"""CLI to process log records remotely via syslog.
 
-Contains the functionality within the base CLI, plus:
+It has all the functionality provided with the Correlator syslog server base
+CLI, plus options to enable the included correlator modules:
 
- --sshd command line option enables the sshd-login module
+ --sshd enables the sshd-login module
 
 """
 
@@ -31,4 +32,3 @@ class SyslogServerCLI(BaseCLI):
 # setuptools entry_point
 def cli():
     SyslogServerCLI()
-

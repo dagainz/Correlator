@@ -1,4 +1,4 @@
-import csv as CSV
+import csv as csv_module
 import logging
 from datetime import datetime
 from io import StringIO
@@ -117,7 +117,7 @@ class AuditEvent(Event):
         self.audit_id = audit_id
         self.buffer = StringIO()
 
-        self.writer = CSV.DictWriter(self.buffer, self._fields)
+        self.writer = csv_module.DictWriter(self.buffer, self._fields)
 
     @staticmethod
     def _resolve_payload(payload):
@@ -195,5 +195,3 @@ class EventProcessor:
     def dispatch_event(self, event: Event):
         for listener in self.listeners:
             listener.process_event(event)
-
-

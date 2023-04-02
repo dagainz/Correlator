@@ -60,7 +60,7 @@ class ConfigStore:
         ]
 
     @staticmethod
-    def debug_log(description=True):
+    def debug_log():
 
         log.debug(f'{"Parameter":<45} {"Value":<10} {"Default":<10} '
                   f'{"Description":<14}')

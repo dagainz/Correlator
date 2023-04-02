@@ -135,6 +135,3 @@ class Email(EventListener):
 
         smtp = smtplib.SMTP(self.smtp_server)
         smtp.sendmail(msg['From'], msg['To'], msg.as_string())
-
-
-

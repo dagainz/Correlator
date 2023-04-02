@@ -15,6 +15,7 @@ log = logging.getLogger(__name__)
 class Instance:
     Version = '0.0.4'
 
+
 class ParserError(Exception):
     pass
 
@@ -61,7 +62,7 @@ class Module:
         return self._store
 
     @store.setter
-    def store (self, value):
+    def store(self, value):
         self._store = value
 
     def dispatch_event(self, event: Event):
@@ -158,7 +159,6 @@ def calculate_summary(detail: str):
 
     # if a word boundary is found in the last MAX_BREAK_SEARCH characters,
     # use it to trim the string.
-
 
     first = MAX_SUMMARY-1
     last = first - MAX_BREAK_SEARCH

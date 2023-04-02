@@ -167,7 +167,6 @@ class SSHD(Module):
 
         """
 
-        log.debug('Running maintenance: Expiring old transactions')
         total_transactions = 0
         expired_transactions = 0
 
@@ -191,10 +190,13 @@ class SSHD(Module):
             #  transactions.
 
     def timer_handler_hour(self, now):
+        log.debug(f'Running scheduled maintenance '
+                  f'(Now={format_timestamp(now)})')
         self.maintenance()
 
     def timer_handler_0_0(self, now):
-        log.info('Running nightly maintenance')
+        log.info(f'Running nightly maintenance '
+                 f'(Now={format_timestamp(now)})')
         self.statistics(reset=True)
 
     def post_init_store(self):
@@ -435,8 +437,8 @@ class SSHD(Module):
             props = self.detect_accepted(record.detail)
             if props is not None:
                 host = props['addr']
-                for field in ['auth', 'user', 'addr', 'port', 'key']:
-                    trans[field] = props[field]
+                for field_name in ['auth', 'user', 'addr', 'port', 'key']:
+                    trans[field_name] = props[field_name]
                 log.debug(f'Clearing any failed attempts for host {host}')
                 self.address_store.clear(host)
 
