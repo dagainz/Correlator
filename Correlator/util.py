@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 
 from Correlator.Event.core import Event
 
+# todo: Add to global configuration somehow
+
 DEFAULT_ROTATE_KEEP = 10
 MAX_SUMMARY = 128
 MAX_BREAK_SEARCH = 10

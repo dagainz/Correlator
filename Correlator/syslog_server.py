@@ -32,3 +32,7 @@ class SyslogServerCLI(BaseCLI):
 # setuptools entry_point
 def cli():
     SyslogServerCLI()
+
+
+if __name__ == '__main__':
+    cli()

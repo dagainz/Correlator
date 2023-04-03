@@ -8,14 +8,14 @@ from typing import List
 from Correlator.config import GlobalConfig
 from Correlator.Event.core import EventProcessor
 from Correlator.Module.report import Report
-from Correlator.syslog import SyslogServer, SyslogStatsEvent, SyslogRecord
-from Correlator.util import (
-    setup_root_logger, capture_filename, format_timestamp, Module)
+from Correlator.syslog import (SyslogServer, SyslogStatsEvent, SyslogRecord,
+                               RawSyslogRecord)
+from Correlator.util import (setup_root_logger, capture_filename,
+                             format_timestamp, Module)
 
 
 class BaseCLI:
 
-    syslog_record: type = SyslogRecord
     cli_title: str = 'Correlator Syslog CLI utility'
 
     def add_arguments(self, parser: argparse.ArgumentParser):
@@ -24,6 +24,15 @@ class BaseCLI:
     def modify_stack(self, cmd_args: argparse.Namespace,
                      modules: List[Module], processor: EventProcessor):
         raise NotImplementedError
+
+    @staticmethod
+    def syslog_record_model():
+        return SyslogRecord
+
+    @staticmethod
+    def trailer_discovery_method(
+            raw_record: RawSyslogRecord) -> bytes | None:
+        return None
 
     # todo Customize epilog
 
@@ -148,8 +157,11 @@ class BaseCLI:
         if cmd_args.host:
             GlobalConfig.set('syslog_server.listen_address', cmd_args.host)
 
-        server = SyslogServer(modules, processor, record=self.syslog_record,
-                              store_file=cmd_args.store_file)
+        server = SyslogServer(modules,
+                              processor,
+                              record=self.syslog_record_model(),
+                              store_file=cmd_args.store_file,
+                              discovery_method=self.trailer_discovery_method)
 
         start = datetime.now()
 
