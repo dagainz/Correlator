@@ -24,10 +24,10 @@
         .notice {
             color: green;
         }
-        .warning{
+        .warning {
             color: yellow;
         }
-        .error{
+        .error {
             color: red;
         }
 		table.datatable {
