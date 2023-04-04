@@ -171,14 +171,7 @@ class BaseCLI:
             server.from_file(open(cmd_args.read_file, 'rb'))
 
         else:
-            stop = False
-            while not stop:
-                try:
-                    server.listen_single(output_file=output_file)
-                except KeyboardInterrupt:
-                    log.info('Shutting down')
-                    server.save_store()
-                    stop = True
+            server.listen_single(output_file=output_file)
 
         end = datetime.now()
 

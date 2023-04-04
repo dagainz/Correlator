@@ -331,29 +331,7 @@ class SyslogServer:
                 return
             last = self._process_block(data)
 
-    def listen_single(self, output_file: BinaryIO = None):
-
-        """ Run a single thread TCP network listener and process syslog records
-
-        This method will listen for and accept a connection, and then process
-        records as they are received, forever.
-
-        If a file object of binary file open for writing is provided in
-        output_file, received packets will also be written to this file.
-
-        Args:
-            output_file:  Binary file open for writing to save received data
-
-         """
-
-        host = GlobalConfig.get('syslog_server.listen_address')
-        port = GlobalConfig.get('syslog_server.listen_port')
-
-        # todo: Why?
-
-        if host is None:
-            host = socket.gethostname()
-        GlobalConfig.debug_log()
+    def handle_connection(self, host, port, output_file: BinaryIO = None):
 
         server_socket = socket.socket()
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -407,7 +385,7 @@ class SyslogServer:
             block = conn.recv(self.buffer_size)
 
             if not block:
-                log.error("read block evaluated false")
+                log.debug("read block evaluated false")
                 break
 
             # Determine the syslog trailer (record separator) if we haven't
@@ -431,6 +409,37 @@ class SyslogServer:
                 break
 
             last = self._process_block(data)
+
+    def listen_single(self, output_file: BinaryIO = None):
+
+        """ Run a single thread TCP network listener and process syslog records
+
+        This method will listen for and accept a connection, and then process
+        records as they are received, forever.
+
+        If a file object of binary file open for writing is provided in
+        output_file, received packets will also be written to this file.
+
+        Args:
+            output_file:  Binary file open for writing to save received data
+
+         """
+
+        host = GlobalConfig.get('syslog_server.listen_address')
+        port = GlobalConfig.get('syslog_server.listen_port')
+
+        # todo: Why?
+
+        if host is None:
+            host = socket.gethostname()
+        GlobalConfig.debug_log()
+
+        while True:
+            try:
+                self.handle_connection(host, port, output_file)
+            except KeyboardInterrupt:
+                break
+
 
     @staticmethod
     def _seconds_remaining():
