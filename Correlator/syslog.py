@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import List, BinaryIO, Callable
 
-from Correlator.config import GlobalConfig
+from Correlator.config import GlobalConfig, ConfigType
 from Correlator.Event.core import EventProcessor, ErrorEvent, AuditEvent
 from Correlator.util import ParserError, Module
 
@@ -18,15 +18,17 @@ log = logging.getLogger(__name__)
 SyslogConfig = [
     {
         'syslog_server.save_store_interval': {
-           'default': 5,
-           'desc': 'Time in minutes in between saves of the persistence store'
+            'default': 5,
+            'desc': 'Time in minutes in between saves of the persistence store',
+            'type': ConfigType.INTEGER
         }
     },
     {
         'syslog_server.buffer_size': {
             'default': 4096,
             'desc': 'Read buffer size. This must be large enough so that an '
-                    'entire header and structured data can fit.'
+                    'entire header and structured data can fit.',
+            'type': ConfigType.INTEGER
         }
     },
     {
@@ -34,20 +36,23 @@ SyslogConfig = [
             'default': '\n',
             'desc': 'The default syslog record separator to use if trailer '
                     'discovery can\'t conclusively determine the record '
-                    'separator in use'
+                    'separator in use',
+            'type': ConfigType.STRING
         }
     },
     {
         'syslog_server.listen_address': {
             'default': '0.0.0.0',
             'desc': 'The IPv4 address of the interface to listen on. 0.0.0.0 '
-                    'means listen on all interfaces.'
+                    'means listen on all interfaces.',
+            'type': ConfigType.STRING
         }
     },
     {
         'syslog_server.listen_port': {
             'default': 514,
-            'desc': 'The TCP port number to listen on.'
+            'desc': 'The TCP port number to listen on.',
+            'type': ConfigType.INTEGER
         }
     }
 
@@ -432,7 +437,7 @@ class SyslogServer:
 
         if host is None:
             host = socket.gethostname()
-        GlobalConfig.debug_log()
+        # GlobalConfig.debug_log()
 
         while True:
             try:

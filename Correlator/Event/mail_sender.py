@@ -9,7 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from Correlator.Event.core import EventListener, Event
-from Correlator.config import GlobalConfig
+from Correlator.config import GlobalConfig, ConfigType
 from Correlator.util import template_dir, Instance
 
 log = logging.getLogger(__name__)
@@ -19,20 +19,24 @@ mako.runtime.UNDEFINED = ''
 EmailConfig = {
         'email.smtp_server': {
             'default': 'giganode1',
-            'desc': 'SMTP Server'
+            'desc': 'SMTP Server',
+            'type': ConfigType.STRING
         },
         'email.from': {
             'default': 'admin@nowhere.com',
-            'desc': 'Value of the Email From: Field'
+            'desc': 'Value of the Email From: Field',
+            'type': ConfigType.EMAIL
         },
         'email.to': {
             'default': 'nobody',
-            'desc': 'Value of the Email To: Field'
+            'desc': 'Value of the Email To: Field',
+            'type': ConfigType.EMAIL
         },
         'email.html': {
             'default': True,
-            'desc': 'Send HTML formatted email'
-        },
+            'desc': 'Send HTML formatted email',
+            'type': ConfigType.BOOLEAN
+        }
 }
 
 

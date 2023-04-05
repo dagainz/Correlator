@@ -4,7 +4,7 @@ from typing import Dict
 import logging
 
 
-from Correlator.config import GlobalConfig
+from Correlator.config import GlobalConfig, ConfigType
 from Correlator.Event.core import EventListener, Event
 from Correlator.util import listize
 
@@ -14,7 +14,8 @@ log = logging.getLogger(__name__)
 CSVListenConfig = {
         'csv.output_directory': {
             'default': 'csv',
-            'desc': 'The directory to write CSV files into'
+            'desc': 'The directory to write CSV files into',
+            'type': ConfigType.INTEGER
         }
 }
 

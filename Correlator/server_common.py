@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import sys
+import re
 from datetime import datetime
 from typing import List
 
@@ -49,7 +50,7 @@ class BaseCLI:
         )
         parser.add_argument(
             '--port',
-            help='TCP port to listen on', type=int)
+            help='TCP port to listen on', type=str)
 
         parser.add_argument(
             '--host',
@@ -72,6 +73,20 @@ class BaseCLI:
             metavar='filename',
             help='File to save and load the persistence store '
                  'from')
+
+        parser.add_argument(
+            '--o',
+            action='append',
+            metavar='option.name=value',
+            help='Set Correlator option.name to value'
+        )
+
+        parser.add_argument(
+            '--config',
+            action='store_true',
+            help='*ONLY* show the valid configuration options and their values then exit'
+        )
+
 
         parser.add_argument(
             '--email',
@@ -153,9 +168,26 @@ class BaseCLI:
             modules.append(Report())
 
         if cmd_args.port:
-            GlobalConfig.set('syslog_server.listen_port', int(cmd_args.port))
+            GlobalConfig.set('syslog_server.listen_port', cmd_args.port)
         if cmd_args.host:
             GlobalConfig.set('syslog_server.listen_address', cmd_args.host)
+
+        # Process Correlator configuration entry overrides
+
+        if cmd_args.o:
+            for entry in cmd_args.o:
+                m = re.match(r'(.+)=(.+)', entry)
+                if m:
+                    (key, value) = (m.group(1), m.group(2))
+                    GlobalConfig.set(key, value)
+                    log.debug(f'Option {key} overridden to {value}')
+
+        if cmd_args.config:
+            GlobalConfig.dump(debug=False)
+            log.info('Shutting down after configuration query')
+            sys.exit(0)
+        else:
+            GlobalConfig.dump()
 
         server = SyslogServer(modules,
                               processor,

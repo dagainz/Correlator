@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from Correlator.Event.core import AuditEvent
 from Correlator.util import (
     Module, CountOverTime, format_timestamp)
-from Correlator.config import GlobalConfig
+from Correlator.config import GlobalConfig, ConfigType
 
 log = logging.getLogger(__name__)
 
@@ -22,20 +22,23 @@ SSHDConfig = [
         'module.sshd.login_failure_window': {
             'default': 300,
             'desc': 'Amount of time in seconds to remember the login failures,'
-                    'per host'
+                    'per host',
+            'type': ConfigType.INTEGER
         }
     },
     {
         'module.sshd.login_failure_limit': {
             'default': 5,
             'desc': 'Number of login failures per host per module.sshd.login_'
-                    'failure_window seconds'
+                    'failure_window seconds',
+            'type': ConfigType.INTEGER
         }
     },
     {
         'module.sshd.max_transaction_age': {
             'default': 2880,
-            'desc': 'How many minutes after creation a transaction is valid for'
+            'desc': 'How many minutes after creation a transaction is valid for',
+            'type': ConfigType.INTEGER
         }
     }
 
