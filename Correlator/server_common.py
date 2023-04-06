@@ -183,11 +183,11 @@ class BaseCLI:
                     log.debug(f'Option {key} overridden to {value}')
 
         if cmd_args.config:
-            GlobalConfig.dump(debug=False)
+            GlobalConfig.dump_to_log(debug=False)
             log.info('Shutting down after configuration query')
             sys.exit(0)
         else:
-            GlobalConfig.dump()
+            GlobalConfig.dump_to_log()
 
         server = SyslogServer(modules,
                               processor,

@@ -137,7 +137,7 @@ class ConfigStore:
         ]
 
     @staticmethod
-    def dump(debug=True):
+    def dump_to_log(debug=True):
         
         if debug:
             log_obj = log.debug
