@@ -3,6 +3,8 @@ from Correlator.Event.core import EventListener, Event, log
 
 class LogbackListener(EventListener):
 
+    name = 'Logback'
+
     def __init__(self):
         # todo: Why?
         pass

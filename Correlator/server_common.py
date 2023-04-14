@@ -84,15 +84,33 @@ class BaseCLI:
         parser.add_argument(
             '--config',
             action='store_true',
-            help='*ONLY* show the valid configuration options and their values then exit'
+            help='*ONLY* show the valid configuration options and their values '
+                 'then exit'
         )
-
 
         parser.add_argument(
             '--email',
             metavar='address',
             help='Enable email handler and send emails to this '
                  'address')
+
+        parser.add_argument(
+            '--sms',
+            metavar='Twilio Account SID',
+            help='Enable SMS handler and use this SID for twilio')
+
+        parser.add_argument(
+            '--sms-to',
+            metavar='Phone Number',
+            help='Value to populate twilio SMS \'To\' field',
+        )
+
+        parser.add_argument(
+            '--sms-from',
+            metavar='Phone Number',
+            help='Value to populate twilio SMS \'From\' field',
+        )
+
         parser.add_argument(
             '--csv',
             metavar='filename', nargs='?', default='.',
@@ -117,6 +135,14 @@ class BaseCLI:
             d['write_file'] = capture_filename()
         elif cmd_args.write_file == '.':
             d['write_file'] = None
+
+        # SMS
+
+        if cmd_args.sms:
+            if not cmd_args.sms_to:
+                parser.error('--sms-to is required when using --sms')
+            if not cmd_args.sms_from:
+                parser.error('--sms-from is required when using --sms')
 
         csv_module = None
 
@@ -154,6 +180,12 @@ class BaseCLI:
             GlobalConfig.set('email.to', cmd_args.email)
             processor.register_listener(Email())
 
+        if cmd_args.sms:
+            from Correlator.Event.sms_sender import SMS
+            GlobalConfig.set('twilio.to', cmd_args.sms_to)
+            GlobalConfig.set('twilio.from', cmd_args.sms_from)
+            processor.register_listener(SMS(cmd_args.sms))
+
         # Setup list of logic modules
 
         modules = []
@@ -165,7 +197,18 @@ class BaseCLI:
         # If any weren't added, add the Report module
 
         if not modules:
+            log.debug('No configured modules. Enabling Report module')
             modules.append(Report())
+
+        # Check if creds required for any event handlers
+
+        ids = processor.check_creds()
+
+        if ids:
+            for userid in ids:
+                log.error(f'A password for id {userid} was not found in the credential store')
+            log.info('Shutting down due to missing passwords')
+            sys.exit(0)
 
         if cmd_args.port:
             GlobalConfig.set('syslog_server.listen_port', cmd_args.port)

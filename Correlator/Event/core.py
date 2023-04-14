@@ -1,9 +1,9 @@
 import csv as csv_module
 import logging
+import keyring
 from datetime import datetime
 from io import StringIO
 from mako.template import Template
-
 
 log = logging.getLogger(__name__)
 
@@ -120,21 +120,28 @@ class AuditEvent(Event):
         self.writer = csv_module.DictWriter(self.buffer, self._fields)
 
     @staticmethod
-    def _resolve_payload(payload):
-        resolved = {}
+    def _resolve_payload(source: dict):
+        """Transforms dict values appropriately to use for mako templates.
 
-        for key in payload:
-            if isinstance(payload[key], (str, int, float)):
-                resolved[key] = payload[key]
-            elif isinstance(payload[key], datetime):
+        Generates and returns a new dict by copying all key and value pairs,
+        and transforming the values into either a str, int, or float if they
+        aren't already.
+
+        """
+        destination = {}
+
+        for key in source:
+            if isinstance(source[key], (str, int, float)):
+                destination[key] = source[key]
+            elif isinstance(source[key], datetime):
                 from Correlator.util import format_timestamp
-                resolved[key] = format_timestamp(payload[key])
-            elif payload[key] is None:
-                resolved[key] = 'None'
+                destination[key] = format_timestamp(source[key])
+            elif source[key] is None:
+                destination[key] = 'None'
             else:
-                raise ValueError(f'Cannot translate type: {type(payload[key])}')
+                raise ValueError(f'Cannot translate type: {type(source[key])}')
 
-        return resolved
+        return destination
 
     def __repr__(self):
         return self.repr
@@ -181,6 +188,15 @@ class NoticeEvent(Event):
 
 
 class EventListener:
+
+    name = 'Unknown'
+
+    def credentials_req(self) -> [str]:
+        return []
+
+    def get_creds(self, user_id: str):
+        return keyring.get_password('Correlator', f'{self.name}.{user_id}')
+
     def process_event(self, event: Event):
         raise NotImplementedError
 
@@ -195,3 +211,10 @@ class EventProcessor:
     def dispatch_event(self, event: Event):
         for listener in self.listeners:
             listener.process_event(event)
+
+    def check_creds(self):
+        creds = []
+        for listener in self.listeners:
+            for cred in listener.credentials_req():
+                creds.append(f'{listener.name}.{cred}')
+        return creds
