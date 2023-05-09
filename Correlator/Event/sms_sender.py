@@ -1,12 +1,9 @@
 import logging
-import os
-
 import mako.runtime
-from mako.template import Template
 from twilio.rest import Client
+
 from Correlator.Event.core import EventListener, Event
 from Correlator.config import GlobalConfig, ConfigType
-from Correlator.util import template_dir, Instance
 
 log = logging.getLogger(__name__)
 
@@ -19,6 +16,7 @@ SMSConfig = {
             'desc': 'Phone number message will be from',
             'type': ConfigType.STRING
         },
+
         'twilio.to': {
             'default': '',
             'desc': 'Phone number to deliver the message to',
@@ -59,23 +57,27 @@ class SMS(EventListener):
             if not self.handle_error:
                 log.debug('Ignoring event type ERROR')
                 return
-            base_def = 'error'
         elif event.is_warning:
             if not self.handle_warning:
                 log.debug('Ignoring event type WARNING')
                 return
-            base_def = 'warning'
         else:
             if not self.handle_notice:
                 log.debug('Ignoring event type NOTICE')
                 return
-            base_def = 'notice'
 
-        if not self.twilio_to or not self.twilio_from:
-            if not self.twilio_to:
-                log.error('The twilio.to parameter must be set')
-            if not self.twilio_from:
-                log.error('The twilio.from parameter must be set')
+        # Check for errors
+
+        errors = []
+
+        if not self.twilio_to:
+            errors.append('The twilio.to parameter must be set')
+        if not self.twilio_from:
+            errors.append('The twilio.from parameter must be set')
+
+        if errors:
+            for error in errors:
+                log.error(error)
             return
 
         if self.Client is None:
