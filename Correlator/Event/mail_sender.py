@@ -1,7 +1,6 @@
 import logging
 import smtplib
 import os
-
 import mako.runtime
 from mako.template import Template
 from email import message
