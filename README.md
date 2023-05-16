@@ -9,7 +9,7 @@ the network as well as after-the-fact by reading and processing log files.
 # Installation and Usage
 
 MkDocs compliant documentation is provided in /doc.
-[Read the HTML version online](https://timmy-bbb.github.io/Correlator/)
+[Read the HTML version online](https://tim-pushor.github.io/Correlator/)
 
 # Credits and blame
 
