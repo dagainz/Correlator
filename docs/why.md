@@ -1,6 +1,6 @@
 ## Why?
 
-One of the hats I wear is designing and deploying enterprise security solutions. In that role, I am often pouring over
+One of my primary roles is designing and deploying enterprise security solutions. In that role, I am often pouring over
 log files to try to understand why the system behaved in a certain way. With log data coming from several services
 It can be challenging enough tracing a transaction through the system in a development environment where the amount of 
 *noise* can be controlled, unlike a busy production environment where log data from several concurrent processes are 

@@ -16,3 +16,11 @@ nav:
   - Architecture: architecture.md
   - OpenSSH login module: sshd.md
   - Reference: reference.md
+  - Modules:
+      - OpenSSH login: sshd-module.md
+      - Report: report-module.md
+  - Event Handlers:
+      - Logback: logback-handler.md
+      - CSV: csv-handler.md
+      - E-Mail: email-handler.md
+      - SMS: sms-handler.md

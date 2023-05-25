@@ -5,7 +5,7 @@ occasionally serialize the root store and write it to a file. During startup, it
 previous state by loading and deserializing the saved store file. Correlator will also update this store file when it
 cleanly exits.
 
-Serialization is done by Python pickle, so anything that can be picked and unpickled can be used in each module's store
+Serialization is done by Python pickle, so anything that can be pickled and unpickled can be used in each module's store
 and will persist if persistence is enabled.
 
 **Note**: The store contains saved state information for all enabled modules. The system assumes all modules

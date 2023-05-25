@@ -1,10 +1,9 @@
 # Architecture
 
-The original vision was a syslog server / log processing system that is easily extendable by writing logic modules
-and handlers in python, which the system could detect and import automatically, and then configured and enabled via
-configuration.
+The vision is a log data processing system that is easily customizable by developing analysis and event handling logic
+in python, that the system could dynamically import during startup. 
 
-It's not there yet. This library's purpose is to provide support to build such a system.
+It's not there yet. This projects purpose is to build that system.
 
 ## The front-end engine
 
@@ -18,12 +17,16 @@ The operation of the front end is conceptually simple. It is responsible for con
 as a python object, and dispatches these objects to one or more logic modules for processing. Processing consists of
 record filtering, correlating, statistics gathering, and event dispatching.
 
-## Modules 
+## Logic Modules
 
-As stated above, logic modules perform record filtering, correlating, statistics gathering, and event dispatching. They
-would typically either handle one process or a group of related processes. 
+*Todo: find better name!*
 
-They:
+Logic modules perform record filtering, correlating, statistics gathering, and event dispatching. They
+would typically handle detecting a single process, or group of related processes.
+
+For example, the OpenSSH login module included watches log events generated from OpenSSH for significant login events.
+
+Logic modules:
 
 - Maintain and report on statistics 
 - Keep state to correlate log events for a higher level of business intelligence
@@ -32,7 +35,7 @@ They:
 There is one system module provided: Report. It simply dispatches a notice event for every log record, as well 
 as collecting some basic statistics. This module coupled with the Logback event listener is a stack that will simply
 read records from the source, and output a summary of each one to the console, via python logging. In fact, 
-when you run the reference server in this distribution without the --sshd option, this is the exact stack that is
+when you run the reference server in this distribution without the --sshd option, this is the stack that is
 running.
 
 ## Event listeners
@@ -44,6 +47,23 @@ events. It is the duty of the event listener to ignore events that it is not int
 
 There is one event listener currently shipped with Correlator, the Logback Listener. This simply
 logs all events to the python log, and at least in the case of the provided CLI utilities, the console.
+
+
+## Stack
+
+The concept of a Correlator Stack is something that will be fleshed out later in this projects lifecycle, but I do
+mention it from time to time. 
+
+A Correlator Stack is a combination of logic modules, event handlers, and associated filter logic to implement an
+application (such as the included SIEM sample application)
+
+In the future, the stack definition will exist in a configuration file and will be able to be named. For example,
+The sample SIEM application included could be called simple-siem and include:
+
+- OpenSSH login module
+- Log, email, and sms handlers
+- Filter logic to determine which events warrant which handlers
+
 
 ## Events
 
@@ -78,38 +98,3 @@ All audit events are custom event classes that extend AuditEvent. An identifier 
 be present in each event must be provided in the class defintion.
 
 See Correlator.sshd.SSHDLoginEvent for an example.
-
-## Correlator stack
-
-As described above in "It's not there yet", developing modules or handlers needs to start with a custom
-server script.
-
-Central to doing that is the concept of a correlator stack. A configured list of modules and event handlers together
-is known as a stack. Even though there may be many logic modules and event handlers available to the system, they
-should not always be active. 
-
-For the SIEM example demonstrated in [OpenSSH login module](sshd.md), the stack would be:
-
-- Modules: sshd
-- Handlers: logback
-
-This is the relevant code snippet from Correlator.syslog_server:
-
-```python
-    processor = EventProcessor()
-    processor.register_listener(LogbackListener())
-
-    # Setup list of logic modules
-
-    modules = []
-
-    # Add all modules specified on the command line
-
-    if cmd_args.sshd:
-        modules.append(SSHD(processor))
-
-    # If any weren't added,add the Report module
-
-    if not modules:
-        modules.append(Report(processor))
-```

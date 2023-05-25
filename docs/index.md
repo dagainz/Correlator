@@ -12,9 +12,14 @@ over the network as well as after-the-fact by reading and processing log files.
 
 - Pure Python framework to develop systems that correlate, report on, and take action in response to system log
 event data. 
+- The framework provides an analysis as well as event interfaces to promote separating detection and correlation from
+event handling logic.
 - RFC 5424 compliant syslog server with packet capture and replay
 - Capture file utility to helps manage captured syslog data
-- OpenSSH login logic module reports and alerts on ssh login attempts, demonstrating a simple SIEM
+
+## Sample application
+
+- Provided OpenSSH login logic module combined with out-of-the-box event handlers demonstrate a simple SIEM application.
 
 ## Requirements
 
