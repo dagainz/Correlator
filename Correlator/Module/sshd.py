@@ -37,7 +37,7 @@ SSHDConfig = [
     {
         'module.sshd.max_transaction_age': {
             'default': 2880,
-            'desc': 'How many minutes after creation a transaction is valid for',
+            'desc': 'How many minutes after creation a transaction is valid',
             'type': ConfigType.INTEGER
         }
     }

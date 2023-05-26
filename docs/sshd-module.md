@@ -8,13 +8,23 @@ This module watches log records generated from OpenSSH to detect
 - unsuccessful login attempts
 - Potential hack attempts
 
-It dispatches events in response with as much information about the transaction as it knows. Separate log entries
-must be correlated together, with some information about the transaction coming from each.
+It dispatches events in response with as much information that is known about the event. Separate log entries
+are correlated together to pull bits of information about the transaction from each.
 
 *Note: Tested with OpenSSH 8.0p1 on Centos 8*
 
 For the hack attempt detection, it counts the number of failed password attempts from a particular host over time. If
 the count goes over a configurable threshold, an event is dispatched.
+
+## Configuration parameters
+
+The following configuration parameters affect the behavior of this module:
+
+| Key                              | Description                                                          | Type    | Default value |
+|----------------------------------|----------------------------------------------------------------------|---------|---------------|
+| module.sshd.login_failure_window | Window of time to remember login failures (seconds)                  | Integer | 300           |
+| module.sshd.login_failure_limit  | Allowed login failures during the failure window                     | Integer | 5             |
+| module.sshd.max_transaction_age  | How many minutes will the system hold onto an incomplete transaction | Integer | 2880          |
 
 ## Dispatched events
 
@@ -22,20 +32,64 @@ the count goes over a configurable threshold, an event is dispatched.
 
 This event is dispatched when a successful sshd login session *ends*
 
-| Attribute | Value                                                                 |
-|-----------|-----------------------------------------------------------------------|
-| timestamp | timestamp of event                                                    |
-| auth      | Authentication type (password, rsa)                                   |
-| user      | Login ID                                                              |
-| addr      | Remote Address                                                        |
-| port      | Remote Port                                                           |
-| key       | Key fingerprint (if applicable)                                       |
-| failures  | Number of failed password attempts before successfully authenticating |
-| start     | Timestamp of session start                                            |
-| finish    | Timestamp of session end                                              |
-| duration  | Session duration                                                      |
+| Attribute  | Value                                                                 |
+|------------|-----------------------------------------------------------------------|
+| timestamp  | timestamp of event                                                    |
+| auth       | Authentication type (password, rsa)                                   |
+| user       | Login ID                                                              |
+| addr       | Remote Address                                                        |
+| port       | Remote Port                                                           |
+| key        | Key fingerprint (if applicable)                                       |
+| failures   | Number of failed password attempts before successfully authenticating |
+| start      | Timestamp of session start                                            |
+| finish     | Timestamp of session end                                              |
+| duration   | Session duration                                                      |
+
+### SSHDLoginFailedEvent (Audit Event)
+
+This event is dispatched when a user does not successfully authenticate and establish a session.
+
+| Attribute  | Value                               |
+|------------|-------------------------------------|
+| timestamp  | timestamp of event                  |
+| user       | Login ID                            |
+| addr       | Remote Address                      |
+| port       | Remote Port                         |
+| failures   | Number of failed password attempts  |
+
+### SSHDLoginsExceededEvent (Audit Event)
+
+This event is dispatched when a user does not successfully authenticate and establish a session.
+
+| Attribute  | Value                               |
+|------------|-------------------------------------|
+| timestamp  | timestamp of event                  |
+| user       | Login ID                            |
+| addr       | Remote Address                      |
+| port       | Remote Port                         |
+| failures   | Number of failed password attempts  |
+
+### SSHDLoginsExceededEvent (Audit Event)
+
+This event is dispatched when the number of unsuccessful password attempts from a host exceeds the configured value.
+
+| Attribute | Value                              |
+|-----------|------------------------------------|
+| timestamp | timestamp of event                 |
+| host      | Remote host address                |
 
 
+## Persistence store usage
+
+This module makes moderate use of the persistence store. A full transaction spans several log
+entries, so it is saved in the store until it is complete.
+
+The python object used to count failures over time is also maintained in the store.
+
+## Maintenance and statistics
+
+maintenance runs hourly, on the hour and expires old transactions.
+Nightly statistics are generated at midnight.
 
 ## Detection patterns
 
