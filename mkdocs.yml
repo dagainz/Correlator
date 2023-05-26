@@ -14,7 +14,6 @@ nav:
   - Why: why.md
   - Quick start: quickstart.md
   - Architecture: architecture.md
-  - OpenSSH login module: sshd.md
   - Reference: reference.md
   - Modules:
       - OpenSSH login: sshd-module.md

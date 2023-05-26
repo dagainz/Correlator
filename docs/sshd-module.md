@@ -179,7 +179,7 @@ Log into the linux system, wait a few seconds, and then log off
 2023-02-27 13:53:06 event INFO: sshd_logins: Audit(sshd_login): Audit: timestamp=2023-02-27 13:53:06, auth=password, user=testguy, addr=192.168.1.85, port=57631, key=None, failures=0, start=2023-02-27 13:53:00.430366, finish=2023-02-27 13:53:06.176757, duration=0:00:05.746391
 ```
 
-Try to log in 5 times within 5 minutes, using an invalid password.
+Attempt to log in 5 times within 5 minutes, using an invalid password.
 
 Login to the Linux system using a username that you know exists. After 3 failed password attempts, the server
 will close the connection. An sshd_login_failed event will be dispatched. Establish a new SSH connection
