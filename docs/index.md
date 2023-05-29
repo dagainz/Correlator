@@ -14,7 +14,7 @@ over the network as well as after-the-fact by reading and processing log files.
 - Separate analysis and event interfaces
 - RFC 5424 compliant syslog server with packet capture and replay
 - Capture file utility to helps manage captured syslog data
-- Ships with a sample application, *OpenSSH login module* that combined with out-of-the-box event handlers demonstrate a 
+- Ships with a sample application, *OpenSSH login* that combined with out-of-the-box event handlers demonstrate a 
 simple SIEM.
 
 ## Requirements
