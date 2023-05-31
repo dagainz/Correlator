@@ -146,12 +146,37 @@ class ConfigStore:
 
         log_obj(f'{"Parameter":<45} {"Type":<10} {"Value":<10} {"Default":<10} '
                   f'{"Description":<14}')
-        log_obj(f'{"---------":<45} {"------":<10} {"------":<10} {"-------":<10} '
-                  f'{"-----------------------":<14}')
+        log_obj(f'{"---------":<45} {"------":<10} {"------":<10} '
+                f'{"-------":<10} {"-----------------------":<14}')
+        for (parameter, description, default, current,
+             datatype) in GlobalConfig.list():
+            log_obj(
+                f'{parameter or "":<45} {datatype:<10} '
+                f'{repr(current or ""):<10} {repr(default or ""):<10} '
+                f'{description or "":<14}')
 
-        for (parameter, description, default, current, datatype) in GlobalConfig.list():
-            log_obj(f'{parameter or "":<45} {datatype:<10} {repr(current or ""):<10} '
-                      f'{repr(default or ""):<10} {description or "":<14}')
+
+def config_list_to_md(config_list: list):
+    """Generate a markdown table from a Configuration Item list"""
+
+    output = '| Key | Description | Type | Default value |\n'
+    output += '|-----|-------------|------|---------------|\n'
+
+    for config_dict in config_list:
+        for config_key in config_dict:
+            config_item = config_dict[config_key]
+            config_type = config_item.get("type", ConfigType.INTEGER)
+            if config_type in (ConfigType.STRING, ConfigType.BYTES):
+                default_value = repr(config_item.get('default'))
+            else:
+                default_value = config_item.get('default')
+            config_desc = config_item.get('desc')
+            type_string = ConfigType.types[config_type]
+
+            output += (f'| {config_key} | {config_desc} | {type_string} | '
+                       f'{default_value} |\n')
+
+    return output
 
 
 # Setup global application configuration store
