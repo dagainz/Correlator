@@ -217,20 +217,22 @@ class RawSyslogRecord:
 
 class SyslogServer:
 
-    GlobalConfig.add(SyslogConfig)
+    """ Read and process syslog records from the network, or file.
 
-    """ Read and process syslog records.
-
-    Reads from either the network or a capture file. Also handles
-    writing data read from the network to a capture file, if desired.
+    Can also write records to a capture file for later replay.
 
     Args:
         modules: List of Correlator modules in this stack
         processor: Instance of EventProcessor with registered event handlers
         discovery_method: Callable that can help determine the syslog trailer
         record_filter:  Record filter list
+        store_file: Name of file to read and write the persistence store
+        record: Custom record class to use (i.e. subclass of SyslogRecord)
 
     """
+
+    GlobalConfig.add(SyslogConfig)
+
     def __init__(self, modules: List[Module], processor: EventProcessor,
                  discovery_method: Callable[[RawSyslogRecord], bytes] = None,
                  record_filter=None, store_file: str = None,
@@ -300,13 +302,12 @@ class SyslogServer:
                 f'Initializing new store')
 
     def from_file(self, input_file: BinaryIO, output_file: BinaryIO = None):
-        """ Processes saved syslog data from a file
+        """ Processes saved syslog data from a capture file rather than network
 
-        The main purpose of this method is to take a capture file as input
-        rather than reading from the network. This does however, also have
-        the capability to write to a file. Combined with the record_filter
-        argument, this makes the way for utilities to create a new file
-        from a subset of an old one.
+        Also supports writing to a capture file. Combined with the record_filter
+        argument in the constructor, this provides rudimentary functionality to
+        edit capture files by reading from one and writing to another, while
+        stripping som packets.
 
         Args:
             input_file: File object of readable binary file

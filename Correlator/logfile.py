@@ -31,7 +31,15 @@ class LogfileStatsEvent(AuditEvent):
 
 class LogRecord:
 
+    """ Base class for custom logfile parser classes to extend
+
+    Args:
+        record: Raw record from logfile
+
+    """
+
     main_regex = None
+    """ For simple parsers, just setting this property is enough"""
 
     def __init__(self, record):
 
@@ -62,6 +70,16 @@ class RecordResult:
 
 
 class LogfileProcessor:
+
+    """ Read and process records from a log file
+
+    Args:
+        log_record: Custom parser class
+        modules: List of Correlator modules in this stack
+        processor: Instance of EventProcessor with registered event handlers
+
+    """
+
     def __init__(self, log_record, modules: list[Module],
                  processor: EventProcessor):
 

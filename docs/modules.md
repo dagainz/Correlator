@@ -1,9 +1,10 @@
 # Modules
 
-Modules are the heart of this system. They provide the logic that understands a problem. 
+Modules are the heart of this system.
 
-Modules:
+They:
 
+- Provide the logic that understands a problem
 - Maintain and report on statistics 
 - Keep state to correlate log events for a higher level of business intelligence
 - Dispatch events in response to detected situations.

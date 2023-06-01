@@ -84,3 +84,13 @@ The following configuration parameters affect the behavior of the syslog server:
 | syslog_server.default_trailer       | The default syslog record separator to use if trailer discovery can't conclusively determine the record separator in use | String  | '\n'           |
 | syslog_server.listen_address        | The IPv4 address of the interface to listen on. 0.0.0.0 means listen on all interfaces.                                  | String  | '0.0.0.0'      |
 | syslog_server.listen_port           | The TCP port number to listen on.                                                                                        | Integer | 514            |
+
+## Usage
+
+There is no plan currently to formalize or overly document internals at the time. For now, the docstrings will have to
+do
+
+### ::: Correlator.syslog.SyslogServer
+    options:
+        show_source: false
+        show_root_heading: true

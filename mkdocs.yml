@@ -17,7 +17,6 @@ nav:
       - Modules: modules.md
       - Event system: event-system.md
       - Stack: stack.md
-  - Reference: reference.md
   - Included front-end processors:
       - Syslog server: syslog-server.md
       - Logfile processor: logfile-processor.md
