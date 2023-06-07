@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 mako.runtime.UNDEFINED = ''
 
-EmailConfig = {
+EmailConfig = [{
         'email.smtp_server': {
             'default': 'giganode1',
             'desc': 'SMTP Server',
@@ -36,7 +36,7 @@ EmailConfig = {
             'desc': 'Send HTML formatted email',
             'type': ConfigType.BOOLEAN
         }
-}
+}]
 
 
 class Email(EventListener):

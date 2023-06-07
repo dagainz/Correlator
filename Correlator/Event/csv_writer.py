@@ -11,16 +11,39 @@ from Correlator.util import listize
 log = logging.getLogger(__name__)
 
 
-CSVListenConfig = {
+CSVListenConfig = [{
         'csv.output_directory': {
             'default': 'csv',
             'desc': 'The directory to write CSV files into',
-            'type': ConfigType.INTEGER
+            'type': ConfigType.STRING
         }
-}
+}]
 
 
 class CSVListener(EventListener):
+    """ Correlator Event handler to write Audit events as CSV file rows
+
+    Each individual audit event gets written into a CSV file named after
+    itself in the format: module_id-audit_id.csv.
+
+    If files argument is not provided, all records from all modules will
+    generate CSV data. If it is, then only generate CSV data (and resulting
+    files) for the indicated files.
+
+    e.g. 'sshd_logins-sshd_login' would result in only the sshd_login event
+    dispatched from the sshd_logins module being logged.
+
+    Args:
+        files: List files of Correlator modules in this stack
+        processor: Instance of EventProcessor with registered event handlers
+        discovery_method: Callable that can help determine the syslog trailer
+        record_filter:  Record filter list
+        store_file: Name of file to read and write the persistence store
+        record: Custom record class to use (i.e. subclass of SyslogRecord)
+
+    """
+
+    """"""
 
     GlobalConfig.add(CSVListenConfig)
 

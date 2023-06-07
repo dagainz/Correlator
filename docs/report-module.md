@@ -6,7 +6,7 @@ This module simply dispatches Notice events for every log record processed.
 
 It also counts and reports on basic statistics.
 
-This is the module that gets used in the stack when using --report-only.
+This is the module that gets used in the stack when using the --report-only option on any CLI.
 
 ## Configuration parameters
 

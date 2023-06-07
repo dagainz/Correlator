@@ -25,4 +25,6 @@ The following configuration parameters affect the behavior of the persistence st
 |-----------------------------------|-----------------------------------------------------------|---------|---------------|
 | syslog_server.save_store_interval | Time in minutes in between saves of the persistence store | Integer | 5             |
 
-##  
+##  Credential handling using keyring
+
+To be written
