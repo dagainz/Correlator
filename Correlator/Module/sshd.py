@@ -48,83 +48,66 @@ SSHDConfig = [
 class SSHDLoginEvent(AuditEvent):
 
     audit_id = 'sshd.login'
-    fields = ['timestamp', 'auth', 'user', 'addr', 'port', 'key', 'failures',
-              'start', 'finish', 'duration']
-
-    def __init__(self, data):
-
-        table = [
-                ['Login ID:', '${user}'],
-                ['Remote host:', '${addr}:${port}'],
-                ['Key fingerprint:', '${key}'],
-                ['Auth type:', '${auth}'],
-                ['Number of failures:', '${failures}'],
-                ['Session start:', '${start}'],
-                ['Session end:', '${finish}'],
-                ['Session duration:', '${duration}'],
-            ]
-
-        super().__init__(self.audit_id, data, table_data=table)
-        self.audit_desc = ('A user ssh login session was established and '
-                           'terminated normally')
+    field_names = ['timestamp', 'auth', 'user', 'addr', 'port', 'key',
+                   'failures', 'start', 'finish', 'duration']
+    audit_desc = ('A user ssh login session was established and '
+                  'terminated normally')
+    table_data = [
+            ['Login ID:', '${user}'],
+            ['Remote host:', '${addr}:${port}'],
+            ['Key fingerprint:', '${key}'],
+            ['Auth type:', '${auth}'],
+            ['Number of failures:', '${failures}'],
+            ['Session start:', '${start}'],
+            ['Session end:', '${finish}'],
+            ['Session duration:', '${duration}'],
+        ]
 
 
 class SSHDLoginFailedEvent(AuditEvent):
 
     audit_id = 'sshd.login-failed'
-    fields = ['timestamp', 'user', 'addr', 'port', 'failures']
-
-    def __init__(self, data):
-        table_data = [
-            ['Attempted login ID:', '${user}'],
-            ['Remote host:', '${addr}:${port}'],
-            ['Number of failures:', '${failures}'],
-        ]
-        super().__init__(self.audit_id, data, table_data=table_data)
-
-        self.is_error = True
-        self.audit_desc = ('A login attempt was rejected because of too many '
-                           'attempts with an incorrect password')
+    field_names = ['timestamp', 'user', 'addr', 'port', 'failures']
+    audit_desc = ('A login attempt was rejected because of too many '
+                  'attempts with an incorrect password')
+    table_data = [
+        ['Attempted login ID:', '${user}'],
+        ['Remote host:', '${addr}:${port}'],
+        ['Number of failures:', '${failures}'],
+    ]
+    status_error = True
 
 
 class SSHDLoginsExceededEvent(AuditEvent):
 
     audit_id = 'sshd.login-retry'
-    fields = ['timestamp', 'host']
-
-    def __init__(self, data):
-        table_data = [
-            ['Remote Host:', '${host}']
-        ]
-        super().__init__(self.audit_id, data, table_data=table_data)
-        self.audit_desc = (
-            'A remote host has exceeded the allowed number of login attempts')
+    field_names = ['timestamp', 'host']
+    audit_desc = ('A remote host has exceeded the allowed number of login '
+                  'attempts')
+    table_data = [
+        ['Remote Host:', '${host}']
+    ]
 
 
 class SSHDStatsEvent(AuditEvent):
 
     audit_id = 'module-stats'
-    fields = [
+    field_names = [
         'login_sessions',
         'denied',
         'lockouts',
         'expired',
         'partial'
     ]
+    audit_desc = 'Statistics for the SSH Logins module'
+    table_data = [
+        ['Login sessions:', '${login_sessions}'],
+        ['Denied logins:', '${denied}'],
+        ['Host lockouts:', '${lockouts}'],
+        ['Expired transactions', '${expired}'],
+        ['Partial transactions', '${partial}'],
+    ]
 
-    def __init__(self, data):
-
-        table_data = [
-            ['Login sessions:', '${login_sessions}'],
-            ['Denied logins:', '${denied}'],
-            ['Host lockouts:', '${lockouts}'],
-            ['Expired transactions', '${expired}'],
-            ['Partial transactions', '${partial}'],
-        ]
-
-        super().__init__(self.audit_id, data, table_data=table_data)
-
-        self.audit_desc = 'Statistics for the SSH Logins module'
 
 
 @dataclass

@@ -11,21 +11,15 @@ log = logging.getLogger(__name__)
 class ReportStatsEvent(AuditEvent):
 
     audit_id = 'module-stats'
-    fields = ['start', 'end', 'duration', 'messages', 'size']
-
-    def __init__(self, data):
-
-        table = [
-                ['Session start:', '${start}'],
-                ['Session end:', '${end}'],
-                ['Session duration:', '${duration}'],
-                ['Number of log records:', '${messages}'],
-                ['Total size (bytes):', '${size}']
-            ]
-
-        super().__init__(self.audit_id, data, table_data=table)
-
-        self.audit_desc = 'Statistics for the report-only module'
+    field_names = ['start', 'end', 'duration', 'messages', 'size']
+    audit_desc = 'Statistics for the report-only module'
+    data_table = [
+        ['Session start:', '${start}'],
+        ['Session end:', '${end}'],
+        ['Session duration:', '${duration}'],
+        ['Number of log records:', '${messages}'],
+        ['Total size (bytes):', '${size}']
+    ]
 
 
 @dataclass
@@ -83,7 +77,7 @@ class Report(Module):
 
         self.dispatch_event(
             NoticeEvent(
-                calculate_summary(str(record)), record=record))
+                calculate_summary(str(record))))
 
         self.store.num_records += 1
         self.store.size_records += recordsize

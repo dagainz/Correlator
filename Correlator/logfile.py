@@ -14,19 +14,13 @@ class LogError(Exception):
 class LogfileStatsEvent(AuditEvent):
 
     audit_id = 'system-stats'
-    fields = ['start', 'end', 'duration']
-
-    def __init__(self, data):
-
-        table = [
-            ['Session Start:', '${start}'],
-            ['Session End:', '${end}'],
-            ['Session Duration:', '${duration}'],
-        ]
-
-        super().__init__(self.audit_id, data, table_data=table)
-
-        self.audit_desc = 'A log file has been completely processed'
+    field_names = ['start', 'end', 'duration']
+    audit_desc = 'A log file has been completely processed'
+    table_data = [
+        ['Session Start:', '${start}'],
+        ['Session End:', '${end}'],
+        ['Session Duration:', '${duration}'],
+    ]
 
 
 class LogRecord:

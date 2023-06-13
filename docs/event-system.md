@@ -2,14 +2,17 @@
 
 The Correlator Event system consists of:
 
-- Events: Python objects that contain data related to the event
-- Event handlers: Instances of a Python class that catch dispatched Events and decide whether to either ignore the even 
-or take action.
+## Events
+
+Events are python objects that are dispatched from the front-end engine or one of its modules in relation to 
+something noteworthy happening. They are dispatched with at least a textual summary of the event, but it is also
+possible to attach an arbitrary data structure for use in event handlers.
+
 
 ## Events
 
 Events are dispatched from the front-end engine or one of its modules. They are modeled as python objects and
-are instances of Correlator.event.Event or a subclass.
+are instances or children of of Correlator.event.Event.
 
 Standard event types are supplied to provide appropriate default actions. For example, any custom event
 dispatched is a subclass of ErrorEvent will generate a python log entry with a severity of error when
@@ -22,7 +25,6 @@ The standard Event can contain quite a bit of information:
 - Descriptive summary
 - Data block - list of key/value pairs
 - Timestamp
-- The original log record (if applicable)
 - System - source of the event
 - optionally a text/html message generated bv mako
 - Is this warning, error, or informational message
@@ -30,15 +32,23 @@ The standard Event can contain quite a bit of information:
 ErrorEvent, WarningEvent, and NoticeEvent are all subclasses of Event. To reiterate a point above, unless there is a
 good reason not to, all non-audit type events should extend one of these standard event classes. 
 
+### Usage
+### ::: Correlator.Event.core.Event
+    options:
+        show_source: false
+        show_root_heading: true
+
+
 ## Audit events
 
-Audit events are dispatched in response to something noteworthy happening, and have a defined data schema. This makes
-these suitable to use as audit records as they can map easily to a CSV row, or database table.
+Audit events are also dispatched from the front-end engine or one of its modules, but they differ with standard
+events in that they have a defined data schema. This makes these suitable to use as data collection points, or audit records. They map easily to a database table or CSV row.
 
-All audit events are custom event classes that extend AuditEvent. An identifier and a list of data fields that will
-be present in each event must be provided in the class defintion.
-
-See Correlator.sshd.SSHDLoginEvent for an example.
+### Usage
+### ::: Correlator.Event.core.AuditEvent
+    options:
+        show_source: false
+        show_root_heading: true
 
 ## Event handlers
 

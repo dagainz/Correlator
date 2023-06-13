@@ -565,16 +565,10 @@ class SyslogServer:
 class SyslogStatsEvent(AuditEvent):
 
     audit_id = 'system-stats'
-    fields = ['start', 'end', 'duration']
-
-    def __init__(self, data):
-
-        table_data = [
-            ['Session Started:', '${start}'],
-            ['Session Ended:', '${end}'],
-            ['Session Duration:', '${duration}'],
-        ]
-
-        super().__init__(self.audit_id, data, table_data)
-
-        self.audit_desc = 'Statistics for the Syslog server'
+    field_names = ['start', 'end', 'duration']
+    data_table = [
+        ['Session Started:', '${start}'],
+        ['Session Ended:', '${end}'],
+        ['Session Duration:', '${duration}'],
+    ]
+    audit_desc = 'Statistics for the Syslog server'

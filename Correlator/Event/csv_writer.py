@@ -35,11 +35,6 @@ class CSVListener(EventListener):
 
     Args:
         files: List files of Correlator modules in this stack
-        processor: Instance of EventProcessor with registered event handlers
-        discovery_method: Callable that can help determine the syslog trailer
-        record_filter:  Record filter list
-        store_file: Name of file to read and write the persistence store
-        record: Custom record class to use (i.e. subclass of SyslogRecord)
 
     """
 
