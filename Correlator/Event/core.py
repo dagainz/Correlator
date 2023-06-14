@@ -9,14 +9,22 @@ from typing import List
 log = logging.getLogger(__name__)
 
 
+class EventTypes:
+    """ For future use """
+    Standard: int = 0
+    Dataset: int = 1
+
+
 class Event:
     """Base class for all events.
 
     This is not meant to be instantiated directly. Modules should use one of the
     subclasses ErrorEvent, WarningEvent, or NoticeEvent, or a custom
-    subclass of AuditEvent.
+    subclass of DataSetEvent.
 
-    The mako template properties are meant to be
+    The mako template properties are currently only used by data table support
+    in DataSetEvents, but expanded future use is planned.
+
     Attributes:
         is_audit: Audit event?
         is_error: Is error set?
@@ -25,7 +33,6 @@ class Event:
         timestamp: Event timestamp
         template_txt: Mako template to render text
         template_html: Mako template to render html
-
 
     Args:
         summary: Summary string
@@ -86,13 +93,15 @@ class Event:
 
     def csv_header(self):
         return ''
+        # raise NotImplementedError
 
     def csv_row(self):
         return ''
+        # raise NotImplementedError
 
     @staticmethod
-    def _html_datatable(rows, cssclass='datatable', header=None):
-        html = f'<table class="{cssclass}">'
+    def _html_datatable(rows, css_class='datatable', header=None):
+        html = f'<table class="{css_class}">'
         if header is not None:
             html += "<tr>"
             for cell in header:
@@ -161,7 +170,6 @@ class AuditEvent(Event):
         if self.field_names is None:
             raise ValueError('Undefined field names')
 
-
         # 'timestamp' is mandatory but overridable
 
         # Ensure it will always be the first field
@@ -173,7 +181,7 @@ class AuditEvent(Event):
         except ValueError:
             pass
 
-        self._fields = ['timestamp'] + self.field_names
+        self._fields = ['timestamp'] + self._fields
 
         # If it has not been set in the payload, set it to now.
 
@@ -206,6 +214,8 @@ class AuditEvent(Event):
             self.is_error = True
         if is_warning:
             self.is_warning = True
+
+        # todo: Review
 
         self.buffer = StringIO()
 
@@ -256,9 +266,6 @@ class ErrorEvent(Event):
         super().__init__(summary, **kwargs)
         self.is_error = True
 
-    # def __repr__(self):
-    #     return f'ERROR: {self.timestamp}: {self.summary}'
-
 
 class WarningEvent(Event):
 
@@ -266,15 +273,9 @@ class WarningEvent(Event):
         super().__init__(summary, **kwargs)
         self.is_warning = True
 
-    # def __repr__(self):
-    #     return f'WARNING: {self.timestamp}: {self.summary}'
-
 
 class NoticeEvent(Event):
     pass
-
-    # def __repr__(self):
-    #     return f'NOTICE: {self.timestamp}: {self.summary}'
 
 
 class EventListener:
