@@ -145,9 +145,9 @@ class AuditEvent(Event):
     audit_id: str = None
     audit_desc: str = None
     field_names: List[str] = None
-    data_table = None
-    status_error = False
-    status_warning = False
+    data_table: None|dict = None
+    status_error: bool = False
+    status_warning: bool = False
 
     def __init__(self, payload: dict, is_error: bool = False,
                  is_warning: bool = False):
@@ -161,15 +161,6 @@ class AuditEvent(Event):
         if self.field_names is None:
             raise ValueError('Undefined field names')
 
-        if is_error:
-            self.is_error = True
-        else:
-            self.is_error = self.status_error
-
-        if is_warning:
-            self.is_warning = True
-        else:
-            self.is_warning = self.status_warning
 
         # 'timestamp' is mandatory but overridable
 
@@ -201,7 +192,21 @@ class AuditEvent(Event):
 
         super().__init__(self.repr, payload=payload)
         self.is_audit = True
-        # self.audit_id = audit_id
+
+        # Set error or warning flags
+
+        # default to using class variables
+
+        self.is_error: bool = self.status_error
+        self.is_warning: bool = self.status_warning
+
+        # Allow constructor overrides
+
+        if is_error:
+            self.is_error = True
+        if is_warning:
+            self.is_warning = True
+
         self.buffer = StringIO()
 
         self.writer = csv_module.DictWriter(self.buffer, self._fields)
