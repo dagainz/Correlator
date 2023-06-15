@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from typing import List, BinaryIO, Callable
 
 from Correlator.config import GlobalConfig, ConfigType
-from Correlator.Event.core import EventProcessor, ErrorEvent, AuditEvent
+from Correlator.Event.core import EventProcessor, ErrorEvent, DataEvent
 from Correlator.util import ParserError, Module
 
 
@@ -562,13 +562,13 @@ class SyslogServer:
                     data=data))
 
 
-class SyslogStatsEvent(AuditEvent):
+class SyslogStatsEvent(DataEvent):
 
-    audit_id = 'system-stats'
+    event_id = 'system-stats'
     field_names = ['start', 'end', 'duration']
     data_table = [
         ['Session Started:', '${start}'],
         ['Session Ended:', '${end}'],
         ['Session Duration:', '${duration}'],
     ]
-    audit_desc = 'Statistics for the Syslog server'
+    event_desc = 'Statistics for the Syslog server'

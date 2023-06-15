@@ -9,10 +9,16 @@ from typing import List
 log = logging.getLogger(__name__)
 
 
-class EventTypes:
+class EventType:
     """ For future use """
     Standard: int = 0
     Dataset: int = 1
+
+
+class EventStatus:
+    Standard: int = 0
+    Warning: int = 1
+    Error: int = 2
 
 
 class Event:
@@ -25,15 +31,6 @@ class Event:
     The mako template properties are currently only used by data table support
     in DataSetEvents, but expanded future use is planned.
 
-    Attributes:
-        is_audit: Audit event?
-        is_error: Is error set?
-        is_warning: Is warning set?
-        summary: Summary string
-        timestamp: Event timestamp
-        template_txt: Mako template to render text
-        template_html: Mako template to render html
-
     Args:
         summary: Summary string
         payload: Optional payload consisting of key/value pairs
@@ -41,53 +38,94 @@ class Event:
 
     """
 
-    audit_id: List[str] = None
-    audit_desc: str = None
+    event_id: str = None
+    system_id: str = None
+    event_desc: str = None
     field_names: List[str] = None
     data_table = None
 
-    def __init__(self, summary: str, payload: dict | None = None,
-                 system: str = 'None'):
+    def __init__(self,
+                 summary: str,
+                 payload: dict = None,
+                 system: str = None,
+                 status: int = EventStatus.Standard,
+                 event_type: int = EventType.Standard):
 
-        self.system: str = system
-        self.payload: dict = payload
+        self._system_id = self.system_id
 
-        # Notice, by default
+        if system is not None:
+            self._system_id = system
+        else:
+            self._system_id = self.system_id
 
-        self.is_error: bool = False
-        self.is_warning: bool = False
+        if self._system_id is None:
+            self._system_id = 'Unspecified'
 
-        # Not an audit event
-        self.is_audit: bool = False
+        self._payload: dict = payload
 
-        self.summary: str = summary
-        self.timestamp: datetime = datetime.now()
+        self._status = status
+        self._event_type = event_type
+        self._event_id = None
+        self._event_desc = None
 
-        self.template_txt: Template | None = None
-        self.template_html: Template | None = None
+        # self._is_error: bool = False
+        # self._is_warning: bool = False
+
+        self._summary: str = summary
+        self._timestamp: datetime = datetime.now()
+
+        self._template_txt: Template | None = None
+        self._template_html: Template | None = None
 
         # Auto generate text and html table mako templates, if provided.
 
         if self.data_table is not None:
-            self.template_txt = Template(self._text_datatable(self.data_table))
-            self.template_html = Template(self._html_datatable(self.data_table))
+            self._template_txt = Template(self._text_datatable(self.data_table))
+            self._template_html = Template(
+                self._html_datatable(self.data_table))
+
+    @property
+    def type(self):
+        return self._event_type
+
+    def id(self):
+        return self._event_type
+
+    @property
+    def status(self):
+        return self._status
+
+    @property
+    def system(self):
+        return self._system_id
+
+    @system.setter
+    def system(self, value):
+        self._system_id = value
+
+    @property
+    def summary(self):
+        return self._summary
 
     def __repr__(self):
-        prefix = ''
-        if self.is_error:
-            prefix = 'Error: '
-        elif self.is_warning:
-            prefix = 'Warning: '
 
-        return prefix + self.summary
+        prefix = ''
+        if self._event_type == EventType.Dataset:
+            prefix += 'Data:'
+        if self._status == EventStatus.Error:
+            prefix += '*Error* '
+        elif self._status == EventStatus.Warning:
+            prefix += '*Warning* '
+
+        return prefix + self._summary
 
     def render_text(self):
-        if self.payload and self.template_txt:
-            return self.template_txt.render(**self.payload)
+        if self._payload and self._template_txt:
+            return self._template_txt.render(**self._payload)
 
     def render_html(self):
-        if self.payload and self.template_html:
-            return self.template_html.render(**self.payload)
+        if self._payload and self._template_html:
+            return self._template_html.render(**self._payload)
 
     # todo: This doesn't feel right
 
@@ -127,48 +165,52 @@ class Event:
         return text
 
 
-class AuditEvent(Event):
-    """Base class for Audit Events.
+class DataEvent(Event):
+    """Base class for Data Events.
 
-    Audit events are custom classes with this one as its parent. To define an
-    audit event that can be dispatched from a module, define a class based on
+    Data events are custom classes with this one as its parent. To define a
+    data event that can be dispatched from a module, define a class based on
     this one, and define the following class variables:
 
     Attributes:
 
-        audit_id: **Required:** unique identifier for this event.
-        audit_desc: **Required:** Short textual description of the event.
+        event_id: **Required** unique identifier for this event.
+        event_desc: **Required** Short textual description of the event.
         field_names: **Required:** list of strings that represent the names of
             the fields in the payload. Position dependent handlers (such as CSV)
             will honor the field order defined here
         data_table: **Optional:** list of name, mako expression pairs to use
             when automatically generating text and html representations of the
             payload.
-        status_error: Set to True to indicate these events are errors
-        status_warning: Set to True to indicate these events are warnings
+        set_error: Set to True to indicate these events are errors
+        set_warning: Set to True to indicate these events are warnings
 
     """
 
     # To be defined in subclass
 
-    audit_id: str = None
-    audit_desc: str = None
+    event_id: str = None
+    event_desc: str = None
     field_names: List[str] = None
-    data_table: None|dict = None
-    status_error: bool = False
-    status_warning: bool = False
+    data_table: None | dict = None
 
-    def __init__(self, payload: dict, is_error: bool = False,
-                 is_warning: bool = False):
+    set_error: bool = False
+    set_warning: bool = False
 
-        if self.audit_id is None:
-            raise ValueError('Undefined audit_id')
-
-        if self.audit_desc is None:
-            raise ValueError('Undefined audit_desc')
+    def __init__(self, payload: dict, status: int = None):
 
         if self.field_names is None:
-            raise ValueError('Undefined field names')
+            raise ValueError('Attribute field_names is not defined in this '
+                             'child')
+
+        if self.event_id is None:
+            raise ValueError('Attribute event_id is not defined in this child')
+
+        if self.event_desc is None:
+            raise ValueError('Attribute event_desc is not defined in this'
+                             ' child')
+        self._event_id = self.event_id
+        self._event_desc = self.event_desc
 
         # 'timestamp' is mandatory but overridable
 
@@ -188,32 +230,27 @@ class AuditEvent(Event):
         if 'timestamp' not in payload:
             payload['timestamp'] = datetime.now()
 
-        # CSV module requires strings or numbers. Resolve any other types
+        # Normalize all data in the payload to numbers and strings.
 
         payload = self._resolve_payload(payload)
 
-        # Simple repr, at least for now.
-        # todo: Review
-
         kv = [f'{field}={payload[field]}' for field in self._fields]
-        self.repr = self.audit_id + ': ' + ', '.join(kv)
+        self.repr = f'Data: event_id={self._event_id}, ' + ', '.join(kv)
 
-        super().__init__(self.repr, payload=payload)
-        self.is_audit = True
+        # Set status. Let status set in constructor override class level
+        # definitions
 
-        # Set error or warning flags
+        if status is None:
+            if self.set_error:
+                status = EventStatus.Error
+            elif self.set_warning:
+                status = EventStatus.Warning
+            else:
+                status = EventStatus.Standard
 
-        # default to using class variables
-
-        self.is_error: bool = self.status_error
-        self.is_warning: bool = self.status_warning
-
-        # Allow constructor overrides
-
-        if is_error:
-            self.is_error = True
-        if is_warning:
-            self.is_warning = True
+        super().__init__(self.repr, payload=payload,
+                         event_type=EventType.Dataset,
+                         status=status)
 
         # todo: Review
 
@@ -253,7 +290,7 @@ class AuditEvent(Event):
         return value
 
     def csv_row(self):
-        self.writer.writerow(self.payload)
+        self.writer.writerow(self._payload)
         value = self.buffer.getvalue().strip("\r\n")
         self.buffer.seek(0)
         self.buffer.truncate(0)
@@ -262,16 +299,14 @@ class AuditEvent(Event):
 
 class ErrorEvent(Event):
 
-    def __init__(self, summary, **kwargs):
-        super().__init__(summary, **kwargs)
-        self.is_error = True
+    def __init__(self, summary):
+        super().__init__(summary, status=EventStatus.Error)
 
 
 class WarningEvent(Event):
 
-    def __init__(self, summary, **kwargs):
-        super().__init__(summary, **kwargs)
-        self.is_warning = True
+    def __init__(self, summary):
+        super().__init__(summary, status=EventStatus.Warning)
 
 
 class NoticeEvent(Event):

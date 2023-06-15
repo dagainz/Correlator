@@ -10,9 +10,8 @@ import re
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 
-from Correlator.Event.core import AuditEvent
-from Correlator.util import (
-    Module, CountOverTime, format_timestamp)
+from Correlator.Event.core import DataEvent
+from Correlator.util import Module, CountOverTime, format_timestamp
 from Correlator.config import GlobalConfig, ConfigType
 
 log = logging.getLogger(__name__)
@@ -45,12 +44,12 @@ SSHDConfig = [
 ]
 
 
-class SSHDLoginEvent(AuditEvent):
+class SSHDLoginEvent(DataEvent):
 
-    audit_id = 'sshd.login'
+    event_id = 'login'
     field_names = ['timestamp', 'auth', 'user', 'addr', 'port', 'key',
                    'failures', 'start', 'finish', 'duration']
-    audit_desc = ('A user ssh login session was established and '
+    event_desc = ('A user ssh login session was established and '
                   'terminated normally')
     table_data = [
             ['Login ID:', '${user}'],
@@ -64,34 +63,35 @@ class SSHDLoginEvent(AuditEvent):
         ]
 
 
-class SSHDLoginFailedEvent(AuditEvent):
+class SSHDLoginFailedEvent(DataEvent):
 
-    audit_id = 'sshd.login-failed'
+    event_id = 'login-failed'
     field_names = ['timestamp', 'user', 'addr', 'port', 'failures']
-    audit_desc = ('A login attempt was rejected because of too many '
+    event_desc = ('A login attempt was rejected because of too many '
                   'attempts with an incorrect password')
     table_data = [
         ['Attempted login ID:', '${user}'],
         ['Remote host:', '${addr}:${port}'],
         ['Number of failures:', '${failures}'],
     ]
-    status_error = True
+    set_error = True
 
 
-class SSHDLoginsExceededEvent(AuditEvent):
+class SSHDLoginsExceededEvent(DataEvent):
 
-    audit_id = 'sshd.login-retry'
+    event_id = 'login-retry'
     field_names = ['timestamp', 'host']
-    audit_desc = ('A remote host has exceeded the allowed number of login '
+    event_desc = ('A remote host has exceeded the allowed number of login '
                   'attempts')
     table_data = [
         ['Remote Host:', '${host}']
     ]
+    set_error = True
 
 
-class SSHDStatsEvent(AuditEvent):
+class SSHDStatsEvent(DataEvent):
 
-    audit_id = 'module-stats'
+    event_id = 'module-stats'
     field_names = [
         'login_sessions',
         'denied',
@@ -99,7 +99,7 @@ class SSHDStatsEvent(AuditEvent):
         'expired',
         'partial'
     ]
-    audit_desc = 'Statistics for the SSH Logins module'
+    event_desc = 'Statistics for the SSH Logins module'
     table_data = [
         ['Login sessions:', '${login_sessions}'],
         ['Denied logins:', '${denied}'],
@@ -107,7 +107,6 @@ class SSHDStatsEvent(AuditEvent):
         ['Expired transactions', '${expired}'],
         ['Partial transactions', '${partial}'],
     ]
-
 
 
 @dataclass

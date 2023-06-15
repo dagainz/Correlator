@@ -90,8 +90,8 @@ class Email(EventListener):
             text_detail = event.summary
 
         html_content = None
-        if event.audit_desc is not None:
-            summary = event.audit_desc
+        if event.event_desc is not None:
+            summary = event.event_desc
         else:
             summary = event.summary
 

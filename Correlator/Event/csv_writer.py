@@ -61,7 +61,7 @@ class CSVListener(EventListener):
         if not row:
             return
 
-        csv_name = f'{event.system}-{event.audit_id}'
+        csv_name = f'{event.system}-{event.event_id}'
         if self.write_files and csv_name not in self.write_files:
             log.debug("Not interested in event")
             # We aren't interested.

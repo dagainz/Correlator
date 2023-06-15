@@ -1,7 +1,7 @@
 import logging
 import re
 
-from Correlator.Event.core import (AuditEvent, EventProcessor)
+from Correlator.Event.core import (DataEvent, EventProcessor)
 from Correlator.util import ParserError, Module, format_timestamp
 
 log = logging.getLogger(__name__)
@@ -11,11 +11,11 @@ class LogError(Exception):
     pass
 
 
-class LogfileStatsEvent(AuditEvent):
+class LogfileStatsEvent(DataEvent):
 
-    audit_id = 'system-stats'
+    event_id = 'system-stats'
     field_names = ['start', 'end', 'duration']
-    audit_desc = 'A log file has been completely processed'
+    event_desc = 'A log file has been completely processed'
     table_data = [
         ['Session Start:', '${start}'],
         ['Session End:', '${end}'],

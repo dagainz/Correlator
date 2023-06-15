@@ -1,4 +1,4 @@
-from Correlator.Event.core import EventListener, Event, log
+from Correlator.Event.core import EventListener, Event, log, EventStatus
 
 
 class LogbackListener(EventListener):
@@ -10,11 +10,9 @@ class LogbackListener(EventListener):
         pass
 
     def process_event(self, event: Event):
-        if event.is_error:
+        if event.status == EventStatus.Error:
             log.error(f'{event.system}: {event.summary}')
-        elif event.is_warning:
+        elif event.status == EventStatus.Warning:
             log.warning(f'{event.system}: {event.summary}')
-        elif event.is_audit:
-            log.info(repr(event))
         else:   # notice
             log.info(f'{event.system}: {event.summary}')

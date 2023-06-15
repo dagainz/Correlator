@@ -3,16 +3,16 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from Correlator.util import Module, format_timestamp, calculate_summary
-from Correlator.Event.core import NoticeEvent, AuditEvent
+from Correlator.Event.core import NoticeEvent, DataEvent
 
 log = logging.getLogger(__name__)
 
 
-class ReportStatsEvent(AuditEvent):
+class ReportStatsEvent(DataEvent):
 
-    audit_id = 'module-stats'
+    event_id = 'module-stats'
     field_names = ['start', 'end', 'duration', 'messages', 'size']
-    audit_desc = 'Statistics for the report-only module'
+    event_desc = 'Statistics for the report-only module'
     data_table = [
         ['Session start:', '${start}'],
         ['Session end:', '${end}'],
