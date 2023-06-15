@@ -16,7 +16,7 @@ class EventType:
 
 
 class EventStatus:
-    Standard: int = 0
+    Informational: int = 0
     Warning: int = 1
     Error: int = 2
 
@@ -42,13 +42,13 @@ class Event:
     system_id: str = None
     event_desc: str = None
     field_names: List[str] = None
-    data_table = None
+    data_table: dict = None
 
     def __init__(self,
                  summary: str,
                  payload: dict = None,
                  system: str = None,
-                 status: int = EventStatus.Standard,
+                 status: int = EventStatus.Informational,
                  event_type: int = EventType.Standard):
 
         self._system_id = self.system_id
@@ -77,7 +77,7 @@ class Event:
         self._template_txt: Template | None = None
         self._template_html: Template | None = None
 
-        # Auto generate text and html table mako templates, if provided.
+        # Auto generate text and html table using mako templates, if provided.
 
         if self.data_table is not None:
             self._template_txt = Template(self._text_datatable(self.data_table))
@@ -107,17 +107,8 @@ class Event:
     def summary(self):
         return self._summary
 
-    def __repr__(self):
-
-        prefix = ''
-        if self._event_type == EventType.Dataset:
-            prefix += 'Data:'
-        if self._status == EventStatus.Error:
-            prefix += '*Error* '
-        elif self._status == EventStatus.Warning:
-            prefix += '*Warning* '
-
-        return prefix + self._summary
+    def __str__(self):
+        return self._summary
 
     def render_text(self):
         if self._payload and self._template_txt:
@@ -168,7 +159,8 @@ class Event:
 class DataEvent(Event):
     """Base class for Data Events.
 
-    Data events are custom classes with this one as its parent. To define a
+    Data events are events that have the primary purpose of who's primary purpose that contain a flat data structure is that guaranteed
+    to follow a simple schema. This makes them suitable for are guaranteed to follow a schema. ustom classes with this one as its parent. To define a
     data event that can be dispatched from a module, define a class based on
     this one, and define the following class variables:
 
@@ -192,7 +184,7 @@ class DataEvent(Event):
     event_id: str = None
     event_desc: str = None
     field_names: List[str] = None
-    data_table: None | dict = None
+    data_table: dict = None
 
     set_error: bool = False
     set_warning: bool = False
@@ -246,7 +238,7 @@ class DataEvent(Event):
             elif self.set_warning:
                 status = EventStatus.Warning
             else:
-                status = EventStatus.Standard
+                status = EventStatus.Informational
 
         super().__init__(self.repr, payload=payload,
                          event_type=EventType.Dataset,

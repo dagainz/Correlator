@@ -2,17 +2,14 @@
 
 The Correlator Event system consists of:
 
-## Events
-
-Events are python objects that are dispatched from the front-end engine or one of its modules in relation to 
-something noteworthy happening. They are dispatched with at least a textual summary of the event, but it is also
-possible to attach an arbitrary data structure for use in event handlers.
 
 
 ## Events
 
-Events are dispatched from the front-end engine or one of its modules. They are modeled as python objects and
-are instances or children of of Correlator.event.Event.
+The front-end engine or one of its modules react to noteworthy situations by dispatching events that can be received
+and acted on by event handlers.
+
+They are modeled as python objects and are instances or children of of Correlator.event.Event.
 
 Standard event types are supplied to provide appropriate default actions. For example, any custom event
 dispatched is a subclass of ErrorEvent will generate a python log entry with a severity of error when
@@ -39,13 +36,22 @@ good reason not to, all non-audit type events should extend one of these standar
         show_root_heading: true
 
 
-## Audit events
+## Data events
 
-Audit events are also dispatched from the front-end engine or one of its modules, but they differ with standard
-events in that they have a defined data schema. This makes these suitable to use as data collection points, or audit records. They map easily to a database table or CSV row.
+Data events are also dispatched from the front-end engine or one of its modules, but they differ with standard
+events in that they follow a simple data schema. 
+
+This schema defines the data to contain:
+- A flat collection of key/value pairs. There can be no additional structure beyond this.
+- A list containing all the field names (key values).
+
+Each event must contain a key/value pair in the payload for every field in field name list (and no more).
+
+This makes these events suitable for inserting into a database table. In addition, field positions may be honored
+by event handlers where this is important (the CSV handler for example).
 
 ### Usage
-### ::: Correlator.Event.core.AuditEvent
+### ::: Correlator.Event.core.DataEvent
     options:
         show_source: false
         show_root_heading: true
