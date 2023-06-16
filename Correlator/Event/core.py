@@ -26,7 +26,7 @@ class Event:
 
     This is not meant to be instantiated directly. Modules should use one of the
     subclasses ErrorEvent, WarningEvent, or NoticeEvent, or a custom
-    subclass of DataSetEvent.
+    subclass of DataEvent.
 
     The mako template properties are currently only used by data table support
     in DataSetEvents, but expanded future use is planned.
@@ -159,10 +159,30 @@ class Event:
 class DataEvent(Event):
     """Base class for Data Events.
 
-    Data events are events that have the primary purpose of who's primary purpose that contain a flat data structure is that guaranteed
-    to follow a simple schema. This makes them suitable for are guaranteed to follow a schema. ustom classes with this one as its parent. To define a
-    data event that can be dispatched from a module, define a class based on
-    this one, and define the following class variables:
+    Data events are events that contain a data structure guaranteed to follow
+    a predetermined schema. This schema defines the data to contain:
+
+    - A single collection of key/value pairs. There can be no additional
+    nesting.
+    - A list containing all the field names (key values). Each event must
+    contain a key/value pair in the payload for every field in field name list
+    (and no more).
+
+    Since the data schema is set within the class declaration, each
+    individual type of event must be defined as a uniquely named python
+    class, which subclasses this one.
+
+    These are designed to be simple to define. Setting the following class
+    variables in the subclass is almost always enough. Then they may be
+    dispatched with a python dictionary as payload, containing all the required
+    key/value pairs.
+
+    Data tables are an optional feature of Data Events. It is a facility in
+    which an array of 2 position lists get rendered by mako to generate a
+    textual and html table representation of the event for use in event
+    handlers. The payload from the data event is supplied to mako, so any
+    of the keys/value are available to the data table.
+
 
     Attributes:
 
