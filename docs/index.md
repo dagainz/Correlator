@@ -4,15 +4,14 @@ A log event processing system written in Python.
 
 ## Overview
 
-This project is a python library and collection of utilities, that will eventually be: Correlator.
-
-Correlator is a system that can read and process log data by forwarding log records through one or more *modules* 
-that look for patterns in the data, and by using an event system, respond to detected situations in various ways.
+Correlator is a proof-of-concept system that can read and process log data by forwarding log records through one or more
+*modules* that detect patterns in log data, and, by using an event system, respond to detected situations in various
+ways.
 
 Functionality and scaffolding is provided to process log data in real time over the network as well as after-the-fact
 by reading and processing log files. 
 
-## Features
+## High level features
 
 - Analysis interface promotes the creation of independent modules that *understand* one or one set of processes.
 - Event system separates the analysis and event logic.

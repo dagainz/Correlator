@@ -17,10 +17,10 @@ This is the base object that events handlers will see however, so it is necessar
 
 ## Standard events
 
-The standard Event contains the following nformation:
+Standard events contain:
 
 - Timestamp
-- Event type: Currently Standard and Dataset
+- Event type: Currently Standard or Dataset
 - Event Status: Error, Warning, Informational
 - System ID: Source of the event
 - Event ID: Event identifier, if event type is Dataset
@@ -28,8 +28,7 @@ The standard Event contains the following nformation:
 - Summary: String summary
 - Payload: a python dict with arbitrary data, to be used in event handlers
 
-ErrorEvent, WarningEvent, and NoticeEvent are all subclasses of Event, which set the Event Status to the appropriate
-value.
+ErrorEvent, WarningEvent, and NoticeEvent are all subclasses of Event which set the appropriate status.
 
 ## Data events
 
