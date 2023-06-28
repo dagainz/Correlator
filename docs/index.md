@@ -16,7 +16,6 @@ by reading and processing log files.
 - Analysis interface promotes the creation of independent modules that *understand* one or one set of processes.
 - Event system separates the analysis and event logic.
 - Event handler interface promotes the creation of individual event handlers that perform one type of action.
-- Layer multiple modules and event handlers together in a stack to implement a Correlator application.
 - RFC 5424 compliant syslog server with packet capture and replay
 - Capture file utility to helps manage captured syslog data
 - A single module is included: *OpenSSH login*, that combined with event handlers demonstrate a simple SIEM.
@@ -29,13 +28,10 @@ It has not been tested on Microsoft Windows.
 
 ## Limitations and known issues
 
-- Lots. This is a proof of concept, and early in the development lifecycle. Bugs are plenty and things change often.
+- Lots. This is a proof of concept
 - Single thread.
 - Virtually no exception handling.
 - The syslog server services a single connection.
-- This has yet to see any full time use, although this will change soon, after this release
 - The event system has no retry capability. Its fire-and-forget.
-- Development sways between the Correlator Core, Syslog Server, Logfile processor, and a private implementation
-of Correlator customized to monitor a proprietary product. Some parts are lagging behind others.
 
 
