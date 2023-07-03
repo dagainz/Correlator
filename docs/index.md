@@ -1,6 +1,6 @@
 # Correlator
 
-A log event processing system written in Python.
+A log processing system written in Python.
 
 ## Overview
 

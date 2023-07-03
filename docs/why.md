@@ -1,6 +1,6 @@
 ## Why?
 
-It's for a couple of reasons.
+A couple of reasons.
 
 ### #1: Personal development
 

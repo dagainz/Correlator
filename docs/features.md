@@ -10,7 +10,7 @@ When enabled, it maintains state by serializing and writing the root store to a 
 initializes the root store to the previous state by loading and deserializing the saved store file. Correlator 
 will write the store file periodically, as well as when it cleanly exits.
 
-Serialization is done by Python pickle, so anything that can be pickled and unpickled can be used in each module's store
+Serialization is done by Python pickle, so any data structure compatible with pickle can be used in each module's store
 and will persist if persistence is enabled.
 
 **Note**: The store contains saved state information for all enabled modules. The system assumes all modules
@@ -27,4 +27,8 @@ The following configuration parameters affect the behavior of the persistence st
 
 ##  Credential handling using keyring
 
-To be written
+To avoid plain-text passwords for external systems in configuration files, Correlator delegates credential storage to
+python keyring. When starting up, Correlator will query all event handlers for required credentials.
+If any of the required credentials are not found in the ring, Correlator will exit with a message indicating which ones
+are missing. After adding the missing credentials to the ring by using a command line utility, Correlator will then
+start and will use those credentials in the event handlers.

@@ -13,7 +13,7 @@ MkDocs compliant documentation is provided in /doc.
 
 # Credits and blame
 
-Lead Developer - Tim Pushor
+Developer - Tim Pushor
 
 # License
 
