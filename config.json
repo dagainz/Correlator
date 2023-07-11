@@ -1,0 +1,25 @@
+{
+  "system": {
+    "config": {
+     "system.run_dir": "/Users/timp/Projects/Correlator/run"
+    }
+  },
+  "application": {
+    "report": {
+      "modules" : [
+        "Report"
+      ],
+      "handlers": {
+        "Logback": {
+          "handler": "Logback",
+          "filter_expression": "${event.is_error or event.is_warning}"
+        }
+      },
+      "config": {
+          "setting": "value"
+        }
+    }
+  }
+}
+
+
