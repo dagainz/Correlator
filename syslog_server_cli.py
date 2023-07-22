@@ -15,9 +15,6 @@ log = logging.getLogger(__name__)
 
 
 class BaseCLI:
-
-    default_config_file = '/Users/timp/Projects/Correlator/config.json'
-
     @staticmethod
     def syslog_record_model():
         return SyslogRecord
@@ -41,7 +38,7 @@ class BaseCLI:
         parser.add_argument(
             '--config_file',
             help='Configuration file to use',
-            default=self.default_config_file
+            default='/Users/timp/Projects/Correlator/config.json'
         )
         parser.add_argument(
             '--app',
@@ -177,8 +174,5 @@ class BaseCLI:
         stack.processor.dispatch_event(e)
 
 
-# Setuptools entrypoint
-
-def cli():
+if __name__ == '__main__':
     BaseCLI()
-

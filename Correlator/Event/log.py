@@ -5,10 +5,6 @@ class LogbackListener(EventListener):
 
     name = 'Logback'
 
-    def __init__(self):
-        # todo: Why?
-        pass
-
     def process_event(self, event: Event):
         if event.status == EventStatus.Error:
             log.error(f'{event.system}: {event.summary}')

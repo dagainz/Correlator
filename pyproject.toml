@@ -12,9 +12,11 @@ dependencies = [
     "iso8601",
     "Mako",
     "MarkupSafe",
+    "Schema",
     "setuptools>=67.0.0",
     "keyring==23.13.1",
-    "twilio==8.0.0"
+    "twilio==8.0.0",
+    "tomli"
 
 ]
 authors = [

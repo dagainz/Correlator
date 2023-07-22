@@ -327,7 +327,12 @@ class NoticeEvent(Event):
 
 class EventListener:
 
-    name = 'Unknown'
+    def __init__(self, name: str, filter_template=None, default_action=True):
+
+        self.filter_template = filter_template
+        self.default_action = default_action
+        self.name = name
+        log.debug(f'Initialized listener {self.name}')
 
     def credentials_req(self) -> [str]:
         return []
@@ -340,6 +345,7 @@ class EventListener:
 
 
 class EventProcessor:
+
     def __init__(self):
         self.listeners: list[EventListener] = []
 
@@ -347,8 +353,26 @@ class EventProcessor:
         self.listeners.append(event_listener)
 
     def dispatch_event(self, event: Event):
+        log.debug(f'Received event {event.event_id}')
         for listener in self.listeners:
-            listener.process_event(event)
+            log.debug(f'Checking if handler {listener.name} is interested')
+            wants_to_handle = False
+            if listener.filter_template is not None:
+                data = {'event': event}
+                try:
+                    res = listener.filter_template.render(**data)
+                    if res == 'True':
+                        log.debug('Yes, filter expression evaluated as True')
+                        wants_to_handle = True
+                    else:
+                        log.debug('No, filter expression evaluated as False')
+                except Exception as e:
+                    log.debug(f'No, filter expression caught exception {e}')
+            else:
+                wants_to_handle = listener.default_action
+                log.debug(f'Falling through to default action of {wants_to_handle}')
+            if wants_to_handle:
+                listener.process_event(event)
 
     def check_creds(self):
         creds = []

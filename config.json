@@ -7,17 +7,31 @@
   "application": {
     "report": {
       "modules" : [
-        "Report"
+        ["Correlator.Module.report", "Report"]
       ],
       "handlers": {
         "Logback": {
-          "handler": "Logback",
-          "filter_expression": "${event.is_error or event.is_warning}"
+          "handler": ["Correlator.Event.log", "LogbackListener"],
+          "filter_expression": "${event.status in [EventStatus.Warning, EventStatus.Error]}"
         }
       },
       "config": {
           "setting": "value"
         }
+    },
+    "siem-report": {
+      "modules" : [
+        ["Correlator.Module.sshd", "SSHD"]
+      ],
+      "handlers": {
+        "Logback": {
+          "handler": ["Correlator.Event.log", "LogbackListener"],
+          "filter_expression": "${event.status in [EventStatus.Warning, EventStatus.Error]}"
+        }
+      },
+      "config": {
+        "module.sshd.login_failure_limit": "6"
+      }
     }
   }
 }

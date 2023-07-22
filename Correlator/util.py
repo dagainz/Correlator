@@ -1,5 +1,7 @@
+import argparse
 import logging
 import os
+import re
 import sys
 from datetime import datetime, timedelta
 
@@ -201,3 +203,21 @@ class CountOverTime:
     def clear(self, identifier: str):
         if identifier in self.store:
             del self.store[identifier]
+
+
+def process_cmdline_options(cmd_args: argparse.Namespace):
+    """Returns a list of list(key,value) options made from an argparse namespace
+
+    arguments in the form --o name=value will be recognized and added.
+
+    """
+
+    res = []
+    if cmd_args.o:
+        for entry in cmd_args.o:
+            m = re.match(r'(.+)=(.+)', entry)
+            if m:
+                (key, value) = (m.group(1), m.group(2))
+                res.append([key, value])
+
+    return res

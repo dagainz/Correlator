@@ -36,6 +36,7 @@ class Report(Module):
 
         super().__init__()
 
+        log.debug('Initialing Report module')
         self.description = 'Report-only'
         self.identifier = 'Report'
         self.module_name = self.identifier
