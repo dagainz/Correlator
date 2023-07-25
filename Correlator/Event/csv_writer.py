@@ -1,18 +1,17 @@
 from io import TextIOWrapper
 from os.path import abspath, join
 from typing import Dict
-import logging
 
 
-from Correlator.config import GlobalConfig, ConfigType
-from Correlator.Event.core import EventListener, Event
+from Correlator.config import ConfigType
+from Correlator.Event.core import EventListener, Event, EventType
 from Correlator.util import listize
 
-log = logging.getLogger(__name__)
+# log = logging.getLogger(__name__)
 
 
 CSVListenConfig = [{
-        'csv.output_directory': {
+        'output_directory': {
             'default': 'csv',
             'desc': 'The directory to write CSV files into',
             'type': ConfigType.STRING
@@ -40,21 +39,29 @@ class CSVListener(EventListener):
 
     """"""
 
-    GlobalConfig.add(CSVListenConfig)
+    # GlobalConfig.add(CSVListenConfig)
 
-    def __init__(self, files=None):
+    def __init__(self, name, files=None):
+
+        super().__init__(name)
+
+        self.add_to_config(CSVListenConfig)
+
         self.csv_files: Dict[str: TextIOWrapper] = {}
         self.write_files = set()
+        self.csv_dir = None
 
         if files:
             for file in listize(files):
                 self.write_files.add(file)
 
-        self.csv_dir = abspath(GlobalConfig.get('csv.output_directory'))
-        log.debug(f'Calculated CSV path: {self.csv_dir}')
+    def initialize(self):
+        self.csv_dir = abspath(self.get_config('output_directory'))
+        self.log.debug(f'Calculated CSV path: {self.csv_dir}')
 
     def process_event(self, event: Event):
-        if not event.is_audit:
+
+        if event.type != EventType.Dataset:
             return
 
         row = event.csv_row()
@@ -63,7 +70,7 @@ class CSVListener(EventListener):
 
         csv_name = f'{event.system}-{event.event_id}'
         if self.write_files and csv_name not in self.write_files:
-            log.debug("Not interested in event")
+            self.log.debug("Not interested in event")
             # We aren't interested.
             return
 

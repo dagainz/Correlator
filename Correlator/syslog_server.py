@@ -182,3 +182,9 @@ class BaseCLI:
 def cli():
     BaseCLI()
 
+
+# For debugging in pycharm
+
+if __name__=='__main__':
+    BaseCLI()
+

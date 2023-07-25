@@ -7,31 +7,29 @@ from email import message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from Correlator.Event.core import EventListener, Event
+from Correlator.Event.core import EventListener, Event, EventStatus
 from Correlator.config import GlobalConfig, ConfigType
 from Correlator.util import template_dir, Instance
-
-log = logging.getLogger(__name__)
 
 mako.runtime.UNDEFINED = ''
 
 EmailConfig = [{
-        'email.smtp_server': {
+        'smtp_server': {
             'default': 'giganode1',
             'desc': 'SMTP Server',
             'type': ConfigType.STRING
         },
-        'email.from': {
+        'from': {
             'default': 'admin@nowhere.com',
             'desc': 'Value of the Email From: Field',
             'type': ConfigType.EMAIL
         },
-        'email.to': {
+        'to': {
             'default': 'nobody',
             'desc': 'Value of the Email To: Field',
             'type': ConfigType.EMAIL
         },
-        'email.html': {
+        'html': {
             'default': True,
             'desc': 'Send HTML formatted email',
             'type': ConfigType.BOOLEAN
@@ -41,44 +39,33 @@ EmailConfig = [{
 
 class Email(EventListener):
 
-    GlobalConfig.add(EmailConfig)
+    # GlobalConfig.add(EmailConfig)
 
-    def __init__(self, handle_error=True, handle_warning=True,
-                 handle_notice=True):
+    def __init__(self, name):
+
+        super().__init__(name)
 
         self.template_dir = template_dir()
-        self.html_email = GlobalConfig.get(
-            'email.html')
+        self.html_email = None
+        self.smtp_server = None
+        self.email_from = None
+        self.email_to = None
 
-        self.smtp_server = GlobalConfig.get(
-            'email.smtp_server')
+    def initialize(self):
+        self.log.debug('Initialize')
 
-        self.email_from = GlobalConfig.get(
-            'email.from')
-
-        self.email_to = GlobalConfig.get(
-            'email.to')
-
-        self.handle_warning = handle_warning
-        self.handle_notice = handle_notice
-        self.handle_error = handle_error
+        self.html_email = self.get_config('email.html')
+        self.smtp_server = self.get_config('email.smtp_server')
+        self.email_from = self.get_config('email.from')
+        self.email_to = self.get_config('email.to')
 
     def process_event(self, event: Event):
 
-        if event.is_error:
-            if not self.handle_error:
-                log.debug('Ignoring event type ERROR')
-                return
+        if event.status == EventStatus.Error:
             base_def = 'error'
-        elif event.is_warning:
-            if not self.handle_warning:
-                log.debug('Ignoring event type WARNING')
-                return
+        elif event.status == EventStatus.Warning:
             base_def = 'warning'
         else:
-            if not self.handle_notice:
-                log.debug('Ignoring event type NOTICE')
-                return
             base_def = 'notice'
 
         template_name = 'email.mako'
@@ -134,7 +121,7 @@ class Email(EventListener):
         msg['To'] = self.email_to
         msg['Subject'] = subject
 
-        log.info(f'Sending email to {self.email_to}')
+        self.log.info(f'Sending email to {self.email_to}')
 
         smtp = smtplib.SMTP(self.smtp_server)
         smtp.sendmail(msg['From'], msg['To'], msg.as_string())

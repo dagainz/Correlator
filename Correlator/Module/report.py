@@ -5,7 +5,7 @@ from datetime import datetime
 from Correlator.util import Module, format_timestamp, calculate_summary
 from Correlator.Event.core import NoticeEvent, DataEvent
 
-log = logging.getLogger(__name__)
+# log = logging.getLogger(__name__)
 
 
 class ReportStatsEvent(DataEvent):
@@ -32,19 +32,21 @@ class ReportState:
 
 class Report(Module):
 
-    def __init__(self):
+    def __init__(self, module_name: str):
 
-        super().__init__()
+        super().__init__(module_name)
 
-        log.debug('Initialing Report module')
+        self.log.debug('Initialing Report module')
         self.description = 'Report-only'
         self.identifier = 'Report'
-        self.module_name = self.identifier
         self.model = ReportState
+
+    def initialize(self):
+        self.log.debug('Initialize no-op')
 
     def _clear_stats(self):
 
-        log.debug('Clear Stats')
+        self.log.debug('Clear Stats')
         self.store.num_records = 0
         self.store.size_records = 0
         self.store.start = None

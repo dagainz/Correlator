@@ -6,31 +6,32 @@
   },
   "application": {
     "report": {
-      "modules" : [
-        ["Correlator.Module.report", "Report"]
-      ],
+      "modules" : {
+        "report": {
+          "module": ["Correlator.Module.report", "Report"]
+        }
+      },
       "handlers": {
         "Logback": {
           "handler": ["Correlator.Event.log", "LogbackListener"],
           "filter_expression": "${event.status in [EventStatus.Warning, EventStatus.Error]}"
         }
-      },
-      "config": {
-          "setting": "value"
-        }
+      }
     },
     "siem-report": {
-      "modules" : [
-        ["Correlator.Module.sshd", "SSHD"]
-      ],
+      "modules" : {
+        "OpenSSH": {
+          "module": ["Correlator.Module.sshd", "SSHD"],
+          "config": {
+            "login_failure_limit": "6"
+          }
+        }
+      },
       "handlers": {
         "Logback": {
           "handler": ["Correlator.Event.log", "LogbackListener"],
           "filter_expression": "${event.status in [EventStatus.Warning, EventStatus.Error]}"
         }
-      },
-      "config": {
-        "module.sshd.login_failure_limit": "6"
       }
     }
   }

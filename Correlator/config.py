@@ -38,7 +38,7 @@ class ConfigException(Exception):
 
 BaseSystemConfig = [
     {
-        'system.run_dir': {
+        'run_dir': {
             'default': '/var/run',
             'desc': 'Writable folder for internal files',
             'type': ConfigType.STRING
@@ -48,12 +48,11 @@ BaseSystemConfig = [
 
 
 class ConfigStore:
-    def __init__(self, initial=None):
-        self.store = {}
-        if isinstance(initial, list):
-            self.add(initial)
+    def __init__(self):
 
-    def add(self, item):
+        self.store = {}
+
+    def add(self, item, prefix: str, instance: str = None):
 
         if isinstance(item, list):
             items = item
@@ -64,7 +63,19 @@ class ConfigStore:
             for key in item:
                 if item[key].get('type') is None:
                     raise ConfigException(f'{key}: No type definition')
-            self.store.update(item)
+
+                # Rename key, adding prefix and instance, if applicable
+
+                new_item = {}
+
+                if instance is not None:
+                    new_key = f'{prefix}.{instance}.{key}'
+                else:
+                    new_key = f'{prefix}.{key}'
+
+                new_item[new_key] = item[key]
+                log.debug(f'Configuration item {key} added as {new_key}')
+                self.store.update(new_item)
 
     def _assert_parameter(self, parameter):
         if parameter not in self.store:
@@ -125,8 +136,10 @@ class ConfigStore:
 
     def get(self, parameter: str):
         self._assert_parameter(parameter)
-        return self.store[parameter].get(
+        v = self.store[parameter].get(
             'value', self.store[parameter].get('default'))
+
+        return v
 
     def get_values(self, parameters: list):
         ret = []
@@ -177,7 +190,8 @@ class ConfigStore:
                 f'{description or "":<14}')
 
 
-GlobalConfig = ConfigStore(BaseSystemConfig)
+GlobalConfig = ConfigStore()
+GlobalConfig.add(BaseSystemConfig, 'system')
 
 
 def config_list_to_md(config_list: list):
@@ -219,17 +233,22 @@ class BaseConfig:
         },
         'application': {
             str: {
-                'modules': [
-                    [str, str]
-                ],
+                'modules': {
+                    str: {
+                        'module': [str, str],
+                        Optional('config', default={}): {
+                            str: object
+                        }
+                    },
+                },
                 'handlers': {
                     str: {
                         'handler': [str, str],
                         'filter_expression': str,
+                        Optional('config', default={}): {
+                         str: object
+                        }
                     }
-                },
-                Optional('config', default={}): {
-                    str: object
                 }
             }
         }
@@ -300,11 +319,13 @@ class BaseConfig:
             log.error('No modules defined')
             return None
 
-        for (python_module, name) in module_cfg:
+        for module_name in module_cfg:
+            module_section = module_cfg[module_name]
+            (python_module, name) = module_section['module']
             log.info(f'Adding Correlator module {name} from python module {python_module}')
             self.add_module(python_module, name)
 
-        app_settings = app['config']
+        # app_settings = app['config']
 
         handler_cfg = app['handlers']
 
@@ -315,7 +336,6 @@ class BaseConfig:
         for handler_name in handler_cfg:
             handler_section = handler_cfg[handler_name]
             (python_module, name) = handler_section['handler']
-            # filter_expression = handler_section['filter_expression']
             log.info(f'Adding event handler {name} from python module {python_module}')
             self.add_module(python_module, name)
 
@@ -323,28 +343,32 @@ class BaseConfig:
 
         self.import_all()
 
-        log.debug('Setting application level options')
-        for key in app_settings:
-            GlobalConfig.set(key, app_settings[key])
-            # log.debug(f'Set [{key}] to [{app_settings[key]}]')
+        # log.debug('Setting application level options')
+        # for key in app_settings:
+        #     GlobalConfig.set(key, app_settings[key])
+        #     # log.debug(f'Set [{key}] to [{app_settings[key]}]')
 
-        log.debug('Setting command line level options')
-        for (key, value) in cmdline_options:
-            GlobalConfig.set(key, value)
-            # log.debug(f'Set [{key}] to [{value}]')
 
         # Instantiate modules
 
-        modules = []
+        module_objects = []
 
-        for (python_module, name) in module_cfg:
-            log.info(f'Instantiating Correlator module {name} from python module {python_module}')
+        for module_name in module_cfg:
+            module_section = module_cfg[module_name]
+            (python_module, name) = module_section['module']
+            log.info(f'Instantiating Correlator module {name} from python module {python_module} as {module_name}')
             python_class = getattr(self.imports[python_module]['obj'], name)
-            modules.append(python_class())
+            module_objects.append(python_class(module_name))
+            log.debug('Setting module level options')
+            module_settings = module_section.get('config', {})
+            for key in module_settings:
+                GlobalConfig.set(f'module.{module_name}.{key}', module_settings[key])
+                # log.debug(f'Set [{key}] to [{module_settings[key]}]')
 
-        processor = EventProcessor()
+        handler_objects = []
 
         # Instantiate handlers
+
         for handler_name in handler_cfg:
             handler_section = handler_cfg[handler_name]
             (python_module, name) = handler_section['handler']
@@ -355,14 +379,38 @@ class BaseConfig:
                 log.info(f'Adding filter expression {filter_expression}')
                 try:
                     template = Template(filter_expression, imports=self.mako_imports)
-                    processor.register_listener(python_class(handler_name, filter_template=template))
+                    # processor.register_listener(python_class(handler_name, filter_template=template))
+                    handler_objects.append(python_class(handler_name, filter_template=template))
                 except Exception as e:
                     log.error(f'Something bad happened: {e}')
                     return None
             else:
-                processor.register_listener(python_class(handler_name))
+                handler_objects.append(python_class(handler_name))
+                # processor.register_listener(python_class(handler_name))
 
-        return CorrelatorStack(processor, modules)
+            log.debug('Setting handler level options')
+            handler_settings = handler_section.get('config', {})
+            for key in handler_settings:
+                GlobalConfig.set(f'handler.{handler_name}.{key}', handler_settings[key])
+                # log.debug(f'Set [{key}] to [{module_settings[key]}]')
+
+        log.debug('Setting command line level options')
+        for (key, value) in cmdline_options:
+            GlobalConfig.set(key, value)
+            # log.debug(f'Set [{key}] to [{value}]')
+
+        # Initialize modules and handlers, and build event processor
+
+        processor = EventProcessor()
+
+        for module in module_objects:
+            module.initialize()
+
+        for handler in handler_objects:
+            handler.initialize()
+            processor.register_listener(handler)
+
+        return CorrelatorStack(processor, module_objects)
 
 
 SystemConfig = BaseConfig()

@@ -6,6 +6,8 @@ from io import StringIO
 from mako.template import Template
 from typing import List
 
+# from Correlator.config import GlobalConfig
+
 log = logging.getLogger(__name__)
 
 
@@ -331,18 +333,33 @@ class EventListener:
 
         self.filter_template = filter_template
         self.default_action = default_action
-        self.name = name
-        log.debug(f'Initialized listener {self.name}')
+        self.handler_name = name
+        self.log = logging.getLogger(f'{self.handler_name}-handler')
+        self.configuration_prefix = f'handler.{self.handler_name}.'
+
+        self.log.debug(f'Initialized base handler')
 
     def credentials_req(self) -> [str]:
         return []
 
     def get_creds(self, user_id: str):
-        return keyring.get_password('Correlator', f'{self.name}.{user_id}')
+        return keyring.get_password('Correlator', f'{self.handler_name}.{user_id}')
 
     def process_event(self, event: Event):
         raise NotImplementedError
 
+    def initialize(self):
+        raise NotImplementedError
+
+    def add_to_config(self, config_item):
+        from Correlator.config import GlobalConfig
+
+        GlobalConfig.add(config_item, 'handler', self.handler_name)
+
+    def get_config(self, key):
+        from Correlator.config import GlobalConfig
+
+        return GlobalConfig.get(self.configuration_prefix + key)
 
 class EventProcessor:
 
@@ -355,7 +372,7 @@ class EventProcessor:
     def dispatch_event(self, event: Event):
         log.debug(f'Received event {event.event_id}')
         for listener in self.listeners:
-            log.debug(f'Checking if handler {listener.name} is interested')
+            log.debug(f'Checking if handler {listener.handler_name} is interested')
             wants_to_handle = False
             if listener.filter_template is not None:
                 data = {'event': event}
@@ -378,5 +395,5 @@ class EventProcessor:
         creds = []
         for listener in self.listeners:
             for cred in listener.credentials_req():
-                creds.append(f'{listener.name}.{cred}')
+                creds.append(f'{listener.handler_name}.{cred}')
         return creds

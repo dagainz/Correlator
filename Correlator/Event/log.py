@@ -3,12 +3,15 @@ from Correlator.Event.core import EventListener, Event, log, EventStatus
 
 class LogbackListener(EventListener):
 
-    name = 'Logback'
+    handler_name = 'Logback'
+
+    def initialize(self):
+        self.log.debug('Handler initialize')
 
     def process_event(self, event: Event):
         if event.status == EventStatus.Error:
-            log.error(f'{event.system}: {event.summary}')
+            self.log.error(f'{event.system}: {event.summary}')
         elif event.status == EventStatus.Warning:
-            log.warning(f'{event.system}: {event.summary}')
+            self.log.warning(f'{event.system}: {event.summary}')
         else:   # notice
-            log.info(f'{event.system}: {event.summary}')
+            self.log.info(f'{event.system}: {event.summary}')

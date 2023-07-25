@@ -12,13 +12,11 @@ from dataclasses import dataclass, field
 
 from Correlator.Event.core import DataEvent
 from Correlator.util import Module, CountOverTime, format_timestamp
-from Correlator.config import GlobalConfig, ConfigType
-
-log = logging.getLogger(__name__)
+from Correlator.config import ConfigType
 
 SSHDConfig = [
     {
-        'module.sshd.login_failure_window': {
+        'login_failure_window': {
             'default': 300,
             'desc': 'Amount of time in seconds to remember the login failures,'
                     'per host',
@@ -26,15 +24,15 @@ SSHDConfig = [
         }
     },
     {
-        'module.sshd.login_failure_limit': {
+        'login_failure_limit': {
             'default': 5,
-            'desc': 'Number of login failures per host per module.sshd.login_'
+            'desc': 'Number of login failures per host per login_'
                     'failure_window seconds',
             'type': ConfigType.INTEGER
         }
     },
     {
-        'module.sshd.max_transaction_age': {
+        'max_transaction_age': {
             'default': 2880,
             'desc': 'How many minutes after creation a transaction is valid',
             'type': ConfigType.INTEGER
@@ -123,26 +121,32 @@ class SSHDStore:
 
 class SSHD(Module):
 
-    GlobalConfig.add(SSHDConfig)
+    # GlobalConfig.add(SSHDConfig)
 
-    def __init__(self):
+    def __init__(self, module_name: str):
 
-        super().__init__()
+        super().__init__(module_name)
 
         self.description = 'OpenSSH Server SSH Logins'
         self.identifier = 'sshd_logins'
-        self.module_name = self.identifier
-
         self.model = SSHDStore
-
-        self.expiry_seconds = GlobalConfig.get(
-            'module.sshd.login_failure_window')
-        self.failure_limit = GlobalConfig.get(
-            'module.sshd.login_failure_limit')
-        self.max_transaction_age = GlobalConfig.get(
-            'module.sshd.max_transaction_age')
-
         self.address_store = None
+
+        self.add_config(SSHDConfig)
+
+        self.expiry_seconds = None
+        self.failure_limit = None
+        self.max_transaction_age = None
+
+    def initialize(self):
+
+        self.log.debug('Process module related configuration items')
+
+        self.expiry_seconds = self.get_config('login_failure_window')
+        self.failure_limit = self.get_config('login_failure_limit')
+        self.max_transaction_age = self.get_config('max_transaction_age')
+
+        pass
 
     def maintenance(self):
         """ perform module maintenance
@@ -166,26 +170,26 @@ class SSHD(Module):
                 expired_transactions += 1
                 self.store.expired += 1
                 self._clear_state(transaction)
-                log.debug(f'Expired transaction {transaction}')
+                self.log.debug(f'Expired transaction {transaction}')
 
         if expired_transactions > 0:
-            log.info(f'Expired {expired_transactions} transactions out of '
+            self.log.info(f'Expired {expired_transactions} transactions out of '
                      f'{total_transactions}.')
             # todo: Evaluate sending an event with details of all expired
             #  transactions.
 
     def timer_handler_hour(self, now):
-        log.debug(f'Running scheduled maintenance '
+        self.log.debug(f'Running scheduled maintenance '
                   f'(Now={format_timestamp(now)})')
         self.maintenance()
 
     def timer_handler_0_0(self, now):
-        log.info(f'Running nightly maintenance '
+        self.log.info(f'Running nightly maintenance '
                  f'(Now={format_timestamp(now)})')
         self.statistics(reset=True)
 
     def post_init_store(self):
-        log.debug(
+        self.log.debug(
             'post_init_store: Initializing host counter from persistence store')
         self.address_store = CountOverTime(
             self.expiry_seconds, self.store.host_store)
@@ -353,10 +357,9 @@ class SSHD(Module):
                     'key': props.get('key'),
                     'failures': 0
                 }
-                log.debug(f'Clearing any failed attempts for host {addr}')
+                self.log.debug(f'Clearing any failed attempts for host {addr}')
                 self.address_store.clear(addr)
-                log.debug(f'Authentication succeeded for '
-                          f'{props.get("user")}')
+                self.log.debug(f'Authentication succeeded for {props.get("user")}')
                 return
 
             props = self.detect_authfailure(record.detail)
@@ -372,7 +375,7 @@ class SSHD(Module):
                     'key': None,
                     'failures': 0
                 }
-                log.debug(f'Authentication failed for {props.get("user")}')
+                self.log.debug(f'Authentication failed for {props.get("user")}')
                 return
 
             props = self.detect_invalid_user(record.detail)
@@ -387,10 +390,10 @@ class SSHD(Module):
                     'key': None,
                     'failures': 0
                 }
-                log.debug(f'Invalid user {props.get("user")}')
+                self.log.debug(f'Invalid user {props.get("user")}')
                 return
 
-            log.debug(f'Skipping State - record: {str(record)}')
+            self.log.debug(f'Skipping State - record: {str(record)}')
 
             return True
 
@@ -403,7 +406,7 @@ class SSHD(Module):
                 host = props.get('addr')
                 trans['failures'] += 1
                 failures = self.address_store.add(host, record.timestamp)
-                log.debug(f"{failures} failures for host {host}")
+                self.log.debug(f"{failures} failures for host {host}")
                 if failures >= self.failure_limit:
                     # Dispatch SSHDLoginsExceededEvent
                     data = {
@@ -424,7 +427,7 @@ class SSHD(Module):
                 host = props['addr']
                 for field_name in ['auth', 'user', 'addr', 'port', 'key']:
                     trans[field_name] = props[field_name]
-                log.debug(f'Clearing any failed attempts for host {host}')
+                self.log.debug(f'Clearing any failed attempts for host {host}')
                 self.address_store.clear(host)
 
             props = self.detect_close(record.detail)
@@ -439,7 +442,7 @@ class SSHD(Module):
                 self.dispatch_event(
                     SSHDLoginFailedEvent(data))
                 return
-            log.debug(f'Skipping State 0 record: {str(record)}')
+            self.log.debug(f'Skipping State 0 record: {str(record)}')
         elif state == 1:
             props = self.detect_close(record.detail)
             if props is not None:
@@ -461,4 +464,4 @@ class SSHD(Module):
                 del self.store.transactions[identifier]
                 del self.store.states[identifier]
                 return
-            log.debug(f'Skipping State 1 record: {str(record)}')
+            self.log.debug(f'Skipping State 1 record: {str(record)}')

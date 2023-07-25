@@ -6,8 +6,7 @@ import sys
 from datetime import datetime, timedelta
 
 from Correlator.Event.core import Event
-
-# todo: Add to global configuration somehow
+from Correlator.config import GlobalConfig
 
 DEFAULT_ROTATE_KEEP = 10
 MAX_SUMMARY = 128
@@ -32,7 +31,7 @@ def setup_root_logger(log_level):
 
     # noinspection SpellCheckingInspection
     formatter = logging.Formatter(
-        '%(asctime)s %(module)s %(levelname)s: %(message)s',
+        '%(asctime)s %(name)s %(levelname)s: %(message)s',
         '%Y-%m-%d %H:%M:%S')
     ch.setFormatter(formatter)
 
@@ -43,13 +42,15 @@ def setup_root_logger(log_level):
 
 class Module:
 
-    module_name = 'System'
     description: str = ''
 
-    def __init__(self):
+    def __init__(self, module_name):
         self._processor = None
         self._store = None
         self.model = None
+        self.module_name = module_name
+        self.log = logging.getLogger(f'{module_name}-module')
+        self.configuration_prefix = f'module.{self.module_name}.'
 
     @property
     def event_processor(self):
@@ -90,6 +91,17 @@ class Module:
 
     def statistics(self):
         raise NotImplementedError
+
+    def initialize(self):
+        raise NotImplementedError
+
+    def add_config(self, config_item):
+        GlobalConfig.add(config_item, 'module', self.module_name)
+
+    def get_config(self, key):
+        # from Correlator.config import GlobalConfig
+
+        return GlobalConfig.get(self.configuration_prefix + key)
 
     @staticmethod
     def _calculate_duration(start, end):

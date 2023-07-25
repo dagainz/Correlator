@@ -17,14 +17,14 @@ log = logging.getLogger(__name__)
 
 SyslogConfig = [
     {
-        'syslog_server.save_store_interval': {
+        'save_store_interval': {
             'default': 5,
             'desc': 'Time in minutes in between saves of the persistence store',
             'type': ConfigType.INTEGER
         }
     },
     {
-        'syslog_server.buffer_size': {
+        'buffer_size': {
             'default': 4096,
             'desc': 'Read buffer size. This must be large enough so that an '
                     'entire header and structured data can fit.',
@@ -32,7 +32,7 @@ SyslogConfig = [
         }
     },
     {
-        'syslog_server.default_trailer': {
+        'default_trailer': {
             'default': '\n',
             'desc': 'The default syslog record separator to use if trailer '
                     'discovery can\'t conclusively determine the record '
@@ -41,7 +41,7 @@ SyslogConfig = [
         }
     },
     {
-        'syslog_server.listen_address': {
+        'listen_address': {
             'default': '0.0.0.0',
             'desc': 'The IPv4 address of the interface to listen on. 0.0.0.0 '
                     'means listen on all interfaces.',
@@ -49,7 +49,7 @@ SyslogConfig = [
         }
     },
     {
-        'syslog_server.listen_port': {
+        'listen_port': {
             'default': 514,
             'desc': 'The TCP port number to listen on.',
             'type': ConfigType.INTEGER
@@ -215,6 +215,9 @@ class RawSyslogRecord:
     structured_data: dict
 
 
+module_name = 'syslog_server'
+
+
 class SyslogServer:
 
     """ Read and process syslog records from the network, or file.
@@ -231,7 +234,7 @@ class SyslogServer:
 
     """
 
-    GlobalConfig.add(SyslogConfig)
+    GlobalConfig.add(SyslogConfig, module_name)
 
     def __init__(self, modules: List[Module], processor: EventProcessor,
                  discovery_method: Callable[[RawSyslogRecord], bytes] = None,
@@ -263,11 +266,11 @@ class SyslogServer:
             module.post_init_store()
 
         self.save_store_interval = GlobalConfig.get(
-            'syslog_server.save_store_interval')
-        self.buffer_size = GlobalConfig.get('syslog_server.buffer_size')
+            f'{module_name}.save_store_interval')
+        self.buffer_size = GlobalConfig.get(f'{module_name}.buffer_size')
 
         self.default_syslog_trailer = GlobalConfig.get(
-            'syslog_server.default_trailer').encode('utf-8')
+            f'{module_name}.default_trailer').encode('utf-8')
 
     def debug_dump_store(self):
         log.debug(repr(self.full_store))
@@ -431,8 +434,8 @@ class SyslogServer:
 
          """
 
-        host = GlobalConfig.get('syslog_server.listen_address')
-        port = GlobalConfig.get('syslog_server.listen_port')
+        host = GlobalConfig.get(f'{module_name}.listen_address')
+        port = GlobalConfig.get(f'{module_name}.listen_port')
 
         # todo: Why?
 
