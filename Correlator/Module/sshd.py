@@ -5,14 +5,13 @@ Process: logins
 
 """
 
-import logging
 import re
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 
 from Correlator.Event.core import DataEvent
 from Correlator.util import Module, CountOverTime, format_timestamp
-from Correlator.config import ConfigType
+from Correlator.global_config import ConfigType
 
 SSHDConfig = [
     {
@@ -145,8 +144,6 @@ class SSHD(Module):
         self.expiry_seconds = self.get_config('login_failure_window')
         self.failure_limit = self.get_config('login_failure_limit')
         self.max_transaction_age = self.get_config('max_transaction_age')
-
-        pass
 
     def maintenance(self):
         """ perform module maintenance

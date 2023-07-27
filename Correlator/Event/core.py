@@ -352,14 +352,15 @@ class EventListener:
         raise NotImplementedError
 
     def add_to_config(self, config_item):
-        from Correlator.config import GlobalConfig
+        from Correlator.global_config import GlobalConfig
 
         GlobalConfig.add(config_item, 'handler', self.handler_name)
 
     def get_config(self, key):
-        from Correlator.config import GlobalConfig
+        from Correlator.global_config import GlobalConfig
 
         return GlobalConfig.get(self.configuration_prefix + key)
+
 
 class EventProcessor:
 

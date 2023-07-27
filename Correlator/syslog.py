@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import List, BinaryIO, Callable
 
-from Correlator.config import GlobalConfig, ConfigType
+from Correlator.global_config import GlobalConfig, ConfigType
 from Correlator.Event.core import EventProcessor, ErrorEvent, DataEvent
 from Correlator.util import ParserError, Module
 

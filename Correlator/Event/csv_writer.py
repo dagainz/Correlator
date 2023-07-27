@@ -2,8 +2,7 @@ from io import TextIOWrapper
 from os.path import abspath, join
 from typing import Dict
 
-
-from Correlator.config import ConfigType
+from Correlator.global_config import ConfigType
 from Correlator.Event.core import EventListener, Event, EventType
 from Correlator.util import listize
 

@@ -4,7 +4,8 @@ import os
 import sys
 from datetime import datetime
 
-from Correlator.config import GlobalConfig, ConfigException, SystemConfig
+from Correlator.stack import SystemConfig
+from Correlator.global_config import GlobalConfig, ConfigException
 from Correlator.Event.core import EventProcessor, EventType, EventStatus
 from Correlator.syslog import (RawSyslogRecord, SyslogRecord, SyslogServer,
                                SyslogStatsEvent)

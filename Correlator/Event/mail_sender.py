@@ -1,15 +1,15 @@
-import logging
-import smtplib
-import os
+
 import mako.runtime
+import os
+import smtplib
 from mako.template import Template
 from email import message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from Correlator.Event.core import EventListener, Event, EventStatus
-from Correlator.config import GlobalConfig, ConfigType
-from Correlator.util import template_dir, Instance
+from Correlator.global_config import GlobalConfig, ConfigType
+from Correlator.util import template_dir, Instance, SimpleException
 
 mako.runtime.UNDEFINED = ''
 
@@ -39,11 +39,10 @@ EmailConfig = [{
 
 class Email(EventListener):
 
-    # GlobalConfig.add(EmailConfig)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def __init__(self, name):
-
-        super().__init__(name)
+        self.add_to_config(EmailConfig)
 
         self.template_dir = template_dir()
         self.html_email = None
@@ -54,10 +53,27 @@ class Email(EventListener):
     def initialize(self):
         self.log.debug('Initialize')
 
-        self.html_email = self.get_config('email.html')
-        self.smtp_server = self.get_config('email.smtp_server')
-        self.email_from = self.get_config('email.from')
-        self.email_to = self.get_config('email.to')
+        bad_params = []
+        self.html_email = self.get_config('html')
+        if not self.html_email:
+            bad_params.append('html')
+
+        self.smtp_server = self.get_config('smtp_server')
+        if not self.smtp_server:
+            bad_params.append('smtp_server')
+
+        self.email_from = self.get_config('from')
+        if not self.email_from:
+            bad_params.append('from')
+
+        self.email_to = self.get_config('to')
+        if not self.email_to:
+            bad_params.append('to')
+
+        if bad_params:
+            raise SimpleException('Invalid or missing configuration '
+                                  'parameter(s): ' + ', '.join(bad_params))
+
 
     def process_event(self, event: Event):
 
@@ -125,3 +141,4 @@ class Email(EventListener):
 
         smtp = smtplib.SMTP(self.smtp_server)
         smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+        self.log.debug('Email sent')

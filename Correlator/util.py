@@ -6,7 +6,7 @@ import sys
 from datetime import datetime, timedelta
 
 from Correlator.Event.core import Event
-from Correlator.config import GlobalConfig
+from Correlator.global_config import GlobalConfig
 
 DEFAULT_ROTATE_KEEP = 10
 MAX_SUMMARY = 128
@@ -40,6 +40,16 @@ def setup_root_logger(log_level):
     return logger
 
 
+class SimpleException(Exception):
+    pass
+
+
+class CredentialsReq(Exception):
+    def __init__(self, ids: list[str]):
+        self.ids = ids
+        super().__init__(', '.join(self.ids))
+
+
 class Module:
 
     description: str = ''
@@ -59,8 +69,6 @@ class Module:
     @event_processor.setter
     def event_processor(self, value):
         self._processor = value
-
-    # todo: What was I thinking?
 
     @property
     def store(self):

@@ -1,10 +1,8 @@
-import mako.runtime
 from twilio.rest import Client
 
 from Correlator.Event.core import EventListener, Event
-from Correlator.config import ConfigType
-
-mako.runtime.UNDEFINED = ''
+from Correlator.global_config import ConfigType
+from Correlator.stack import SimpleException, CredentialsReq
 
 SMSConfig = [
     {
@@ -35,9 +33,9 @@ class SMS(EventListener):
 
     handler_name = 'SMS'
 
-    def __init__(self, name):
+    def __init__(self, *args, **kwargs):
 
-        super().__init__(name)
+        super().__init__(*args, **kwargs)
 
         self.add_to_config(SMSConfig)
 
@@ -49,28 +47,35 @@ class SMS(EventListener):
 
     def initialize(self):
 
+        self.log.debug('Initializing twilio SMS module')
+        # Load and validate configuration parameters
+
+        bad_params = []
+
         self.twilio_from = self.get_config('from')
         if not self.twilio_from:
-            raise ValueError('Invalid or missing twilio from')
+            bad_params.append('from')
 
         self.twilio_to = self.get_config('to')
         if not self.twilio_to:
-            raise ValueError('Invalid or missing twilio to')
+            bad_params.append('to')
 
         self.account_sid = self.get_config('sid')
         if not self.account_sid:
-            raise ValueError('Invalid or missing twilio account SID')
+            bad_params.append('sid')
 
-        self.Client = Client(self.account_sid, self.auth_token)
+        if bad_params:
+            raise SimpleException('Invalid or missing configuration '
+                                  'parameter(s): ' + ', '.join(bad_params))
 
-        self.log.debug('Twilio module initialized')
+        # Load credentials, or signify that they are missing from the keyring
 
-    def credentials_req(self) -> [str]:
         self.auth_token = self.get_creds(self.account_sid)
         if self.auth_token is None:
-            return [self.account_sid]
+            raise CredentialsReq([self.account_sid])
 
-        return []
+        # Initialize twilio client object
+        self.Client = Client(self.account_sid, self.auth_token)
 
     def process_event(self, event: Event):
 

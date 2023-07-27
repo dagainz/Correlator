@@ -33,8 +33,53 @@
           "filter_expression": "${event.status in [EventStatus.Warning, EventStatus.Error]}"
         }
       }
+    },
+    "siem-sms": {
+      "modules" : {
+        "OpenSSH": {
+          "module": ["Correlator.Module.sshd", "SSHD"]
+          }
+        },
+        "handlers": {
+          "Logback": {
+            "handler": ["Correlator.Event.log", "LogbackListener"],
+            "filter_expression": "True"
+            },
+            "SMS": {
+              "handler": ["Correlator.Event.sms_sender", "SMS"],
+              "filter_expression": "${event.status == EventStatus.Error}",
+              "config": {
+                "from": "+17624754154",
+                "to": "+15878906502",
+                "sid": "AC019be492348423fc1a25ac8653a2574b"
+              }
+          }
+        }
+      },
+    "siem-email": {
+      "modules" : {
+        "OpenSSH": {
+          "module": ["Correlator.Module.sshd", "SSHD"]
+          }
+        },
+        "handlers": {
+          "Logback": {
+            "handler": ["Correlator.Event.log", "LogbackListener"],
+            "filter_expression": "True"
+            },
+            "E-mail": {
+              "handler": ["Correlator.Event.mail_sender", "Email"],
+              "filter_expression": "${event.status == EventStatus.Error}",
+              "config": {
+                "smtp_server": "giganode1",
+                "to": "tim.pushor@gmail.com",
+                "from": "tim.pushor@gmail.com"
+              }
+          }
+        }
+      }
+
     }
   }
-}
 
 
