@@ -76,15 +76,20 @@ class Event:
         self._summary: str = summary
         self._timestamp: datetime = datetime.now()
 
-        self._template_txt: Template | None = None
-        self._template_html: Template | None = None
+        self._template_txt = None
+        self._template_html = None
 
         # Auto generate text and html table using mako templates, if provided.
 
         if self.data_table is not None:
-            self._template_txt = Template(self._text_datatable(self.data_table))
-            self._template_html = Template(
-                self._html_datatable(self.data_table))
+            if self._template_txt is not None:
+                self._template_txt = Template(
+                    self._text_datatable(self.data_table))
+            if self._template_html is not None:
+                self._template_html = Template(
+                    self._html_datatable(self.data_table))
+
+        self.summary_template = None
 
     @property
     def type(self):
@@ -107,10 +112,13 @@ class Event:
 
     @property
     def summary(self):
+        if self.summary_template and self._payload:
+            return self.summary_template.render(**self._payload)
+
         return self._summary
 
     def __str__(self):
-        return self._summary
+        return self.summary()
 
     def render_text(self):
         if self._payload and self._template_txt:
@@ -120,7 +128,7 @@ class Event:
         if self._payload and self._template_html:
             return self._template_html.render(**self._payload)
 
-    # todo: This doesn't feel right
+    # todo: This is really dumb. fix it.
 
     def csv_header(self):
         return ''

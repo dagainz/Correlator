@@ -170,19 +170,20 @@ class SSHD(Module):
                 self.log.debug(f'Expired transaction {transaction}')
 
         if expired_transactions > 0:
-            self.log.info(f'Expired {expired_transactions} transactions out of '
-                     f'{total_transactions}.')
+            self.log.info(f'Expired {expired_transactions} transactions out'
+                          f' of {total_transactions}.')
+
             # todo: Evaluate sending an event with details of all expired
             #  transactions.
 
     def timer_handler_hour(self, now):
-        self.log.debug(f'Running scheduled maintenance '
-                  f'(Now={format_timestamp(now)})')
+        self.log.debug(f'Running scheduled maintenance (Now='
+                       f'{format_timestamp(now)})')
         self.maintenance()
 
     def timer_handler_0_0(self, now):
         self.log.info(f'Running nightly maintenance '
-                 f'(Now={format_timestamp(now)})')
+                      f'(Now={format_timestamp(now)})')
         self.statistics(reset=True)
 
     def post_init_store(self):

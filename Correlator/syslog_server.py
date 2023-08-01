@@ -12,11 +12,12 @@ from Correlator.syslog import (RawSyslogRecord, SyslogRecord, SyslogServer,
 from Correlator.util import (setup_root_logger, capture_filename,
                              format_timestamp, Module)
 
-log = logging.getLogger(__name__)
+# log = logging.getLogger(__name__)
 
 
-class BaseCLI:
+class SyslogServerCLI:
 
+    cli_title = 'Correlator syslog server'
     default_config_file = '/Users/timp/Projects/Correlator/config.json'
 
     @staticmethod
@@ -31,23 +32,17 @@ class BaseCLI:
     def __init__(self):
 
         parser = argparse.ArgumentParser(
-            'Correlator syslog server CLI',
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            epilog=__doc__)
+            description=self.cli_title)
 
         parser.add_argument(
             '--d',
             help='Debug level', action='store_true'
         )
+
         parser.add_argument(
             '--config_file',
             help='Configuration file to use',
             default=self.default_config_file
-        )
-        parser.add_argument(
-            '--app',
-            help='Application to run',
-            required=True
         )
 
         parser.add_argument(
@@ -83,14 +78,38 @@ class BaseCLI:
                  'then exit'
         )
 
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument(
+            '--app',
+            help='Application to run'
+        )
+        group.add_argument(
+            '--apps',
+            help='List available applications',
+            action='store_true'
+        )
         cmd_args = parser.parse_args()
 
         # Setup logging
 
+        self.log = logging.getLogger('syslog_server')
+
         debug_level = logging.DEBUG if cmd_args.d else logging.INFO
         setup_root_logger(debug_level)
 
+        self.log.info('Starting up with command line arguments: ' + " ".join(
+            sys.argv[1:]))
+
         if not SystemConfig.load(cmd_args.config_file):
+            sys.exit(0)
+
+        # If we are just listing apps, do it
+
+        if cmd_args.apps:
+            self.log.info(f'{"Application":<25} Description')
+            self.log.info(f'{"-----------":<25} -----------')
+            for (app, desc) in SystemConfig.apps():
+                self.log.info(f'{app:<25} {desc}')
             sys.exit(0)
 
         # Give a default value to write_file if not provided
@@ -115,16 +134,18 @@ class BaseCLI:
 
         stack = SystemConfig.build_stack(cmd_args.app, settings)
         if stack is None:
-            log.error('Can\'t initialize application. Exiting')
+            self.log.error('Can\'t initialize application. Exiting')
             sys.exit(0)
-        # Check if creds required for any event handlers
+
+        # Check if creds required for any modules or event handlers
 
         ids = stack.processor.check_creds()
 
         if ids:
             for userid in ids:
-                log.error(f'A password for id {userid} was not found in the credential store')
-            log.info('Shutting down due to missing passwords')
+                self.log.error(f'A password for id {userid} was not found in the '
+                          f'credential store')
+            self.log.info('Shutting down due to missing secrets')
             sys.exit(0)
 
         # Prepare output file, if using
@@ -136,13 +157,13 @@ class BaseCLI:
                 print(f'{cmd_args.write_file} exists. Delete it first')
                 sys.exit(0)
             else:
-                log.info(f'Writing received syslog data to capture file '
+                self.log.info(f'Writing received syslog data to capture file '
                          f'{cmd_args.write_file}')
                 output_file = open(cmd_args.write_file, 'wb')
 
         if cmd_args.config:
             GlobalConfig.dump_to_log(debug=False)
-            log.info('Shutting down after configuration query')
+            self.log.info('Shutting down after configuration query')
             sys.exit(0)
         else:
             GlobalConfig.dump_to_log()
@@ -157,7 +178,7 @@ class BaseCLI:
 
         if cmd_args.read_file:
             # Replay from capture file
-            log.info(f'Reading from capture file {cmd_args.read_file}')
+            self.log.info(f'Reading from capture file {cmd_args.read_file}')
             server.from_file(open(cmd_args.read_file, 'rb'))
 
         else:
@@ -181,11 +202,11 @@ class BaseCLI:
 # Setuptools entrypoint
 
 def cli():
-    BaseCLI()
+    SyslogServerCLI()
 
 
-# For debugging in pycharm
+# For -m or running/debugging in IDE
 
-if __name__=='__main__':
-    BaseCLI()
+if __name__ == '__main__':
+    SyslogServerCLI()
 

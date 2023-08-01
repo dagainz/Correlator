@@ -10,7 +10,6 @@ from Correlator.util import SimpleException, CredentialsReq
 log = logging.getLogger(__name__)
 
 
-
 class CorrelatorStack:
     def __init__(self, processor, modules):
         self.processor = processor
@@ -27,6 +26,7 @@ class StackConfig:
         },
         'application': {
             str: {
+                'description': str,
                 'modules': {
                     str: {
                         'module': [str, str],
@@ -38,7 +38,7 @@ class StackConfig:
                 'handlers': {
                     str: {
                         'handler': [str, str],
-                        'filter_expression': str,
+                        Optional('filter_expression', default=''): str,
                         Optional('config', default={}): {
                          str: object
                         }
@@ -96,6 +96,12 @@ class StackConfig:
             log.debug(f'Loading python module {module}, exposing names {",".join(names)}')
             pkg = __import__(module, fromlist=[names])
             self.imports[module]['obj'] = pkg
+
+    def apps(self):
+        apps = self.cfg.get('application', {})
+        for app in apps:
+            desc = apps[app]['description']
+            yield app, desc
 
     def build_stack(self, app_name: str, cmdline_options: list[list[str, str]]) -> CorrelatorStack | None:
 

@@ -6,6 +6,7 @@
   },
   "application": {
     "report": {
+      "description": "Report-only",
       "modules" : {
         "report": {
           "module": ["Correlator.Module.report", "Report"]
@@ -19,6 +20,7 @@
       }
     },
     "siem-report": {
+      "description": "Simple SIEM - Report-only",
       "modules" : {
         "OpenSSH": {
           "module": ["Correlator.Module.sshd", "SSHD"],
@@ -35,6 +37,7 @@
       }
     },
     "siem-sms": {
+      "description": "Simple SIEM - Errors via SMS",
       "modules" : {
         "OpenSSH": {
           "module": ["Correlator.Module.sshd", "SSHD"]
@@ -57,6 +60,7 @@
         }
       },
     "siem-email": {
+      "description": "Simple SIEM - Errors via Email",
       "modules" : {
         "OpenSSH": {
           "module": ["Correlator.Module.sshd", "SSHD"]
