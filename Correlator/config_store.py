@@ -8,8 +8,6 @@ handlers use during execution.
 import logging
 import re
 
-# log = logging.getLogger(__name__)
-
 
 class ConfigType:
 
@@ -33,13 +31,29 @@ class ConfigType:
         return cls.types.get(code, 'Unknown')
 
 
+BaseSystemConfig = [
+    {
+        'run_dir': {
+            'default': '/var/run',
+            'desc': 'Writable folder for internal files',
+            'type': ConfigType.STRING
+        }
+    }
+]
+"""Configuration that serves as the base for any application"""
+
+
 class ConfigStore:
+    """Provides run-time functionality for the configuration store
+
+    """
     def __init__(self):
 
         self.store = {}
         self.log = logging.getLogger('ConfigStore')
 
     def add(self, item, prefix: str, instance: str = None):
+        """Add a configuration item or block to the store"""
 
         if isinstance(item, list):
             items = item
@@ -49,7 +63,7 @@ class ConfigStore:
         for item in items:
             for key in item:
                 if item[key].get('type') is None:
-                    raise ConfigException(f'{key}: No type definition')
+                    raise ValueError(f'{key}: No type definition')
 
                 # Rename key, adding prefix and instance, if applicable
 
@@ -66,10 +80,16 @@ class ConfigStore:
 
     def _assert_parameter(self, parameter):
         if parameter not in self.store:
-            raise ConfigException(f'Unknown configuration parameter: '
-                                  f'{parameter}')
+            raise ValueError(f'Unknown configuration parameter: {parameter}')
 
     def set(self, parameter: str, value):
+        """Attempts to set a configuration parameter to a certain value.
+
+        It will cast if it can, or raise an exception if it cannot be
+        set for any reason.
+
+        """
+
         self.log.debug(f'Set configuration parameter {parameter} to {value}')
 
         # Ensure this is a valid parameter
@@ -119,7 +139,7 @@ class ConfigStore:
             set_value = str(value)
 
         if set_value is None:
-            raise ConfigException(f'{parameter}: {message}')
+            raise ValueError(f'{parameter}: {message}')
 
         self.store[parameter]['value'] = set_value
 
@@ -178,10 +198,6 @@ class ConfigStore:
                 f'{description or "":<14}')
 
 
-class ConfigException(Exception):
-    pass
-
-
 def config_list_to_md(config_list: list):
     """Generate a Markdown table from a Configuration Item list"""
 
@@ -205,15 +221,7 @@ def config_list_to_md(config_list: list):
     return output
 
 
-BaseSystemConfig = [
-    {
-        'run_dir': {
-            'default': '/var/run',
-            'desc': 'Writable folder for internal files',
-            'type': ConfigType.STRING
-        }
-    }
-]
+# Initialize the globally accessible instance that is usable throughout
 
 RuntimeConfig = ConfigStore()
 RuntimeConfig.add(BaseSystemConfig, 'system')

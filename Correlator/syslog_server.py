@@ -4,15 +4,13 @@ import os
 import sys
 from datetime import datetime
 
-from Correlator.config_store import ConfigException, RuntimeConfig
+from Correlator.config_store import RuntimeConfig
 from Correlator.app_config import ApplicationConfig
 from Correlator.Event.core import EventProcessor, EventType, EventStatus
 from Correlator.syslog import (RawSyslogRecord, SyslogRecord, SyslogServer,
                                SyslogStatsEvent)
 from Correlator.util import (setup_root_logger, capture_filename,
                              format_timestamp, Module)
-
-# log = logging.getLogger(__name__)
 
 
 class SyslogServerCLI:
@@ -143,8 +141,9 @@ class SyslogServerCLI:
 
         if ids:
             for userid in ids:
-                self.log.error(f'A password for id {userid} was not found in the '
-                          f'credential store')
+                self.log.error(
+                    f'A password for id {userid} was not found in the '
+                    f'credential store')
             self.log.info('Shutting down due to missing secrets')
             sys.exit(0)
 

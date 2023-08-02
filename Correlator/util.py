@@ -241,3 +241,7 @@ def process_cmdline_options(cmd_args: argparse.Namespace):
                 res.append([key, value])
 
     return res
+
+
+class ConfigException(Exception):
+    pass
