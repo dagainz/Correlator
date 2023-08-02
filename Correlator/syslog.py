@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import List, BinaryIO, Callable
 
-from Correlator.global_config import GlobalConfig, ConfigType
+from Correlator.config_store import ConfigType, RuntimeConfig
 from Correlator.Event.core import EventProcessor, ErrorEvent, DataEvent
 from Correlator.util import ParserError, Module
 
@@ -234,7 +234,7 @@ class SyslogServer:
 
     """
 
-    GlobalConfig.add(SyslogConfig, module_name)
+    RuntimeConfig.add(SyslogConfig, module_name)
 
     def __init__(self, modules: List[Module], processor: EventProcessor,
                  discovery_method: Callable[[RawSyslogRecord], bytes] = None,
@@ -265,11 +265,11 @@ class SyslogServer:
             module.store = self.full_store[module.module_name]
             module.post_init_store()
 
-        self.save_store_interval = GlobalConfig.get(
+        self.save_store_interval = RuntimeConfig.get(
             f'{module_name}.save_store_interval')
-        self.buffer_size = GlobalConfig.get(f'{module_name}.buffer_size')
+        self.buffer_size = RuntimeConfig.get(f'{module_name}.buffer_size')
 
-        self.default_syslog_trailer = GlobalConfig.get(
+        self.default_syslog_trailer = RuntimeConfig.get(
             f'{module_name}.default_trailer').encode('utf-8')
 
     def debug_dump_store(self):
@@ -434,8 +434,8 @@ class SyslogServer:
 
          """
 
-        host = GlobalConfig.get(f'{module_name}.listen_address')
-        port = GlobalConfig.get(f'{module_name}.listen_port')
+        host = RuntimeConfig.get(f'{module_name}.listen_address')
+        port = RuntimeConfig.get(f'{module_name}.listen_port')
 
         # todo: Why?
 

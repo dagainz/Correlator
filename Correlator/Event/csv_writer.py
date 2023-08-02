@@ -2,7 +2,7 @@ from io import TextIOWrapper
 from os.path import abspath, join, exists
 from typing import Dict
 
-from Correlator.global_config import ConfigType
+from Correlator.config_store import ConfigType
 from Correlator.Event.core import EventListener, Event, EventType
 from Correlator.stack import SimpleException
 from Correlator.util import listize

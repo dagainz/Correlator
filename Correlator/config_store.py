@@ -1,7 +1,14 @@
+"""Support for the runtime configuration store.
+
+While confusing, there are two configuration systems. This is the one that
+handles the runtime configuration store that the system, modules, and event
+handlers use during execution.
+
+"""
 import logging
 import re
 
-log = logging.getLogger(__name__)
+# log = logging.getLogger(__name__)
 
 
 class ConfigType:
@@ -30,6 +37,7 @@ class ConfigStore:
     def __init__(self):
 
         self.store = {}
+        self.log = logging.getLogger('ConfigStore')
 
     def add(self, item, prefix: str, instance: str = None):
 
@@ -53,7 +61,7 @@ class ConfigStore:
                     new_key = f'{prefix}.{key}'
 
                 new_item[new_key] = item[key]
-                log.debug(f'Configuration item {key} added as {new_key}')
+                self.log.debug(f'Configuration item {key} added as {new_key}')
                 self.store.update(new_item)
 
     def _assert_parameter(self, parameter):
@@ -62,7 +70,7 @@ class ConfigStore:
                                   f'{parameter}')
 
     def set(self, parameter: str, value):
-        log.debug(f'Set configuration parameter {parameter} to {value}')
+        self.log.debug(f'Set configuration parameter {parameter} to {value}')
 
         # Ensure this is a valid parameter
         self._assert_parameter(parameter)
@@ -151,39 +159,23 @@ class ConfigStore:
              ] for x in self.store
         ]
 
-    @staticmethod
-    def dump_to_log(debug=True):
+    def dump_to_log(self, debug=True):
 
         if debug:
-            log_obj = log.debug
+            log_obj = self.log.debug
         else:
-            log_obj = log.info
+            log_obj = self.log.info
 
         log_obj(f'{"Parameter":<45} {"Type":<10} {"Value":<10} {"Default":<10} '
-                  f'{"Description":<14}')
+                f'{"Description":<14}')
         log_obj(f'{"---------":<45} {"------":<10} {"------":<10} '
                 f'{"-------":<10} {"-----------------------":<14}')
         for (parameter, description, default, current,
-             datatype) in GlobalConfig.list():
+             datatype) in RuntimeConfig.list():
             log_obj(
                 f'{parameter or "":<45} {datatype:<10} '
                 f'{repr(current or ""):<10} {repr(default or ""):<10} '
                 f'{description or "":<14}')
-
-
-GlobalConfig = ConfigStore()
-
-BaseSystemConfig = [
-    {
-        'run_dir': {
-            'default': '/var/run',
-            'desc': 'Writable folder for internal files',
-            'type': ConfigType.STRING
-        }
-    }
-]
-
-GlobalConfig.add(BaseSystemConfig, 'system')
 
 
 class ConfigException(Exception):
@@ -211,3 +203,17 @@ def config_list_to_md(config_list: list):
                        f'{default_value} |\n')
 
     return output
+
+
+BaseSystemConfig = [
+    {
+        'run_dir': {
+            'default': '/var/run',
+            'desc': 'Writable folder for internal files',
+            'type': ConfigType.STRING
+        }
+    }
+]
+
+RuntimeConfig = ConfigStore()
+RuntimeConfig.add(BaseSystemConfig, 'system')

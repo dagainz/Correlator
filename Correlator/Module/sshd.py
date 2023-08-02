@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 
 from Correlator.Event.core import DataEvent
 from Correlator.util import Module, CountOverTime, format_timestamp
-from Correlator.global_config import ConfigType
+from Correlator.config_store import ConfigType
 
 SSHDConfig = [
     {

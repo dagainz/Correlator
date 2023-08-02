@@ -1,7 +1,7 @@
 from twilio.rest import Client
 
 from Correlator.Event.core import EventListener, Event
-from Correlator.global_config import ConfigType
+from Correlator.config_store import ConfigType
 from Correlator.stack import SimpleException, CredentialsReq
 
 SMSConfig = [

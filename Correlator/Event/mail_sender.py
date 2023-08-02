@@ -8,7 +8,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from Correlator.Event.core import EventListener, Event, EventStatus
-from Correlator.global_config import GlobalConfig, ConfigType
+from Correlator.config_store import ConfigType, RuntimeConfig
 from Correlator.util import template_dir, Instance, SimpleException
 
 mako.runtime.UNDEFINED = ''

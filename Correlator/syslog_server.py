@@ -4,8 +4,8 @@ import os
 import sys
 from datetime import datetime
 
-from Correlator.stack import SystemConfig
-from Correlator.global_config import GlobalConfig, ConfigException
+from Correlator.config_store import ConfigException, RuntimeConfig
+from Correlator.app_config import ApplicationConfig
 from Correlator.Event.core import EventProcessor, EventType, EventStatus
 from Correlator.syslog import (RawSyslogRecord, SyslogRecord, SyslogServer,
                                SyslogStatsEvent)
@@ -100,7 +100,7 @@ class SyslogServerCLI:
         self.log.info('Starting up with command line arguments: ' + " ".join(
             sys.argv[1:]))
 
-        if not SystemConfig.load(cmd_args.config_file):
+        if not ApplicationConfig.load(cmd_args.config_file):
             sys.exit(0)
 
         # If we are just listing apps, do it
@@ -108,7 +108,7 @@ class SyslogServerCLI:
         if cmd_args.apps:
             self.log.info(f'{"Application":<25} Description')
             self.log.info(f'{"-----------":<25} -----------')
-            for (app, desc) in SystemConfig.apps():
+            for (app, desc) in ApplicationConfig.apps():
                 self.log.info(f'{app:<25} {desc}')
             sys.exit(0)
 
@@ -132,7 +132,7 @@ class SyslogServerCLI:
                 value = option[pos+1:]
                 settings.append((key, value))
 
-        stack = SystemConfig.build_stack(cmd_args.app, settings)
+        stack = ApplicationConfig.build_stack(cmd_args.app, settings)
         if stack is None:
             self.log.error('Can\'t initialize application. Exiting')
             sys.exit(0)
@@ -162,11 +162,11 @@ class SyslogServerCLI:
                 output_file = open(cmd_args.write_file, 'wb')
 
         if cmd_args.config:
-            GlobalConfig.dump_to_log(debug=False)
+            RuntimeConfig.dump_to_log(debug=False)
             self.log.info('Shutting down after configuration query')
             sys.exit(0)
         else:
-            GlobalConfig.dump_to_log()
+            RuntimeConfig.dump_to_log()
 
         server = SyslogServer(stack.modules,
                               stack.processor,

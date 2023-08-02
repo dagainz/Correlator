@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 
 from Correlator.config import SystemConfig
-from Correlator.global_config import GlobalConfig, ConfigException
+from Correlator.config_store import ConfigException, RuntimeConfig
 from Correlator.Event.core import EventProcessor, EventType, EventStatus
 from Correlator.syslog import (RawSyslogRecord, SyslogRecord, SyslogServer,
                                SyslogStatsEvent)
@@ -138,11 +138,11 @@ class BaseCLI:
                 output_file = open(cmd_args.write_file, 'wb')
 
         if cmd_args.config:
-            GlobalConfig.dump_to_log(debug=False)
+            RuntimeConfig.dump_to_log(debug=False)
             log.info('Shutting down after configuration query')
             sys.exit(0)
         else:
-            GlobalConfig.dump_to_log()
+            RuntimeConfig.dump_to_log()
 
         server = SyslogServer(stack.modules,
                               stack.processor,

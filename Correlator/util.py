@@ -6,7 +6,7 @@ import sys
 from datetime import datetime, timedelta
 
 from Correlator.Event.core import Event
-from Correlator.global_config import GlobalConfig
+from Correlator.config_store import RuntimeConfig
 
 DEFAULT_ROTATE_KEEP = 10
 MAX_SUMMARY = 128
@@ -104,12 +104,12 @@ class Module:
         raise NotImplementedError
 
     def add_config(self, config_item):
-        GlobalConfig.add(config_item, 'module', self.module_name)
+        RuntimeConfig.add(config_item, 'module', self.module_name)
 
     def get_config(self, key):
         # from Correlator.config import GlobalConfig
 
-        return GlobalConfig.get(self.configuration_prefix + key)
+        return RuntimeConfig.get(self.configuration_prefix + key)
 
     @staticmethod
     def _calculate_duration(start, end):
