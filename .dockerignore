@@ -1,0 +1,4 @@
+# Exclude other docker contexts
+
+test/ssh
+
