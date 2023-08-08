@@ -1,0 +1,2 @@
+- Check into using rsyslog octet-counted TCP framing
+- Alternative tranports (RELP?)

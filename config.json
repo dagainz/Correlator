@@ -15,7 +15,7 @@
       "handlers": {
         "Logback": {
           "handler": ["Correlator.Event.log", "LogbackListener"],
-          "filter_expression": "${event.status in [EventStatus.Warning, EventStatus.Error]}"
+          "filter_expression": "True"
         }
       }
     },
