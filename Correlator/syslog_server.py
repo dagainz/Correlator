@@ -16,7 +16,7 @@ from Correlator.util import (setup_root_logger, capture_filename,
 class SyslogServerCLI:
 
     cli_title = 'Correlator syslog server'
-    default_config_file = '/Users/timp/Projects/Correlator/config.json'
+    default_config_file = '/usr/src/app/config.json'
 
     @staticmethod
     def syslog_record_model():
@@ -135,6 +135,11 @@ class SyslogServerCLI:
             self.log.error('Can\'t initialize application. Exiting')
             sys.exit(0)
 
+        run_dir = RuntimeConfig.get('system.run_dir')
+        if not os.access(run_dir, os.W_OK):
+            self.log.error(f'Can\'t write to configured run directory {run_dir}')
+            sys.exit(0)
+
         # Check if creds required for any modules or event handlers
 
         ids = stack.processor.check_creds()
@@ -152,13 +157,18 @@ class SyslogServerCLI:
         output_file = None
 
         if cmd_args.write_file:
-            if os.path.exists(cmd_args.write_file):
-                print(f'{cmd_args.write_file} exists. Delete it first')
+            filename = cmd_args.write_file
+            if not os.path.dirname(filename):
+                # No directory name component, filename only
+                filename = os.path.join(run_dir, filename)
+
+            if os.path.exists(filename):
+                self.log.error(f'{filename} exists. Delete it first')
                 sys.exit(0)
             else:
                 self.log.info(f'Writing received syslog data to capture file '
-                         f'{cmd_args.write_file}')
-                output_file = open(cmd_args.write_file, 'wb')
+                              f'{filename}')
+                output_file = open(filename, 'wb')
 
         if cmd_args.config:
             RuntimeConfig.dump_to_log(debug=False)

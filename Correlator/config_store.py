@@ -34,7 +34,7 @@ class ConfigType:
 BaseSystemConfig = [
     {
         'run_dir': {
-            'default': '/var/run',
+            'default': '/var/spool/correlator',
             'desc': 'Writable folder for internal files',
             'type': ConfigType.STRING
         }

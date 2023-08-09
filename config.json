@@ -1,7 +1,7 @@
 {
   "system": {
     "config": {
-     "system.run_dir": "/Users/timp/Projects/Correlator/run"
+     "system.run_dir": "/var/run/correlator"
     }
   },
   "application": {
