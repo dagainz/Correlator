@@ -161,8 +161,13 @@ class SyslogRecord:
                 raise ParserError('Ran out of content')
             if state == 1:
 
-                if not has_structured_data and dataline[0:2] == '- ':
-                    return dataline[2:], {}
+                # if not has_structured_data and dataline[0:2] == '- ':
+                #     return dataline[2:], {}
+
+                if not has_structured_data:
+                    m = re.match(r'-\s+(.+)', dataline)
+                    if m:
+                        return m.group(1), {}
 
                 m = re.match(r'\[(\w+) (.*)', dataline)
                 if not m:

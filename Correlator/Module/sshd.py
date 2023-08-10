@@ -284,6 +284,8 @@ class SSHD(Module):
     @staticmethod
     def detect_accepted(string):
 
+        # self.log.debug(f'detect_accepted: string=[{string}]')
+
         m = re.match(r'Accepted publickey for (\S+) from (\S+) port (\S+) '
                      r'ssh2: RSA (\S+)', string)
         if m:
