@@ -9,7 +9,7 @@ RUN pip install build
 RUN python -m build
 RUN pip install -e .
 
-RUN mkdir -p /var/spool/correlator
+RUN mkdir -p /var/run/correlator
 
 CMD [ "bash" ]
 
