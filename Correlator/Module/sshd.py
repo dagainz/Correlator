@@ -269,11 +269,12 @@ class SSHD(Module):
 
         return None
 
-    @staticmethod
-    def detect_authfailure(string):
+    # @staticmethod
+    def detect_authfailure(self, string):
         m = re.match(r'.+authentication failure;\s+(.+)\s*', string)
         if m:
-            prop_str = m.group(1)
+            prop_str = m.group(1).strip()
+            self.log.debug(f'detect_authfailure: prop_str={prop_str}')
             props = dict(x.split('=') for x in re.split(' +', prop_str))
             if len(props) > 0:
                 return props
