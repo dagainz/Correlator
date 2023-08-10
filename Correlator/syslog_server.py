@@ -10,7 +10,7 @@ from Correlator.Event.core import EventProcessor, EventType, EventStatus
 from Correlator.syslog import (RawSyslogRecord, SyslogRecord, SyslogServer,
                                SyslogStatsEvent)
 from Correlator.util import (setup_root_logger, capture_filename,
-                             format_timestamp, Module)
+                             format_timestamp, prefix_run_dir)
 
 
 class SyslogServerCLI:
@@ -44,7 +44,7 @@ class SyslogServerCLI:
         )
 
         parser.add_argument(
-            '--o',
+            '--option',
             action='append',
             metavar='option.name=value',
             help='Set Correlator option.name to value',
@@ -123,7 +123,7 @@ class SyslogServerCLI:
 
         settings = []
 
-        for option in cmd_args.o:
+        for option in cmd_args.option:
             pos = option.find('=')
             if pos > 0:
                 key = option[0:pos]
@@ -154,13 +154,10 @@ class SyslogServerCLI:
 
         # Prepare output file, if using
 
-        output_file = None
+        output_fd = None
 
         if cmd_args.write_file:
-            filename = cmd_args.write_file
-            if not os.path.dirname(filename):
-                # No directory name component, filename only
-                filename = os.path.join(run_dir, filename)
+            filename = prefix_run_dir(cmd_args.write_file)
 
             if os.path.exists(filename):
                 self.log.error(f'{filename} exists. Delete it first')
@@ -168,7 +165,12 @@ class SyslogServerCLI:
             else:
                 self.log.info(f'Writing received syslog data to capture file '
                               f'{filename}')
-                output_file = open(filename, 'wb')
+                output_fd = open(filename, 'wb')
+
+        store_filename = None
+
+        if cmd_args.store_file:
+            store_filename = prefix_run_dir(cmd_args.store_file)
 
         if cmd_args.config:
             RuntimeConfig.dump_to_log(debug=False)
@@ -180,7 +182,7 @@ class SyslogServerCLI:
         server = SyslogServer(stack.modules,
                               stack.processor,
                               record=self.syslog_record_model(),
-                              store_file=cmd_args.store_file,
+                              store_file=store_filename,
                               discovery_method=self.trailer_discovery_method)
 
         start = datetime.now()
@@ -191,7 +193,7 @@ class SyslogServerCLI:
             server.from_file(open(cmd_args.read_file, 'rb'))
 
         else:
-            server.listen_single(output_file=output_file)
+            server.listen_single(output_file=output_fd)
 
         end = datetime.now()
 

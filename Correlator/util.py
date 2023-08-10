@@ -161,6 +161,13 @@ def template_dir():
         'Templates')
 
 
+def prefix_run_dir(file_name: str):
+    if not os.path.dirname(file_name):
+        run_dir = RuntimeConfig.get('system.run_dir')
+        # No directory name component, filename only
+        return os.path.join(run_dir, file_name)
+    return file_name
+
 def calculate_summary(detail: str):
     """Generates a summary line from a string
 
