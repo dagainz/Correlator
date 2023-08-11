@@ -74,7 +74,6 @@ class Email(EventListener):
             raise SimpleException('Invalid or missing configuration '
                                   'parameter(s): ' + ', '.join(bad_params))
 
-
     def process_event(self, event: Event):
 
         if event.status == EventStatus.Error:

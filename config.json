@@ -19,8 +19,8 @@
         }
       }
     },
-    "siem-report": {
-      "description": "Simple SIEM - Report-only",
+    "ssh-report": {
+      "description": "OpenSSH Demo - Report only",
       "modules" : {
         "OpenSSH": {
           "module": ["Correlator.Module.sshd", "SSHD"],
@@ -36,8 +36,8 @@
         }
       }
     },
-    "siem-sms": {
-      "description": "Simple SIEM - Errors via SMS",
+    "ssh-sms": {
+      "description": "OpenSSH Demo - Errors via SMS",
       "modules" : {
         "OpenSSH": {
           "module": ["Correlator.Module.sshd", "SSHD"]
@@ -59,8 +59,8 @@
           }
         }
       },
-    "siem-email": {
-      "description": "Simple SIEM - Errors via Email",
+    "ssh-email": {
+      "description": "OpenSSH Demo - Errors via Email",
       "modules" : {
         "OpenSSH": {
           "module": ["Correlator.Module.sshd", "SSHD"]

@@ -162,11 +162,15 @@ def template_dir():
 
 
 def prefix_run_dir(file_name: str):
+    """Prefix the system run directory to a filename if it has no path component
+
+    """
     if not os.path.dirname(file_name):
         run_dir = RuntimeConfig.get('system.run_dir')
-        # No directory name component, filename only
+        # No path component, filename only
         return os.path.join(run_dir, file_name)
     return file_name
+
 
 def calculate_summary(detail: str):
     """Generates a summary line from a string
