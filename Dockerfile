@@ -9,7 +9,9 @@ RUN pip install build
 RUN python -m build
 RUN pip install -e .
 
-RUN mkdir -p /var/run/correlator
+RUN pip install keyrings.cryptfile
+
+RUN mkdir -p /var/spool/correlator
 
 CMD [ "bash" ]
 
