@@ -1,7 +1,7 @@
 {
   "system": {
     "config": {
-     "system.run_dir": "/var/run/correlator"
+     "system.run_dir": "/var/spool/correlator"
     }
   },
   "application": {
