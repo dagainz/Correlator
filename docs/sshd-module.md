@@ -28,7 +28,7 @@ The following configuration parameters affect the behavior of this module:
 
 ## Dispatched events
 
-### SSHDLoginEvent (Audit Event)
+### SSHDLoginSucceeded (Audit Event)
 
 This event is dispatched when a successful sshd login session *ends*
 
@@ -45,7 +45,7 @@ This event is dispatched when a successful sshd login session *ends*
 | finish     | Timestamp of session end                                              |
 | duration   | Session duration                                                      |
 
-### SSHDLoginFailedEvent (Audit Event)
+### SSHDLoginFailed (Audit Event)
 
 This event is dispatched when a user does not successfully authenticate and establish a session.
 
@@ -57,7 +57,7 @@ This event is dispatched when a user does not successfully authenticate and esta
 | port       | Remote Port                         |
 | failures   | Number of failed password attempts  |
 
-### SSHDLoginsExceededEvent (Audit Event)
+### SSHDAttemptsExceeded (Audit Event)
 
 This event is dispatched when a user does not successfully authenticate and establish a session.
 
@@ -69,7 +69,7 @@ This event is dispatched when a user does not successfully authenticate and esta
 | port       | Remote Port                         |
 | failures   | Number of failed password attempts  |
 
-### SSHDLoginsExceededEvent (Audit Event)
+### SSHDAttemptsExceeded (Audit Event)
 
 This event is dispatched when the number of unsuccessful password attempts from a host exceeds the configured value.
 
