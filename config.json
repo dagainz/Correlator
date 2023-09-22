@@ -33,7 +33,15 @@
         "Logback": {
           "handler": ["Correlator.Event.log", "LogbackListener"],
           "filter_expression": "True"
+        },
+        "CSV": {
+          "handler": ["Correlator.Event.csv_writer", "CSVListener"],
+          "filter_expression": "True",
+          "config": {
+            "rotate_files": "False"
+          }
         }
+
       }
     },
     "ssh-sms": {
@@ -50,7 +58,7 @@
             },
             "SMS": {
               "handler": ["Correlator.Event.sms_sender", "SMS"],
-              "filter_expression": "${event.status == EventStatus.Error}",
+              "filter_expression": "${event.severity == EventSeverity.Error}",
               "config": {
                 "from": "+17624754154",
                 "to": "+15878906502",
@@ -73,7 +81,7 @@
             },
             "E-mail": {
               "handler": ["Correlator.Event.mail_sender", "Email"],
-              "filter_expression": "${event.status == EventStatus.Error}",
+              "filter_expression": "True",
               "config": {
                 "smtp_server": "giganode1",
                 "to": "tim.pushor@gmail.com",

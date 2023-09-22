@@ -1,11 +1,11 @@
-from io import TextIOWrapper
+import csv
+from io import TextIOWrapper, StringIO
 from os.path import abspath, join, exists
 from typing import Dict
 
 from Correlator.config_store import ConfigType
-from Correlator.Event.core import EventListener, Event, EventType
-from Correlator.stack import SimpleException
-from Correlator.util import listize
+from Correlator.Event.core import EventListener, Event
+from Correlator.util import SimpleException
 
 
 CSVListenConfig = [
@@ -22,40 +22,41 @@ CSVListenConfig = [
             'desc': 'Rotate existing CSV files prior to writing new records',
             'type': ConfigType.BOOLEAN
         }
+    },
+    {
+        'cache_filehandles': {
+            'default': True,
+            'desc': 'Cache filehandles for performance',
+            'type': ConfigType.BOOLEAN
+        }
+    },
+    {
+        'enabled': {
+            'default': True,
+            'desc': 'Enable module',
+            'type': ConfigType.BOOLEAN
+        }
     }
 ]
 
 
 class CSVListener(EventListener):
-    """ Correlator Event handler to write Audit events as CSV file rows
-
-    Each individual audit event gets written into a CSV file named after
-    itself in the format: module_id-audit_id.csv.
-
-    If files argument is not provided, all records from all modules will
-    generate CSV data. If it is, then only generate CSV data (and resulting
-    files) for the indicated files.
-
-    e.g. 'sshd_logins-sshd_login' would result in only the sshd_login event
-    dispatched from the sshd_logins module being logged.
-
-    Args:
-        files: List files of Correlator modules in this stack
-
-    """
-
-    """"""
 
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
         self.add_to_config(CSVListenConfig)
-        self.default_action = False
+
+        self.io_buffer = StringIO()
+        self.csv_writer = csv.writer(self.io_buffer)
 
         self.csv_files: Dict[str: TextIOWrapper] = {}
         self.csv_dir = None
-        self.rotate_files = True
+        self.cache_filehandles = None
+        self.rotate_files = None
+
+        self.enabled = None
 
     def initialize(self):
 
@@ -63,24 +64,30 @@ class CSVListener(EventListener):
         if not exists(self.csv_dir):
             raise SimpleException(f'Path does not exist: {self.csv_dir}')
         self.rotate_files = self.get_config('rotate_files')
+        self.enabled = self.get_config('enabled')
+        self.cache_filehandles = self.get_config('cache_filehandles')
         self.log.debug(f'Calculated CSV path: {self.csv_dir}')
+
+    def csv_encode(self, *args):
+        self.csv_writer.writerow(args)
+
+        value = self.io_buffer.getvalue().strip("\r\n")
+        self.io_buffer.seek(0)
+        self.io_buffer.truncate(0)
+        return value + "\n"
 
     def process_event(self, event: Event):
 
-        fq_event_id = f'{event.system}-{event.event_id}'
-
-        if event.type != EventType.Dataset:
-            self.log.warning(f'Ignoring non Dataset type event {fq_event_id}')
+        if not self.enabled:
+            self.log.debug('Module disabled via configuration')
             return
 
-        row = event.csv_row()
-        if not row:
-            self.log.debug(f'Event produced no csv data!')
-            return
+        event_id = event.fq_id
+        full_path = join(self.csv_dir, event_id)
 
-        if fq_event_id not in self.csv_files:
+        if self.cache_filehandles and event_id not in self.csv_files:
+            self.log.debug(f'Caching filehandles and do not have one for {event_id} yet')
             # We don't yet have this file open.
-            full_path = join(self.csv_dir, fq_event_id)
             if self.rotate_files:
                 self.log.debug(f'Rotating {full_path}.csv')
                 from Correlator.util import rotate_file  # Avoid cyclic import
@@ -90,20 +97,18 @@ class CSVListener(EventListener):
             filehandle = open(full_path + ".csv", "a")
 
             # Add its handle to the list of open files
-            self.csv_files[fq_event_id] = filehandle
-
+            self.csv_files[event_id] = filehandle
+        elif self.cache_filehandles:
+            self.log.debug(f'Caching filehandles and we do have one for {event_id}')
+            filehandle = self.csv_files[event_id]
         else:
-            filehandle = self.csv_files[fq_event_id]
+            self.log.debug('Not caching filehandles. Opening a new file')
+            filehandle = open(full_path + ".csv", "a")
 
-        # If file is at position 0, and our event provides header
-        # names, write the header to the file
+        # Write header of we are at beginning of file
 
         if filehandle.tell() == 0:
-            header = event.csv_header()
-            if header:
-                filehandle.write(header + '\n')
+            filehandle.write(self.csv_encode(*event.field_names))
 
-        # Write the row, and flush the output buffer
-
-        filehandle.write(row + '\n')
+        filehandle.write(self.csv_encode(*event.field_values))
         filehandle.flush()
