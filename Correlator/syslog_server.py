@@ -6,7 +6,7 @@ from datetime import datetime
 
 from Correlator.config_store import RuntimeConfig
 from Correlator.app_config import ApplicationConfig
-from Correlator.Event.core import EventProcessor, EventType, EventStatus
+from Correlator.Event.core import EventProcessor, EventSeverity
 from Correlator.syslog import (RawSyslogRecord, SyslogRecord, SyslogServer,
                                SyslogStatsEvent)
 from Correlator.util import (setup_root_logger, capture_filename,
@@ -185,6 +185,8 @@ class SyslogServerCLI:
                               store_file=store_filename,
                               discovery_method=self.trailer_discovery_method)
 
+        module_name = server.ConfigModuleName
+
         start = datetime.now()
 
         if cmd_args.read_file:
@@ -206,7 +208,7 @@ class SyslogServerCLI:
                 'end': format_timestamp(end),
                 'duration': str(end - start)
             })
-        e.system = 'syslog-server'
+        e.system = module_name
         stack.processor.dispatch_event(e)
 
 

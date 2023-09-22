@@ -13,7 +13,7 @@ class LogError(Exception):
 
 class LogfileStatsEvent(DataEvent):
 
-    event_id = 'system-stats'
+    _id = 'system-stats'
     field_names = ['start', 'end', 'duration']
     event_desc = 'A log file has been completely processed'
     table_data = [

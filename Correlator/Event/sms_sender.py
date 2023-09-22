@@ -79,13 +79,10 @@ class SMS(EventListener):
 
     def process_event(self, event: Event):
 
-        text_detail = event.render_text()
-
-        if text_detail is None:
-            text_detail = event.summary
+        message = f'This notification from the Correlator log monitor system is from the event {event.id} which occurred at {event.timestamp}: {event.summary}'
 
         self.Client.messages.create(
             from_=self.twilio_from,
-            body=text_detail,
+            body=message,
             to=self.twilio_to)
         self.log.info('SMS Sent')

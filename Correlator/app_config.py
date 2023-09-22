@@ -60,7 +60,7 @@ class ApplicationConfigStore:
     # template code.
 
     mako_imports = [
-        'from Correlator.Event.core import EventType, EventStatus'
+        'from Correlator.Event.core import EventSeverity'
     ]
 
     def __init__(self):

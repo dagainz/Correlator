@@ -3,23 +3,22 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from Correlator.util import Module, format_timestamp, calculate_summary
-from Correlator.Event.core import NoticeEvent, DataEvent
+from Correlator.Event.core import Event, SimpleNotice
 
 # log = logging.getLogger(__name__)
 
 
-class ReportStatsEvent(DataEvent):
+class ReportStats(Event):
 
-    event_id = 'module-stats'
-    field_names = ['start', 'end', 'duration', 'messages', 'size']
-    event_desc = 'Statistics for the report-only module'
-    data_table = [
-        ['Session start:', '${start}'],
-        ['Session end:', '${end}'],
-        ['Session duration:', '${duration}'],
-        ['Number of log records:', '${messages}'],
-        ['Total size (bytes):', '${size}']
+    schema = [
+        ['start', 'Session started'],
+        ['end', 'Session ended'],
+        ['duration', 'Session duration'],
+        ['messages', 'Number of log records'],
+        ['size', 'Total size in bytes'],
+
     ]
+    summary_template = 'Statistics: Session started at ${start}, ended at ${end}, with a duration of ${duration} and ${size} bytes processed'
 
 
 @dataclass
@@ -63,7 +62,7 @@ class Report(Module):
             'size': self.store.size_records,
         }
 
-        self.dispatch_event(ReportStatsEvent(data))
+        self.dispatch_event(ReportStats(data))
 
         if reset:
             self._clear_stats()
@@ -79,8 +78,7 @@ class Report(Module):
             self.store.end = record.timestamp
 
         self.dispatch_event(
-            NoticeEvent(
-                calculate_summary(str(record))))
+            SimpleNotice({'message': calculate_summary(str(record))}))
 
         self.store.num_records += 1
         self.store.size_records += recordsize

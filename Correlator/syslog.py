@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from typing import List, BinaryIO, Callable
 
 from Correlator.config_store import ConfigType, RuntimeConfig
-from Correlator.Event.core import EventProcessor, ErrorEvent, DataEvent
+from Correlator.Event.core import EventProcessor, Event, SimpleError
 from Correlator.util import ParserError, Module
 
 
@@ -220,7 +220,7 @@ class RawSyslogRecord:
     structured_data: dict
 
 
-module_name = 'syslog_server'
+# module_name = 'syslog_server'
 
 
 class SyslogServer:
@@ -239,7 +239,8 @@ class SyslogServer:
 
     """
 
-    RuntimeConfig.add(SyslogConfig, module_name)
+    ConfigModuleName = 'syslog_server'      # For Runtime configuration
+    RuntimeConfig.add(SyslogConfig, ConfigModuleName)
 
     def __init__(self, modules: List[Module], processor: EventProcessor,
                  discovery_method: Callable[[RawSyslogRecord], bytes] = None,
@@ -271,11 +272,11 @@ class SyslogServer:
             module.post_init_store()
 
         self.save_store_interval = RuntimeConfig.get(
-            f'{module_name}.save_store_interval')
-        self.buffer_size = RuntimeConfig.get(f'{module_name}.buffer_size')
+            f'{self.ConfigModuleName}.save_store_interval')
+        self.buffer_size = RuntimeConfig.get(f'{self.ConfigModuleName}.buffer_size')
 
         self.default_syslog_trailer = RuntimeConfig.get(
-            f'{module_name}.default_trailer').encode('utf-8')
+            f'{self.ConfigModuleName}.default_trailer').encode('utf-8')
 
     def debug_dump_store(self):
         log.debug(repr(self.full_store))
@@ -336,8 +337,8 @@ class SyslogServer:
                 self.syslog_trailer = self.discover_trailer(block)
                 if self.syslog_trailer is None:
                     self.processor.dispatch_event(
-                        ErrorEvent(
-                            'Problem running trailer discovery'))
+                        SimpleError(
+                            {'message': 'Problem running trailer discovery'}))
                     return
 
             data = last + block
@@ -409,8 +410,9 @@ class SyslogServer:
                 self.syslog_trailer = self.discover_trailer(block)
                 if self.syslog_trailer is None:
                     self.processor.dispatch_event(
-                        ErrorEvent(
-                            'Cannot locate structured data in raw block'))
+                        SimpleError({
+                            'message': 'Cannot locate structured data in raw block'
+                        }))
                     return
 
             # Combine this new block with whatever was left from the last block
@@ -439,8 +441,8 @@ class SyslogServer:
 
          """
 
-        host = RuntimeConfig.get(f'{module_name}.listen_address')
-        port = RuntimeConfig.get(f'{module_name}.listen_port')
+        host = RuntimeConfig.get(f'{self.ConfigModuleName}.listen_address')
+        port = RuntimeConfig.get(f'{self.ConfigModuleName}.listen_port')
 
         # todo: Why?
 
@@ -565,18 +567,22 @@ class SyslogServer:
                 module.handle_record(record)
         else:
             self.processor.dispatch_event(
-                ErrorEvent(
-                    'Error processing record',
-                    data=data))
+                SimpleError({'message': 'Error processing record'}))
 
 
-class SyslogStatsEvent(DataEvent):
+class SyslogStatsEvent(Event):
 
-    event_id = 'system-stats'
-    field_names = ['start', 'end', 'duration']
-    data_table = [
-        ['Session Started:', '${start}'],
-        ['Session Ended:', '${end}'],
-        ['Session Duration:', '${duration}'],
+    schema = [
+        ['start', 'Session started:'],
+        ['end', 'Session ended:'],
+        ['duration', 'Session duration:'],
     ]
-    event_desc = 'Statistics for the Syslog server'
+    templates = {
+        'text/plain': {
+            'summary': 'Statistics: Session started at ${start}, ended at ${end}, with a duration of ${duration}'
+        },
+        'text/html': {
+            'summary': 'Statistics: Session started at <strong>${start}</strong>, ended at <strong>${end}</strong>, with a duration of <strong>${duration}</strong>'
+        }
+
+    }

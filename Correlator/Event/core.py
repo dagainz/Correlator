@@ -1,284 +1,114 @@
-import csv as csv_module
+
 import logging
 import keyring
 from datetime import datetime
-from io import StringIO
+from enum import Enum
+from functools import cache
 from mako.template import Template
-from typing import List
-
-# from Correlator.config import GlobalConfig
+from typing import List, Tuple, Dict
 
 log = logging.getLogger(__name__)
 
-
-class EventType:
-    """ For future use """
-    Standard: int = 0
-    Dataset: int = 1
+DEFAULT_SYSTEM = 'system'
+INVALID_FIELDS = {'timestamp', 'summary'}
 
 
-class EventStatus:
-    Informational: int = 0
-    Warning: int = 1
-    Error: int = 2
+class EventException(Exception):
+    pass
+
+
+class EventSeverity(Enum):
+    Informational = 0
+    Warning = 1
+    Error = 2
+
+    Default = 0
 
 
 class Event:
-    """Base class for all events.
 
-    This is not meant to be instantiated directly. Modules should use one of the
-    subclasses ErrorEvent, WarningEvent, or NoticeEvent, or a custom
-    subclass of DataEvent.
+    # Required
 
-    The mako template properties are currently only used by data table support
-    in DataSetEvents, but expanded future use is planned.
+    schema: List[Tuple[str, str]] = None
+    summary_template: str = None
 
-    Args:
-        summary: Summary string
-        payload: Optional payload consisting of key/value pairs
-        system: String identifier of the originating system
+    # Optional
 
-    """
+    severity_override: int = None
 
-    event_id: str = None
-    system_id: str = None
-    event_desc: str = None
-    field_names: List[str] = None
-    data_table: dict = None
+    # Internal
+
+    templates = {
+        'text/plain': {
+            'summary': None
+        }
+    }
 
     def __init__(self,
-                 summary: str,
-                 payload: dict = None,
-                 system: str = None,
-                 status: int = EventStatus.Informational,
-                 event_type: int = EventType.Standard):
+                 payload: Dict[str, str | int | float | None | datetime],  #todo: fix me
+                 summary: str = None,
+                 severity: int = EventSeverity.Default):
 
-        self._system_id = self.system_id
-
-        if system is not None:
-            self._system_id = system
+        self._timestamp = datetime.now()
+        self._system = DEFAULT_SYSTEM
+        if self.severity_override is not None:
+            self._severity = self.severity_override
         else:
-            self._system_id = self.system_id
+            self._severity = severity
 
-        if self._system_id is None:
-            self._system_id = 'Unspecified'
+        self._id = self.__class__.__name__
 
-        self._payload: dict = payload
+        self.log = logging.getLogger(self._id)
 
-        self._status = status
-        self._event_type = event_type
-        self._event_id = None
-        self._event_desc = None
+        if self.schema is None:
+            raise EventException(f'{self._id}: Missing schema in class definition')
 
-        # self._is_error: bool = False
-        # self._is_warning: bool = False
+        # Validate data against schema, and build the data table
 
-        self._summary: str = summary
-        self._timestamp: datetime = datetime.now()
+        self._data_table = [['Timestamp:', '${timestamp}']]
+        self._field_names = ['timestamp']
+        self._field_descriptions = {'timestamp': 'Timestamp'}
 
-        self._template_txt = None
-        self._template_html = None
+        payload_copy = payload.copy()
+        self._payload = payload.copy()
 
-        # Auto generate text and html table using mako templates, if provided.
+        missing_fields: List[str] = []
+        invalid_fields: List[str] = []
 
-        if self.data_table is not None:
-            if self._template_txt is not None:
-                self._template_txt = Template(
-                    self._text_datatable(self.data_table))
-            if self._template_html is not None:
-                self._template_html = Template(
-                    self._html_datatable(self.data_table))
-
-        self.summary_template = None
-
-    @property
-    def type(self):
-        return self._event_type
-
-    def id(self):
-        return self._event_type
-
-    @property
-    def status(self):
-        return self._status
-
-    @property
-    def system(self):
-        return self._system_id
-
-    @system.setter
-    def system(self, value):
-        self._system_id = value
-
-    @property
-    def summary(self):
-        if self.summary_template and self._payload:
-            return self.summary_template.render(**self._payload)
-
-        return self._summary
-
-    def __str__(self):
-        return self.summary()
-
-    def render_text(self):
-        if self._payload and self._template_txt:
-            return self._template_txt.render(**self._payload)
-
-    def render_html(self):
-        if self._payload and self._template_html:
-            return self._template_html.render(**self._payload)
-
-    # todo: This is really dumb. fix it.
-
-    def csv_header(self):
-        return ''
-        # raise NotImplementedError
-
-    def csv_row(self):
-        return ''
-        # raise NotImplementedError
-
-    @staticmethod
-    def _html_datatable(rows, css_class='datatable', header=None):
-        html = f'<table class="{css_class}">'
-        if header is not None:
-            html += "<tr>"
-            for cell in header:
-                html += f"<th>{cell}</th>"
-            html += "</tr>"
-
-        for row in rows:
-            html += "<tr>"
-            for cell in row:
-                html += f"<td>{cell}</td>"
-            html += "</tr>"
-
-        html += "</table>"
-        return html
-
-    @staticmethod
-    def _text_datatable(rows):
-        text = ''
-        for row in rows:
-            for cell in row:
-                text += cell + " "
-            text += "\n"
-        return text
-
-
-class DataEvent(Event):
-    """Base class for Data Events.
-
-    Data events are events that contain a data structure guaranteed to follow
-    a predetermined schema. This schema defines the data to contain:
-
-    - A single collection of key/value pairs. There can be no additional
-    nesting.
-    - A list containing all the field names (key values). Each event must
-    contain a key/value pair in the payload for every field in field name list
-    (and no more).
-
-    Since the data schema is set within the class declaration, each
-    individual type of event must be defined as a uniquely named python
-    class, which subclasses this one.
-
-    These are designed to be simple to define. Setting the following class
-    variables in the subclass is almost always enough. Then they may be
-    dispatched with a python dictionary as payload, containing all the required
-    key/value pairs.
-
-    Data tables are an optional feature of Data Events. It is a facility in
-    which an array of 2 position lists get rendered by mako to generate a
-    textual and html table representation of the event for use in event
-    handlers. The payload from the data event is supplied to mako, so any
-    of the keys/value are available to the data table.
-
-
-    Attributes:
-
-        event_id: **Required** unique identifier for this event.
-        event_desc: **Required** Short textual description of the event.
-        field_names: **Required:** list of strings that represent the names of
-            the fields in the payload. Position dependent handlers (such as CSV)
-            will honor the field order defined here
-        data_table: **Optional:** list of name, mako expression pairs to use
-            when automatically generating text and html representations of the
-            payload.
-        set_error: Set to True to indicate these events are errors
-        set_warning: Set to True to indicate these events are warnings
-
-    """
-
-    # To be defined in subclass
-
-    event_id: str = None
-    event_desc: str = None
-    field_names: List[str] = None
-    data_table: dict = None
-
-    set_error: bool = False
-    set_warning: bool = False
-
-    def __init__(self, payload: dict, status: int = None):
-
-        if self.field_names is None:
-            raise ValueError('Attribute field_names is not defined in this '
-                             'child')
-
-        if self.event_id is None:
-            raise ValueError('Attribute event_id is not defined in this child')
-
-        if self.event_desc is None:
-            raise ValueError('Attribute event_desc is not defined in this'
-                             ' child')
-        self._event_id = self.event_id
-        self._event_desc = self.event_desc
-
-        # 'timestamp' is mandatory but overridable
-
-        # Ensure it will always be the first field
-
-        self._fields = self.field_names.copy()
-
-        try:
-            self._fields.remove('timestamp')
-        except ValueError:
-            pass
-
-        self._fields = ['timestamp'] + self._fields
-
-        # If it has not been set in the payload, set it to now.
-
-        if 'timestamp' not in payload:
-            payload['timestamp'] = datetime.now()
-
-        # Normalize all data in the payload to numbers and strings.
-
-        payload = self._resolve_payload(payload)
-
-        kv = [f'{field}={payload[field]}' for field in self._fields]
-        self.repr = f'Data: event_id={self._event_id}, ' + ', '.join(kv)
-
-        # Set status. Let status set in constructor override class level
-        # definitions
-
-        if status is None:
-            if self.set_error:
-                status = EventStatus.Error
-            elif self.set_warning:
-                status = EventStatus.Warning
+        for field_name, field_description in self.schema:
+            self._field_names.append(field_name)
+            self._field_descriptions[field_name] = field_description
+            if field_name in INVALID_FIELDS:
+                invalid_fields.append(field_name)
+            elif field_name not in payload:
+                missing_fields.append(field_name)
             else:
-                status = EventStatus.Informational
+                self._data_table.append([f'{field_description}:', f'${{{field_name}}}'])
+                del payload_copy[field_name]
 
-        super().__init__(self.repr, payload=payload,
-                         event_type=EventType.Dataset,
-                         status=status)
+        messages = []
 
-        # todo: Review
+        if invalid_fields:
+            messages.append(f'Payload has invalid field(s): {", ".join(missing_fields)}')
 
-        self.buffer = StringIO()
+        if missing_fields:
+            messages.append(f'Payload has missing field(s): {", ".join(missing_fields)}')
 
-        self.writer = csv_module.DictWriter(self.buffer, self._fields)
+        if len(payload_copy) != 0:
+            messages.append(f'Payload has extra field(s): {", ".join(payload_copy.keys())}')
+
+        if messages:
+            raise EventException(f'{self._id}: Schema validation failed for the following reason(s): {", ".join(messages)}')
+
+        # Payload ok, resolve all data to strings and numbers
+
+        self._payload = self._resolve_payload(payload)
+        self._payload['timestamp'] = self._timestamp
+
+        # Create unique repr
+
+        kv = [f'{field}={self._payload[field]}' for field in self._field_names]
+        self._repr = f'{self._id}: ' + ', '.join(kv)
 
     @staticmethod
     def _resolve_payload(source: dict):
@@ -304,35 +134,126 @@ class DataEvent(Event):
 
         return destination
 
-    def csv_header(self):
-        self.writer.writeheader()
-        value = self.buffer.getvalue().strip("\r\n")
-        self.buffer.seek(0)
-        self.buffer.truncate(0)
-        return value
+    @property
+    def timestamp(self):
+        return self._timestamp
 
-    def csv_row(self):
-        self.writer.writerow(self._payload)
-        value = self.buffer.getvalue().strip("\r\n")
-        self.buffer.seek(0)
-        self.buffer.truncate(0)
-        return value
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def fq_id(self):
+        return f'{self.system}-{self.id}'
+
+    @property
+    def severity(self):
+        return self._severity
+
+    @property
+    def severity_name(self):
+        return EventSeverity(self._severity).name
+
+    @property
+    def system(self):
+        return self._system
+
+    @system.setter
+    def system(self, value):
+        self._system = value
+
+    @property
+    def summary(self):
+        return self.render_summary('text/plain')
+
+    @cache
+    def render_summary(self, content_type: str = 'text/plain'):
+        templates = self.templates[content_type]
+        summary_template = templates.get('summary')
+        if summary_template:
+            try:
+                return Template(summary_template).render(**self._payload)
+            except Exception as e:
+                message = f'Summary template failed to render: {e}'
+                self.log.error(e)
+                self.log.exception(e)
+                raise EventException(message)
+        else:
+            return self._repr
+
+    @property
+    def field_names(self):
+        return self._field_names
+
+    @property
+    def field_values(self):
+        for field in self.field_names:
+            yield self._payload[field]
+
+    @property
+    def content_types(self):
+        return list(self.templates.keys())
+
+    def __str__(self):
+        return self.summary
+
+    def __repr__(self):
+        return f'[{self.system} :: {self.id}]: {self.summary}'
+
+    @cache
+    def render_datatable(self, content_type='text/plain', **kwargs):
+        template = self.create_datatable(content_type, self._data_table, **kwargs)
+
+        return Template(template).render(**self._payload)
+
+    # Legacy mako generation, kept for transitionary purposes.
+
+    def create_datatable(self, content_type: str, rows, **kwargs):
+        if content_type == 'text/plain':
+            text = ''
+            for row in rows:
+                for cell in row:
+                    text += cell + " "
+                text += "\n"
+            return text
+        elif content_type == 'text/html':
+            css_class = kwargs.get('css_class', 'datatable')
+            header = kwargs.get('header')
+            html = f'<table class="{css_class}">'
+            if header is not None:
+                html += "<tr>"
+                for cell in header:
+                    html += f"<th>{cell}</th>"
+                html += "</tr>"
+
+            for row in rows:
+                html += "<tr>"
+                for cell in row:
+                    html += f"<td>{cell}</td>"
+                html += "</tr>"
+
+            html += "</table>"
+            return html
+        else:
+            raise EventException(f'I do not know how to render datatables for content type {content_type}')
 
 
-class ErrorEvent(Event):
-
-    def __init__(self, summary):
-        super().__init__(summary, status=EventStatus.Error)
-
-
-class WarningEvent(Event):
-
-    def __init__(self, summary):
-        super().__init__(summary, status=EventStatus.Warning)
+class SimpleError(Event):
+    schema = [['message', 'Message']]
+    summary_template = "Error: ${message}"
+    severity_override = EventSeverity.Error
 
 
-class NoticeEvent(Event):
-    pass
+class SimpleWarning(Event):
+    schema = [['message', 'Message']]
+    summary_template = "Warning: ${message}"
+    severity_override = EventSeverity.Error
+
+
+class SimpleNotice(Event):
+    schema = [['message', 'Message']]
+    summary_template = "${message}"
+    severity_override = EventSeverity.Informational
 
 
 class EventListener:
@@ -379,7 +300,7 @@ class EventProcessor:
         self.listeners.append(event_listener)
 
     def dispatch_event(self, event: Event):
-        log.debug(f'Received event {event.event_id}')
+        log.debug(f'Received event {event.id}')
         for listener in self.listeners:
             log.debug(f'Checking if handler {listener.handler_name} is interested')
             wants_to_handle = False
@@ -394,6 +315,7 @@ class EventProcessor:
                         log.debug('No, filter expression evaluated as False')
                 except Exception as e:
                     log.debug(f'No, filter expression caught exception {e}')
+                    log.exception(e)
             else:
                 wants_to_handle = listener.default_action
                 log.debug(f'Falling through to default action of {wants_to_handle}')

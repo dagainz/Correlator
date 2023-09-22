@@ -1,4 +1,4 @@
-from Correlator.Event.core import EventListener, Event, log, EventStatus
+from Correlator.Event.core import EventListener, Event, log, EventSeverity
 
 
 class LogbackListener(EventListener):
@@ -9,9 +9,11 @@ class LogbackListener(EventListener):
         self.log.debug('Handler initialize')
 
     def process_event(self, event: Event):
-        if event.status == EventStatus.Error:
-            self.log.error(f'{event.system}: {event.summary}')
-        elif event.status == EventStatus.Warning:
-            self.log.warning(f'{event.system}: {event.summary}')
+        message = f'[{event.system} :: {event.id}] {event.summary}'
+        # message = f'{event.system}: {event.summary}'
+        if event.severity == EventSeverity.Error:
+            self.log.error(message)
+        elif event.severity == EventSeverity.Warning:
+            self.log.warning(message)
         else:   # notice
-            self.log.info(f'{event.system}: {event.summary}')
+            self.log.info(message)

@@ -9,7 +9,7 @@ import re
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 
-from Correlator.Event.core import DataEvent
+from Correlator.Event.core import Event, EventSeverity
 from Correlator.util import Module, CountOverTime, format_timestamp
 from Correlator.config_store import ConfigType
 
@@ -41,69 +41,76 @@ SSHDConfig = [
 ]
 
 
-class SSHDLoginEvent(DataEvent):
+class SSHDLoginSucceeded(Event):
 
-    event_id = 'login'
-    field_names = ['timestamp', 'auth', 'user', 'addr', 'port', 'key',
-                   'failures', 'start', 'finish', 'duration']
-    event_desc = ('A user ssh login session was established and '
-                  'terminated normally')
-    table_data = [
-            ['Login ID:', '${user}'],
-            ['Remote host:', '${addr}:${port}'],
-            ['Key fingerprint:', '${key}'],
-            ['Auth type:', '${auth}'],
-            ['Number of failures:', '${failures}'],
-            ['Session start:', '${start}'],
-            ['Session end:', '${finish}'],
-            ['Session duration:', '${duration}'],
-        ]
+    schema = [
+        ['user', 'Login ID'],
+        ['auth', 'Authentication method'],
+        ['addr', 'Remote host'],
+        ['port', 'Remote port'],
+        ['failures', 'Failures prior'],
+        ['start', 'Session start'],
+        ['finish', 'Session end'],
+        ['duration', 'Session Duration'],
+        ['key', 'Public key fingerprint'],
 
-
-class SSHDLoginFailedEvent(DataEvent):
-
-    event_id = 'login-failed'
-    field_names = ['timestamp', 'user', 'addr', 'port', 'failures']
-    event_desc = ('A login attempt was rejected because of too many '
-                  'attempts with an incorrect password')
-    table_data = [
-        ['Attempted login ID:', '${user}'],
-        ['Remote host:', '${addr}:${port}'],
-        ['Number of failures:', '${failures}'],
     ]
-    set_error = True
+
+    templates = {
+        'text/plain': {
+            'summary': 'User ${user} from host ${addr}:${port} succesfully authenticated using ${auth} authentication after ${failures} failed attempt(s) with a session duration of ${duration}'
+        }
+    }
+
+    # summary_template = 'User ${user} from host ${addr}:${port} succesfully authenticated using ${auth} authentication after ${failures} failed attempt(s) with a session duration of ${duration}'
 
 
-class SSHDLoginsExceededEvent(DataEvent):
+class SSHDLoginFailed(Event):
 
-    event_id = 'login-retry'
-    field_names = ['timestamp', 'host']
-    event_desc = ('A remote host has exceeded the allowed number of login '
-                  'attempts')
-    table_data = [
-        ['Remote Host:', '${host}']
+    schema = [
+        ['user', 'Attempted login ID'],
+        ['addr', 'Remote host'],
+        ['port', 'Remote port'],
+        ['failures', 'Number of failures']
     ]
-    set_error = True
+    templates = {
+        'text/plain': {
+            'summary': 'User ${user} from host ${addr}:${port} failed to login after ${failures} failures'
+        },
+        'text/html': {
+            'summary': 'User <strong>${user}</strong> from host <strong>${addr}:${port}</strong> failed to login after <strong>${failures}</strong> failures'
+        }
+    }
+    # summary_template = 'User ${user} from host ${addr}:${port} failed to login after ${failures} failures'
+    severity_override = EventSeverity.Error
 
 
-class SSHDStatsEvent(DataEvent):
+class SSHDAttemptsExceeded(Event):
 
-    event_id = 'module-stats'
-    field_names = [
-        'login_sessions',
-        'denied',
-        'lockouts',
-        'expired',
-        'partial'
+    schema = [
+        ['host', 'Remote host']
     ]
-    event_desc = 'Statistics for the SSH Logins module'
-    table_data = [
-        ['Login sessions:', '${login_sessions}'],
-        ['Denied logins:', '${denied}'],
-        ['Host lockouts:', '${lockouts}'],
-        ['Expired transactions', '${expired}'],
-        ['Partial transactions', '${partial}'],
+
+    templates = {
+        'text/plain': {
+            'summary': 'User ${user} from host ${addr}:${port} failed to login after ${failures} failures'
+        }
+    }
+
+    # summary_template = 'The host at ${host} has exceeded the maximum number of failed login attempts within the configured time window'
+    severity_override = EventSeverity.Error
+
+
+class SSHDStats(Event):
+
+    schema = [
+        ['login_sessions', 'Login sessions'],
+        ['denied', 'Denied logins'],
+        ['lockouts', 'Host lockouts'],
+        ['expired', 'Expired transactions'],
+        ['partial', 'Partial transactions'],
     ]
+    summary_template = 'Statistics: ${login_sessions} logion session(s), ${denied} denied login(s),  ${lockouts} host lockout(s), ${expired} expired transaction(s), ${partial} partial transaction(s)'
 
 
 @dataclass
@@ -208,7 +215,7 @@ class SSHD(Module):
             'partial': len(self.store.transactions)
 
         }
-        self.dispatch_event(SSHDStatsEvent(data))
+        self.dispatch_event(SSHDStats(data))
 
         if reset:
             self.clear_statistics()
@@ -409,13 +416,11 @@ class SSHD(Module):
                 failures = self.address_store.add(host, record.timestamp)
                 self.log.debug(f"{failures} failures for host {host}")
                 if failures >= self.failure_limit:
-                    # Dispatch SSHDLoginsExceededEvent
-                    data = {
-                        'timestamp': format_timestamp(datetime.now()),
-                        'host': props.get('addr')
+                    # Dispatch SSHDAttemptsExceeded
+                    data = { 'host': props.get('addr')
                     }
                     self.dispatch_event(
-                        SSHDLoginsExceededEvent(data))
+                        SSHDAttemptsExceeded(data))
                     self.store.lockouts += 1
                 return
             props = self.detect_open(record.detail)
@@ -434,14 +439,12 @@ class SSHD(Module):
             props = self.detect_close(record.detail)
             if props is not None:
                 self.store.denied += 1
-                # Dispatch SSHDLoginFailedEvent
-                data = {
-                    'timestamp': format_timestamp(datetime.now())
-                }
+                # Dispatch SSHDLoginFailed
+                data =  {}
                 for key in ['user', 'addr', 'port', 'failures']:
                     data[key] = trans[key]
                 self.dispatch_event(
-                    SSHDLoginFailedEvent(data))
+                    SSHDLoginFailed(data))
                 return
             self.log.debug(f'Skipping State 0 record: {str(record)}')
         elif state == 1:
@@ -449,10 +452,8 @@ class SSHD(Module):
             if props is not None:
                 trans['finish'] = record.timestamp
                 self.store.login_sessions += 1
-                # Dispatch SSHDLoginEvent
-                data = {
-                    'timestamp': format_timestamp(datetime.now())
-                }
+                # Dispatch SSHDLoginSucceeded
+                data = {}
                 for key in [
                     'auth', 'user', 'addr', 'port', 'key', 'failures',
                         'start', 'finish']:
@@ -460,7 +461,7 @@ class SSHD(Module):
 
                 data['duration'] = str(trans['finish'] - trans['start'])
                 self.dispatch_event(
-                    SSHDLoginEvent(data))
+                    SSHDLoginSucceeded(data))
 
                 del self.store.transactions[identifier]
                 del self.store.states[identifier]
