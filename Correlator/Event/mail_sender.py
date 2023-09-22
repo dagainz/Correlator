@@ -7,7 +7,7 @@ from email import message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from Correlator.Event.core import EventListener, Event, EventStatus
+from Correlator.Event.core import EventListener, Event, EventSeverity
 from Correlator.config_store import ConfigType, RuntimeConfig
 from Correlator.util import template_dir, Instance, SimpleException
 
@@ -33,6 +33,11 @@ EmailConfig = [{
             'default': True,
             'desc': 'Send HTML formatted email',
             'type': ConfigType.BOOLEAN
+        },
+        'template': {
+            'default': 'mail_sender',
+            'desc': 'Email template filename prefix',
+            'type': ConfigType.STRING
         }
 }]
 
@@ -49,6 +54,8 @@ class Email(EventListener):
         self.smtp_server = None
         self.email_from = None
         self.email_to = None
+
+        self.template_name = None
 
     def initialize(self):
         self.log.debug('Initialize')
@@ -70,74 +77,85 @@ class Email(EventListener):
         if not self.email_to:
             bad_params.append('to')
 
+        self.template_name = self.get_config('template')
+        if not self.email_to:
+            bad_params.append('template')
+
         if bad_params:
             raise SimpleException('Invalid or missing configuration '
                                   'parameter(s): ' + ', '.join(bad_params))
 
     def process_event(self, event: Event):
 
-        if event.status == EventStatus.Error:
-            base_def = 'error'
-        elif event.status == EventStatus.Warning:
-            base_def = 'warning'
+        html_type = 'text/html'
+        args = {}
+
+        # Check for HTML
+
+        html_template = self.template_name + '-html.mako'
+        text_template = self.template_name + '-text.mako'
+
+        self.log.debug(f'self.html_email: {self.html_email}')
+
+        if (self.html_email
+            and html_type in event.content_types
+            and os.path.isfile(os.path.join(self.template_dir, html_template))):
+
+            template_name = html_template
+            content_type = html_type
         else:
-            base_def = 'notice'
-
-        template_name = 'email.mako'
-
-        html_detail = event.render_html()
-        text_detail = event.render_text()
-
-        if text_detail is None:
-            text_detail = event.summary
-
-        html_content = None
-        if event.event_desc is not None:
-            summary = event.event_desc
-        else:
-            summary = event.summary
-
-        # Render text message body
+            if not os.path.isfile(os.path.join(self.template_dir, text_template)):
+                raise ValueError(f'Can\'t open template {text_template}')
+            template_name = text_template
+            content_type = 'text/plain'
 
         template_path = os.path.join(self.template_dir, template_name)
 
-        if not os.path.isfile(template_path):
-            raise ValueError(f'Required template {template_path} missing')
+        # Initial subject
+
+        subject = event.summary
 
         data = {
+            'To': self.email_to,
+            'From': self.email_from,
+            'Subject': subject,
             'version': Instance.Version,
-            'text_detail': text_detail,
-            'html_detail': html_detail,
-            'summary': summary
+            'summary': event.render_summary(content_type),
+            'data_table': event.render_datatable(content_type, **args),
+            'event': event
             }
 
-        if html_detail and self.html_email:
-            # Render HTML message body
-            html_content = Template(
-                filename=template_path).get_def(
-                f'{base_def}_html').render(**data)
+        with open(template_path, "r") as t:
+            contents = t.read()
 
-        email_template = Template(filename=template_path)
-        text_content = email_template.get_def(f'{base_def}_text').render(**data)
-        subject = email_template.get_def(f'{base_def}_subject').render(**data)
+            try:
+                subject = Template(contents).get_def('subject').render(**data).strip()
+                self.log.debug(f'subject: {subject}')
+            except AttributeError:
+                # No subject def
+                self.log.debug('Using default subject as there is subject def in template')
+            except Exception as e:
+                self.log.error(f'Using default subject as there was an exception while rendering subject from email template: {e}')
+                self.log.exception(e)
 
-        if html_content:
-            msg = MIMEMultipart('alternative')
-            text_part = MIMEText(text_content, 'plain')
-            html_part = MIMEText(html_content, 'html')
-            msg.attach(text_part)
-            msg.attach(html_part)
-        else:
-            msg = message.Message()
-            msg.add_header('Content-Type', 'text')
-            msg.set_payload(text_content)
+            # Replace with new subject, if there is one
+            data['Subject'] = subject
 
-        msg['From'] = self.email_from
-        msg['To'] = self.email_to
-        msg['Subject'] = subject
+            # Generate an email body
+            message_text = Template(contents).render(**data)
+
+            # If it appears to be correctly MIME encoded, pass it through
+
+            if message_text[17] == 'MIME-Version: 1.0':
+                self.log.debug('Passing MIME message through')
+            else:
+                self.log.debug('Building MIME message')
+                msg = message.Message()
+                msg.add_header('Content-Type', content_type)
+                msg.set_payload(message_text)
 
         self.log.info(f'Sending email to {self.email_to}')
 
         smtp = smtplib.SMTP(self.smtp_server)
-        smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+        smtp.sendmail(self.email_from, self.email_to, message_text)
         self.log.debug('Email sent')
