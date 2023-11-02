@@ -4,10 +4,11 @@ RUN apt-get update && apt-get install -y rsyslog openssh-server
 RUN sed -i '/imklog/s/^/#/' /etc/rsyslog.conf
 
 WORKDIR /etc/rsyslog.d
-
 COPY correlator.conf .
 
+WORKDIR /usr/local/bin
+COPY start_rsyslog_ssh.sh .
+RUN chmod +x start_rsyslog_ssh.sh
 
-CMD [ "bash" ]
+CMD [ "/usr/local/bin/start_rsyslog_ssh.sh" ]
 
-# /var/spool/rsyslog - rsyslog queue
