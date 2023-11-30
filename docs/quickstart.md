@@ -1,16 +1,32 @@
 # Quickstart
 
-The following process details a method to install the library in-place into a new python virtual environment. For more
+## Build and install the package in a linux container on a system running Docker:
+
+This process:
+- Creates the network *correlator-net* to ease network access from application server
+containers to test and validate proper operation.
+- Exposes TCP port 514 in the container to port 5140 on the network
+- Creates a local volume for data persistence
+
+    git checkout https://github.com/tim-pushor/Correlator.git
+    cd Correlator
+    docker build -t correlator .
+    docker network create correlator-net
+    docker run --name correlator --net correlator-net -it -v /Users/timp/Projects/Correlator/docker-data:/var/correlator correlator
+
+This will expose a bash prompt where you may run the CLI recipes on this page.
+ 
+## Build and install the package directly on a unix like system:
+
+This process details installing the python package in-place into a new python virtual environment. For more
 information about in-place installs, see
 [pip editable installs](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs "Title").
-
-## Build and install the library
 
 ### Checkout and build
 
 Note: Pip must be upgraded if it is < 21.3
 
-    git checkout https://app.thepushors.com/gitlab/code/correlator.git
+    git checkout https://github.com/tim-pushor/Correlator.git
     cd Correlator
     python -m venv venv
     .venv/bin/activate
@@ -22,9 +38,9 @@ Note: Pip must be upgraded if it is < 21.3
 
     pip install -e .
 
+After the library is installed by pip you may run the CLI recipes on this page within the virtual environment.
+
 ## CLI Recipes
-After the library is installed by pip, the command line utilities `syslog_server` and `caputil` will be available in
-the virtual environment.
 
 ### Report a summary of the records in a capture file (using syslog_server)
 This will process a capture file and take no action other than reporting a summary of each syslog message to the

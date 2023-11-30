@@ -15,9 +15,7 @@ They are modeled as python objects and are instances or children of of Correlato
 Events will not typically get instantiated directly by client code, instead a preferring to use one of its subclasses.
 This is the base object that events handlers will see however, so it is necessary to understand its structure.
 
-## Standard events
-
-Standard events contain:
+Events contain:
 
 - Timestamp
 - Event type: Currently Standard or Dataset
@@ -30,21 +28,9 @@ Standard events contain:
 
 ErrorEvent, WarningEvent, and NoticeEvent are all subclasses of Event which set the appropriate status.
 
-## Data events
-
-Data events are also dispatched from the front-end engine or one of its modules, but they differ with standard
-events in that they enforce the payload to follow simple data schema that consists of a single non-tested collection of
-key/vale pairs.
-
 ## Event docs from the code
 
 ### ::: Correlator.Event.core.Event
-    options:
-        show_source: false
-        show_root_heading: true
-
-
-### ::: Correlator.Event.core.DataEvent
     options:
         show_source: false
         show_root_heading: true

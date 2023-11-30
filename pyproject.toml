@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Correlator"
-description = "System log data processing library"
+description = "log data processing system"
 readme = "README.md"
 
 version = "0.0.4"
