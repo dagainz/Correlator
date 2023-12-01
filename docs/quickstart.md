@@ -4,15 +4,15 @@
 
 This process:
 - Creates the network *correlator-net* to ease network access from application server
-containers to test and validate proper operation.
+containers to validate proper operation.
 - Exposes TCP port 514 in the container to port 5140 on the network
-- Creates a local volume for data persistence
+- Creates a volume named correlator
 
     git checkout https://github.com/tim-pushor/Correlator.git
     cd Correlator
     docker build -t correlator .
     docker network create correlator-net
-    docker run --name correlator --net correlator-net -it -v /Users/timp/Projects/Correlator/docker-data:/var/correlator correlator
+    docker run --name correlator --net correlator-net -it -p 5140:514/tcp --mount source=correlator,target=/var/correlator correlator
 
 This will expose a bash prompt where you may run the CLI recipes on this page.
  

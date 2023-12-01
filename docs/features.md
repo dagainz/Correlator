@@ -4,12 +4,16 @@
 
 ### The problem
 
-For various reasons, most (if not all) logic modules needs to maintain data representing the current
-state of the system. All the modules included with the system use it (at least) for collecting running statistics.
-Most modules that correlate and collect data from log records also require a running state to facilitate.
+For various reasons, most (if not all) logic modules needs to maintain data, stored in python variables, to 
+represent the current
+state of the system. All the included modules keep state, if for nothing more than to collect module level statistics.
+Most modules that correlate and collect data from log records will also require a running state to facilitate this.
 
 The issue is that any data stored in module variables will be lost whenever correlator stops for any reason. As an
-example, the sshd module maintains a list of unfinished transactions. In the case of a valid login, a transaction
+example, the sshd module maintains a list of *transactions* that contain all of the information pertaining the
+transaction. Take the case of a *valid login*. The transaction starts with that with information that gets added as log entries
+associated with 
+In the case of a valid login, a transaction
 get created upon an initial log entry, and terminates (and dispatches an event) with one that indicates the connection
 is closed. 
 
