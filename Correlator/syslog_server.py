@@ -98,7 +98,16 @@ class SyslogServerCLI:
         self.log.info('Starting up with command line arguments: ' + " ".join(
             sys.argv[1:]))
 
-        if not ApplicationConfig.load(cmd_args.config_file):
+        if 'CORRELATOR_CFG' in os.environ:
+            final_config_file = os.environ['CORRELATOR_CFG']
+            self.log.debug(f'CORRELATOR_CFG environment variable set. Using its'
+                           f' value of  {final_config_file}')
+        else:
+            final_config_file = cmd_args.config_file
+            self.log.debug(f'CORRELATOR_CFG environment variable not set.'
+                           f' Using the preset value of {final_config_file}')
+
+        if not ApplicationConfig.load(final_config_file):
             sys.exit(0)
 
         # If we are just listing apps, do it
@@ -137,7 +146,8 @@ class SyslogServerCLI:
 
         run_dir = RuntimeConfig.get('system.run_dir')
         if not os.access(run_dir, os.W_OK):
-            self.log.error(f'Can\'t write to configured run directory {run_dir}')
+            self.log.error(f'Can\'t write to configured run directory '
+                           f'{run_dir}')
             sys.exit(0)
 
         # Check if creds required for any modules or event handlers
