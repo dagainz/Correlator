@@ -1,12 +1,24 @@
 # Quickstart
 
-## Build and install the package in a linux container on a system running Docker:
+## Docker
+
+The quickest way to see Correlator in action is by using Docker. A dockerfile is included that facilitates building
+a container that you can use to test Correlator, and a quick way to be able to run the CLI recipes on this page. 
+
+There is an additional dockerfile included that will build a container running OpenSSH that forwards log events to the 
+correlator container to see the OpenSSH module in action.
+
+This has been tested using Docker on Linux and macOS, but should be fine on Windows as well.
+
+### Build and run correlator docker container.
 
 This process:
-- Creates the network *correlator-net* to ease network access from application server
-containers to validate proper operation.
+
+- Creates the network *correlator-net* to help facilitate network access from the OpenSSH container.
 - Exposes TCP port 514 in the container to port 5140 on the network
-- Creates a volume named correlator
+- Creates a volume named correlator to store non-static files such as configuration, any capture files, and the
+persistence store
+
 
     git checkout https://github.com/tim-pushor/Correlator.git
     cd Correlator
@@ -14,9 +26,10 @@ containers to validate proper operation.
     docker network create correlator-net
     docker run --name correlator --net correlator-net -it -p 5140:514/tcp --mount source=correlator,target=/var/correlator correlator
 
-This will expose a bash prompt where you may run the CLI recipes on this page.
+
+This will build and run a container that exposes a bash prompt where you may run the CLI recipes on this page.
  
-## Build and install the package directly on a unix like system:
+### Build and install the package directly on a unix like system:
 
 This process details installing the python package in-place into a new python virtual environment. For more
 information about in-place installs, see

@@ -1,17 +1,35 @@
-# Correlator
+# Welcome to the Correlator repository!
 
 Correlator is a log processing system written in Python. 
 
-It consists of a Python library and collection of utilities that collectively facilitate the creation of log event
-processing systems. Functionality and scaffolding is provided to create systems that process log data in real time over
-the network as well as after-the-fact by reading and processing log files.
+It consumes and processes log data looking for patterns, and taking specific actions when they occur. It provides an
+interface to write both custom detection and/or action logic in python, which it can dynamically import.
 
-# Installation and Usage
+out-of-the-box functionality includes:
 
-MkDocs compliant documentation is provided in /doc.
-[Read the HTML version online](https://tim-pushor.github.io/Correlator/)
+- RFC 5424 compliant TCP syslog server processes syslog records received from a remote system. It also has the
+ability to capture received syslog packets to a file, and to use these capture files as input.
+- An OpenSSH *logic module*: Detection logic that looks for patterns, such as **Successful login** in OpenSSH's
+log stream, and dispatch *events* in response.
+- Several *event handlers*: action logic that take action when these events occur.
+  - Email: Generates an email from a template using mako, and send via SMTP.
+  - CSV: Writes event data to rows in a csv file.
+  - SMS: Sends a basic SMS via twilio.
 
-# Credits and blame
+And more!
+
+---
+
+### Documentation and resources
+
+mkdocs based Markdown formatted documentation is provided in /doc.
+
+A pre-rendered HTML format version is hosted on GitHub pages:
+- [https://tim-pushor.github.io/Correlator/](https://tim-pushor.github.io/Correlator/) - Documentation index
+- [https://tim-pushor.github.io/Correlator/quickstart/](https://tim-pushor.github.io/Correlator/quickstart/) - Quick
+start
+
+# Credits
 
 Developer - Tim Pushor
 

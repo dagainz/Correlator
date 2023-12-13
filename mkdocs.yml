@@ -10,6 +10,8 @@ plugins:
 
 nav:
   - Home: index.md
+  - Architecture: architecture.md
+  - Implementation: implementation.md
   - Features: features.md
   - Quick start: quickstart.md
   - Concepts:
