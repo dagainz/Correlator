@@ -1,5 +1,10 @@
 FROM python:3.10-slim-bookworm
 
+ARG USER=testguy
+ARG PASS="testpass"
+
+RUN adduser --disabled-password $USER && echo "$USER:$PASS" | chpasswd
+
 RUN apt-get update && apt-get install -y rsyslog openssh-server
 RUN sed -i '/imklog/s/^/#/' /etc/rsyslog.conf
 

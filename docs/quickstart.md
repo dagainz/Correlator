@@ -15,7 +15,7 @@ This has been tested using Docker on Linux and macOS, but should be fine on Wind
 This process:
 
 - Creates the network *correlator-net* to help facilitate network access from the OpenSSH container.
-- Exposes TCP port 514 in the container to port 5140 on the network
+- Publishes TCP port 5140 on the host to map to the same port in the container.
 - Creates a volume named correlator to store non-static files such as configuration, any capture files, and the
 persistence store
 
@@ -24,7 +24,7 @@ persistence store
     cd Correlator
     docker build -t correlator .
     docker network create correlator-net
-    docker run --name correlator --net correlator-net -it -p 5140:514/tcp --mount source=correlator,target=/var/correlator correlator
+    docker run --name correlator --net correlator-net -it -p 5140:5140/tcp --mount source=correlator,target=/var/correlator correlator
 
 
 This will build and run a container that exposes a bash prompt where you may run the CLI recipes on this page.

@@ -4,3 +4,4 @@ test/ssh
 *.cap
 venv/
 assets/
+docker-volumes/

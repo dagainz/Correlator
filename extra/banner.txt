@@ -2,24 +2,34 @@
 Welcome to the Correlator syslog server docker container
 --------------------------------------------------------
 
-Here are some command line recipes to get you going:
+Note:
 
-1. Display list of Correlator applications as defined in the Application
+You can add a --d argument to any of the examples below to increase
+the logging (output) level to include debugging information.
+
+Command line examples:
+
+1. Run Correlator in "OpenSSH" reporting mode.
+   **For use with the OpenSSH test container **
+
+syslog_server --app ssh-report
+
+2. Display list of Correlator applications as defined in the Application
    configuration file:
 
 syslog_server --apps
 
-2. Run Correlator in a 'report only' mode. In this mode it will dump summaries
+3. Run Correlator in a 'report only' mode. In this mode it will dump summaries
    of syslog records received on the exposed TCP port to the screen:
 
 syslog_server --app report
 
-3. Run in report-only mode, capturing and saving syslog records to a file. The
+4. Run in report-only mode, capturing and saving syslog records to a file. The
    file name will be in the server output:
 
 syslog_server --app report --write-file
 
-4. Run in report-only mode, taking input from a capture file:
+5. Run in report-only mode, taking input from a capture file:
 
 syslog_server --app report --read-file <filename>
 
