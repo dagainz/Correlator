@@ -42,6 +42,7 @@ As *this is a currently a proof of concept*, there are many. Such as:
 - The event system has no retry or even audit capability. Its fire-and-forget.
 - The Application configuration file currently is in JSON format. This is less than ideal for humans, but it maps easily
 to python data structures.
+- Correlator output goes to stdout, making it really only usable for interactive testing purposes.
 
 
 
