@@ -228,7 +228,7 @@ class ApplicationConfigStore:
                 for user_id in e.ids:
                     self.log.error(
                         f'Module {module.module_name} missing secret for '
-                        f'credential {user_id}')
+                        f'credential {module.module_name}.{user_id}')
                 return None
             except SimpleException as e:
                 self.log.error(
@@ -246,8 +246,8 @@ class ApplicationConfigStore:
             except CredentialsReq as e:
                 for user_id in e.ids:
                     self.log.error(
-                        f'Handler {handler.handler_name} missing secret for '
-                        f'credential {user_id}')
+                        f'Handler missing secret for credential '
+                        f'{handler.handler_name}.{user_id}')
                 return None
             except SimpleException as e:
                 self.log.error(
