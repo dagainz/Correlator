@@ -5,7 +5,7 @@ from typing import Dict
 
 from Correlator.config_store import ConfigType
 from Correlator.Event.core import EventListener, Event
-from Correlator.util import SimpleException
+from Correlator.util import SimpleException, prefix_run_dir
 
 
 CSVListenConfig = [
@@ -60,13 +60,13 @@ class CSVListener(EventListener):
 
     def initialize(self):
 
-        self.csv_dir = abspath(self.get_config('output_directory'))
+        self.csv_dir = prefix_run_dir(self.get_config('output_directory'))
         if not exists(self.csv_dir):
             raise SimpleException(f'Path does not exist: {self.csv_dir}')
         self.rotate_files = self.get_config('rotate_files')
         self.enabled = self.get_config('enabled')
         self.cache_filehandles = self.get_config('cache_filehandles')
-        self.log.debug(f'Calculated CSV path: {self.csv_dir}')
+        self.log.debug(f'Resolved CSV path: {self.csv_dir}')
 
     def csv_encode(self, *args):
         self.csv_writer.writerow(args)
