@@ -11,7 +11,7 @@ COPY . .
 RUN pip install --upgrade pip
 RUN pip install build
 RUN python -m build
-RUN pip install .
+RUN pip install -e .
 
 RUN pip install keyrings.cryptfile
 
