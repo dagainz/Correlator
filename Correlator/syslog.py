@@ -293,7 +293,7 @@ class SyslogServer:
 
         with open(self.store_file, 'wb') as output_file:
             pickle.dump(self.full_store, output_file, pickle.HIGHEST_PROTOCOL)
-            log.info(f'Save store: store written to {self.store_file}')
+            log.info(f'Save store: store written to {self.store_file} and is {output_file.tell()} bytes')
 
     def load_store(self):
         if not self.store_file:
