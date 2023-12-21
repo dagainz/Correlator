@@ -111,8 +111,8 @@ def cli():
     # Build Correlator stack
     processor = EventProcessor()
     from Correlator.Event.log import LogbackListener
-    processor.register_listener(LogbackListener())
-    modules = [Report()]
+    processor.register_listener(LogbackListener('Logback'))
+    modules = [Report('Report')]
 
     server = SyslogServer(modules, processor, record_filter=filter_list)
     server.from_file(file_in, file_out)
