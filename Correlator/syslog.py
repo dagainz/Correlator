@@ -454,6 +454,7 @@ class SyslogServer:
             try:
                 self.handle_connection(host, port, output_file)
             except KeyboardInterrupt:
+                self.save_store()
                 break
 
 
