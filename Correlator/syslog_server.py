@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import pydevd_pycharm
 import sys
 from datetime import datetime
 
@@ -32,6 +33,10 @@ class SyslogServerCLI:
         parser = argparse.ArgumentParser(
             description=self.cli_title)
 
+        parser.add_argument(
+            '--pydebug',
+            help='Debug using PyCharm debug server', action='store_true'
+        )
         parser.add_argument(
             '--d',
             help='Debug level', action='store_true'
@@ -87,6 +92,21 @@ class SyslogServerCLI:
             action='store_true'
         )
         cmd_args = parser.parse_args()
+
+        # Enable remote pycharm logging
+
+        if cmd_args.pydebug:
+
+            try:
+                port = int(os.environ['PYCHARM_DEBUG_PORT'])
+            except ValueError:
+                raise ValueError('PYCHARM_DEBUG_PORT environment variable must be an integer')
+            except NameError:
+                raise ValueError('PYCHARM_DEBUG_PORT environment variable is not set')
+
+            pydevd_pycharm.settrace(
+                'host.docker.internal',
+                port=port, stdoutToServer=True, stderrToServer=True)
 
         # Setup logging
 
