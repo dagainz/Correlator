@@ -59,10 +59,11 @@ class SSHDLoginSucceeded(Event):
     templates = {
         'text/plain': {
             'summary': 'User ${user} from host ${addr}:${port} succesfully authenticated using ${auth} authentication after ${failures} failed attempt(s) with a session duration of ${duration}'
+        },
+        'text/html': {
+            'summary': 'User <strong>${user}</strong> from host <strong>${addr}:${port}</strong> succesfully authenticated using <strong>${auth}</strong> authentication after <strong>${failures}</strong> failed attempt(s) with a session duration of <strong>${duration}</strong>'
         }
     }
-
-    # summary_template = 'User ${user} from host ${addr}:${port} succesfully authenticated using ${auth} authentication after ${failures} failed attempt(s) with a session duration of ${duration}'
 
 
 class SSHDLoginFailed(Event):
@@ -81,7 +82,6 @@ class SSHDLoginFailed(Event):
             'summary': 'User <strong>${user}</strong> from host <strong>${addr}:${port}</strong> failed to login after <strong>${failures}</strong> failures'
         }
     }
-    # summary_template = 'User ${user} from host ${addr}:${port} failed to login after ${failures} failures'
     severity_override = EventSeverity.Error
 
 
