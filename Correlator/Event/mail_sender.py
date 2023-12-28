@@ -62,7 +62,7 @@ class Email(EventListener):
 
         bad_params = []
         self.html_email = self.get_config('html')
-        if not self.html_email:
+        if self.html_email is None:
             bad_params.append('html')
 
         self.smtp_server = self.get_config('smtp_server')
@@ -146,13 +146,15 @@ class Email(EventListener):
 
             # If it appears to be correctly MIME encoded, pass it through
 
-            if message_text[17] == 'MIME-Version: 1.0':
+            if message_text.startswith('MIME-Version: 1.0'):
                 self.log.debug('Passing MIME message through')
             else:
                 self.log.debug('Building MIME message')
                 msg = message.Message()
                 msg.add_header('Content-Type', content_type)
+                msg.add_header('Subject', subject)
                 msg.set_payload(message_text)
+                message_text = msg.as_string()
 
         self.log.info(f'Sending email to {self.email_to}')
 
