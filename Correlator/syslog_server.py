@@ -104,9 +104,15 @@ class SyslogServerCLI:
             except NameError:
                 raise ValueError('PYCHARM_DEBUG_PORT environment variable is not set')
 
-            pydevd_pycharm.settrace(
-                'host.docker.internal',
-                port=port, stdoutToServer=True, stderrToServer=True)
+            try:
+                pydevd_pycharm.settrace(
+                    'host.docker.internal',
+                    port=port, stdoutToServer=True, stderrToServer=True)
+            except ConnectionRefusedError:
+                print('Connection refused. Did you start the Pycharm debug '
+                      'server?',
+                      file=sys.stderr)
+                sys.exit(0)
 
         # Setup logging
 
