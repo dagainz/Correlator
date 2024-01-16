@@ -206,7 +206,7 @@ class Event:
 
         return Template(template).render(**self._payload)
 
-    # Legacy mako generation, kept for transitionary purposes.
+    # Legacy mako generation, kept for transitional purposes.
 
     def create_datatable(self, content_type: str, rows, **kwargs):
         if content_type == 'text/plain':
@@ -236,6 +236,10 @@ class Event:
             return html
         else:
             raise EventException(f'I do not know how to render datatables for content type {content_type}')
+
+
+class StatsEvent(Event):
+    pass
 
 
 class SimpleError(Event):

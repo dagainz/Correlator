@@ -9,7 +9,7 @@ import re
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 
-from Correlator.Event.core import Event, EventSeverity
+from Correlator.Event.core import Event, StatsEvent, EventSeverity
 from Correlator.util import Module, CountOverTime, format_timestamp
 from Correlator.config_store import ConfigType
 
@@ -101,7 +101,7 @@ class SSHDAttemptsExceeded(Event):
     severity_override = EventSeverity.Error
 
 
-class SSHDStats(Event):
+class SSHDStats(StatsEvent):
 
     schema = [
         ['login_sessions', 'Login sessions'],

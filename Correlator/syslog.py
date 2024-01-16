@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from typing import List, BinaryIO, Callable
 
 from Correlator.config_store import ConfigType, RuntimeConfig
-from Correlator.Event.core import EventProcessor, Event, SimpleError
+from Correlator.Event.core import EventProcessor, Event, StatsEvent, SimpleError
 from Correlator.util import ParserError, Module
 
 
@@ -571,7 +571,7 @@ class SyslogServer:
                 SimpleError({'message': 'Error processing record'}))
 
 
-class SyslogStatsEvent(Event):
+class SyslogStatsEvent(StatsEvent):
 
     schema = [
         ['start', 'Session started:'],
