@@ -118,17 +118,6 @@ class SyslogServerCLI:
 
             self.log.info('Attempting to enable PyCharm remote debugging')
 
-            # try:
-            #     self.python_port = int(os.environ['PYCHARM_DEBUG_PORT'])
-            # except ValueError:
-            #     self.quit('PYCHARM_DEBUG_PORT environment variable must be an '
-            #               'integer')
-            # except KeyError:
-            #     self.quit('PYCHARM_DEBUG_PORT environment variable is not set')
-            #
-            # self.log.debug(f'PyCharm remote port set to {self.python_port}')
-
-
             try:
                 self.python_port = os.environ['PYCHARM_DEBUG_PORT']
                 self.python_host = os.environ['PYCHARM_DEBUG_HOST']
