@@ -3,7 +3,7 @@ FROM python:3.10-slim-bookworm
 EXPOSE 5140
 ENV CORRELATOR_CFG=/var/correlator/etc/config.json
 ENV PYCHARM_DEBUG_PORT=4200
-ENV PYCHARM_REMOTE_HOST=host.docker.internal
+ENV PYCHARM_DEBUG_HOST=host.docker.internal
 
 RUN apt-get update && apt-get install -y screen
 
@@ -17,7 +17,7 @@ RUN python -m build
 RUN pip install -e .
 
 RUN pip install keyrings.cryptfile
-RUN pip install pydevd-pycharm~=223.8836.43
+RUN pip install pydevd-pycharm~=233.13135.95
 
 # Copy the startup script out of the source tree so we can bind mount our source tree
 # to develop within the container.
