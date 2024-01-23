@@ -93,11 +93,10 @@ class SSHDAttemptsExceeded(Event):
 
     templates = {
         'text/plain': {
-            'summary': 'User ${user} from host ${addr}:${port} failed to login after ${failures} failures'
+            'summary': 'The host at ${host} has exceeded the maximum number of failed login attempts within the configured time window'
         }
     }
 
-    # summary_template = 'The host at ${host} has exceeded the maximum number of failed login attempts within the configured time window'
     severity_override = EventSeverity.Error
 
 
@@ -110,7 +109,11 @@ class SSHDStats(StatsEvent):
         ['expired', 'Expired transactions'],
         ['partial', 'Partial transactions'],
     ]
-    summary_template = 'Statistics: ${login_sessions} logion session(s), ${denied} denied login(s),  ${lockouts} host lockout(s), ${expired} expired transaction(s), ${partial} partial transaction(s)'
+    templates = {
+        'text/plain': {
+            'summary': 'Statistics: ${login_sessions} logion session(s), ${denied} denied login(s),  ${lockouts} host lockout(s), ${expired} expired transaction(s), ${partial} partial transaction(s)'
+        }
+    }
 
 
 @dataclass
