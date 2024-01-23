@@ -116,7 +116,7 @@ class SyslogServerCLI:
         if cmd_args.pydebug:
             self.python_port = None
 
-            self.log.info('Attempting to enable PyCharm remote debugging')
+            self.log.info('Configuring PyCharm remote debugging')
 
             try:
                 self.python_port = os.environ['PYCHARM_DEBUG_PORT']
