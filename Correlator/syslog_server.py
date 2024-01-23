@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-import pydevd_pycharm
 import sys
 from datetime import datetime
 
@@ -27,6 +26,16 @@ class SyslogServerCLI:
     def trailer_discovery_method(
             raw_record: RawSyslogRecord) -> bytes | None:
         return None
+
+    def quit(self, error_message=None):
+        if error_message:
+            self.log.error(error_message)
+        self.log.info('Shutting down')
+        sys.exit(0)
+
+    def start(self):
+        self.log.info(f'Starting up with command line arguments: '
+                      f'{" ".join(sys.argv[1:])}')
 
     def __init__(self):
 
@@ -93,27 +102,6 @@ class SyslogServerCLI:
         )
         cmd_args = parser.parse_args()
 
-        # Enable remote pycharm logging
-
-        if cmd_args.pydebug:
-
-            try:
-                port = int(os.environ['PYCHARM_DEBUG_PORT'])
-            except ValueError:
-                raise ValueError('PYCHARM_DEBUG_PORT environment variable must be an integer')
-            except NameError:
-                raise ValueError('PYCHARM_DEBUG_PORT environment variable is not set')
-
-            try:
-                pydevd_pycharm.settrace(
-                    'host.docker.internal',
-                    port=port, stdoutToServer=True, stderrToServer=True)
-            except ConnectionRefusedError:
-                print('Connection refused. Did you start the Pycharm debug '
-                      'server?',
-                      file=sys.stderr)
-                sys.exit(0)
-
         # Setup logging
 
         self.log = logging.getLogger('syslog_server')
@@ -121,8 +109,55 @@ class SyslogServerCLI:
         debug_level = logging.DEBUG if cmd_args.d else logging.INFO
         setup_root_logger(debug_level)
 
-        self.log.info('Starting up with command line arguments: ' + " ".join(
-            sys.argv[1:]))
+        self.start()
+
+        # Enable remote pycharm logging
+
+        if cmd_args.pydebug:
+            self.python_port = None
+
+            self.log.info('Attempting to enable PyCharm remote debugging')
+
+            # try:
+            #     self.python_port = int(os.environ['PYCHARM_DEBUG_PORT'])
+            # except ValueError:
+            #     self.quit('PYCHARM_DEBUG_PORT environment variable must be an '
+            #               'integer')
+            # except KeyError:
+            #     self.quit('PYCHARM_DEBUG_PORT environment variable is not set')
+            #
+            # self.log.debug(f'PyCharm remote port set to {self.python_port}')
+
+
+            try:
+                self.python_port = os.environ['PYCHARM_DEBUG_PORT']
+                self.python_host = os.environ['PYCHARM_DEBUG_HOST']
+            except KeyError as e:
+                self.quit(f'{e} environment variable is not set')
+
+            try:
+                self.python_port = int(self.python_port)
+            except ValueError:
+                self.quit('PYCHARM_DEBUG_PORT environment variable must be an '
+                          'integer')
+
+            self.log.debug(f'PyCharm remote debugging destination: '
+                           f'{self.python_host}:{self.python_port}')
+
+            try:
+                import pydevd_pycharm
+                pydevd_pycharm.settrace(
+                    self.python_host,
+                    port=self.python_port,
+                    stdoutToServer=True,
+                    stderrToServer=True)
+
+            except ConnectionRefusedError:
+                self.quit(f'Connection to the PyCharm debug server '
+                          f'{self.python_host}:{self.python_port} refused')
+
+            except ModuleNotFoundError:
+                self.quit('Can\'t find module named pydevd_pycharm')
 
         if 'CORRELATOR_CFG' in os.environ:
             final_config_file = os.environ['CORRELATOR_CFG']
@@ -134,7 +169,7 @@ class SyslogServerCLI:
                            f' Using the preset value of {final_config_file}')
 
         if not ApplicationConfig.load(final_config_file):
-            sys.exit(0)
+            self.quit()
 
         # If we are just listing apps, do it
 
@@ -143,7 +178,7 @@ class SyslogServerCLI:
             self.log.info(f'{"-----------":<25} -----------')
             for (app, desc) in ApplicationConfig.apps():
                 self.log.info(f'{app:<25} {desc}')
-            sys.exit(0)
+            self.quit()
 
         # Give a default value to write_file if not provided
 
@@ -167,14 +202,11 @@ class SyslogServerCLI:
 
         stack = ApplicationConfig.build_stack(cmd_args.app, settings)
         if stack is None:
-            self.log.error('Can\'t initialize application. Exiting')
-            sys.exit(0)
+            self.quit()
 
         run_dir = RuntimeConfig.get('system.run_dir')
         if not os.access(run_dir, os.W_OK):
-            self.log.error(f'Can\'t write to configured run directory '
-                           f'{run_dir}')
-            sys.exit(0)
+            self.quit(f'Can\'t write to configured run directory {run_dir}')
 
         # Check if creds required for any modules or event handlers
 
@@ -185,8 +217,7 @@ class SyslogServerCLI:
                 self.log.error(
                     f'A password for id {userid} was not found in the '
                     f'credential store')
-            self.log.info('Shutting down due to missing secrets')
-            sys.exit(0)
+            self.quit()
 
         # Prepare output file, if using
 
@@ -196,8 +227,7 @@ class SyslogServerCLI:
             filename = prefix_run_dir(cmd_args.write_file)
 
             if os.path.exists(filename):
-                self.log.error(f'{filename} exists. Delete it first')
-                sys.exit(0)
+                self.quit(f'{filename} already exists.')
             else:
                 self.log.info(f'Writing received syslog data to capture file '
                               f'{filename}')
@@ -211,7 +241,7 @@ class SyslogServerCLI:
         if cmd_args.config:
             RuntimeConfig.dump_to_log(debug=False)
             self.log.info('Shutting down after configuration query')
-            sys.exit(0)
+            self.quit()
         else:
             RuntimeConfig.dump_to_log()
 
@@ -246,6 +276,8 @@ class SyslogServerCLI:
             })
         e.system = module_name
         stack.processor.dispatch_event(e)
+
+        self.quit()
 
 
 # Setuptools entrypoint
