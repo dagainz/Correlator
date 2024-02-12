@@ -5,6 +5,8 @@ import re
 import sys
 from datetime import datetime, timedelta
 
+import keyring
+
 from Correlator.Event.core import Event
 from Correlator.config_store import RuntimeConfig
 
@@ -38,6 +40,16 @@ def setup_root_logger(log_level):
     logger.addHandler(ch)
 
     return logger
+
+
+def setup_keyring():
+
+    keyring_pass = os.getenv('KEYRING_CRYPTFILE_PASSWORD')
+    if keyring_pass:
+        from keyrings.cryptfile.cryptfile import CryptFileKeyring
+        kr = CryptFileKeyring()
+        kr.keyring_key = keyring_pass
+        keyring.set_keyring(kr)
 
 
 class SimpleException(Exception):

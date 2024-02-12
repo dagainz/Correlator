@@ -10,7 +10,7 @@ from Correlator.Event.core import EventProcessor, EventSeverity
 from Correlator.syslog import (RawSyslogRecord, SyslogRecord, SyslogServer,
                                SyslogStatsEvent)
 from Correlator.util import (setup_root_logger, capture_filename,
-                             format_timestamp, prefix_run_dir)
+                             format_timestamp, prefix_run_dir, setup_keyring)
 
 
 class SyslogServerCLI:
@@ -110,6 +110,8 @@ class SyslogServerCLI:
         setup_root_logger(debug_level)
 
         self.start()
+
+        setup_keyring()
 
         # Enable remote pycharm logging
 
