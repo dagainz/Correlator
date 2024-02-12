@@ -4,8 +4,7 @@ EXPOSE 5140
 ENV CORRELATOR_CFG=/var/correlator/etc/config.json
 ENV PYCHARM_DEBUG_PORT=4200
 ENV PYCHARM_DEBUG_HOST=host.docker.internal
-
-RUN apt-get update && apt-get install -y screen
+ENV KEYRING_CRYPTFILE_PASSWORD=abracadabra
 
 WORKDIR /usr/src/app
 
@@ -19,8 +18,8 @@ RUN pip install -e .
 RUN pip install keyrings.cryptfile
 RUN pip install pydevd-pycharm~=233.13135.95
 
-# Copy the startup script out of the source tree so we can bind mount our source tree
-# to develop within the container.
+# Copy the startup script out of the source tree so we are able to bind mount
+# the source tree to develop within this container
 
 RUN cp /usr/src/app/extra/start_correlator_container.sh /bin
 RUN chmod +x /bin/start_correlator_container.sh
