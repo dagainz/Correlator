@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 class Instance:
-    Version = '0.0.4'
+    Version = os.environ.get("CORRELATOR_VERSION", '0.0.4')
 
 
 class ParserError(Exception):

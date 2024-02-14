@@ -9,7 +9,7 @@ from Correlator.app_config import ApplicationConfig
 from Correlator.Event.core import EventProcessor, EventSeverity
 from Correlator.syslog import (RawSyslogRecord, SyslogRecord, SyslogServer,
                                SyslogStatsEvent)
-from Correlator.util import (setup_root_logger, capture_filename,
+from Correlator.util import (setup_root_logger, capture_filename, Instance,
                              format_timestamp, prefix_run_dir, setup_keyring)
 
 
@@ -34,8 +34,8 @@ class SyslogServerCLI:
         sys.exit(0)
 
     def start(self):
-        self.log.info(f'Starting up with command line arguments: '
-                      f'{" ".join(sys.argv[1:])}')
+        self.log.info(f'Correlator version {Instance.Version} starting with '
+                      f'command line arguments: {" ".join(sys.argv[1:])}')
 
     def __init__(self):
 

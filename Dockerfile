@@ -1,10 +1,19 @@
 FROM python:3.10-slim-bookworm
 
+ARG VERSION
+ARG BUILD_TYPE
+
+RUN test -n "${VERSION}" || (echo "VERSION build argument not specified" && false)
+
 EXPOSE 5140
 ENV CORRELATOR_CFG=/var/correlator/etc/config.json
+ENV CORRELATOR_VERSION=${VERSION}
+ENV KEYRING_CRYPTFILE_PASSWORD=abracadabra
+
 ENV PYCHARM_DEBUG_PORT=4200
 ENV PYCHARM_DEBUG_HOST=host.docker.internal
-ENV KEYRING_CRYPTFILE_PASSWORD=abracadabra
+
+ENV XDG_DATA_HOME=/var/correlator/etc
 
 WORKDIR /usr/src/app
 
@@ -13,7 +22,12 @@ COPY . .
 RUN pip install --upgrade pip
 RUN pip install build
 RUN python -m build
-RUN pip install -e .
+RUN if [ BUILD_TYPE=development ]; then \
+      pip install -e .; \
+    else \
+      pip install .; \
+    fi
+
 
 RUN pip install keyrings.cryptfile
 RUN pip install pydevd-pycharm~=233.13135.95
