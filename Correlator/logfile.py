@@ -1,7 +1,7 @@
 import logging
 import re
 
-from Correlator.Event.core import (DataEvent, EventProcessor)
+from Correlator.Event.core import (EventProcessor, StatsEvent)
 from Correlator.util import ParserError, Module, format_timestamp
 
 log = logging.getLogger(__name__)
@@ -11,16 +11,22 @@ class LogError(Exception):
     pass
 
 
-class LogfileStatsEvent(DataEvent):
+class LogfileStatsEvent(StatsEvent):
 
-    _id = 'system-stats'
-    field_names = ['start', 'end', 'duration']
-    event_desc = 'A log file has been completely processed'
-    table_data = [
-        ['Session Start:', '${start}'],
-        ['Session End:', '${end}'],
-        ['Session Duration:', '${duration}'],
+    schema = [
+        ['start', 'Session started:'],
+        ['end', 'Session ended:'],
+        ['duration', 'Session duration:'],
     ]
+    templates = {
+        'text/plain': {
+            'summary': 'Log processing session started at ${start}, ended at ${end}, with a duration of ${duration}'
+        },
+        'text/html': {
+            'summary': 'Log processing session started at <strong>${start}</strong>, ended at <strong>${end}</strong>, with a duration of <strong>${duration}</strong>'
+        }
+
+    }
 
 
 class LogRecord:
@@ -46,6 +52,9 @@ class LogRecord:
 
         self.record = record
         self.match = m
+
+    def __len__(self):
+        return len(self.record)
 
 
 class RecordResult:
