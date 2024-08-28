@@ -235,7 +235,7 @@ class Event:
             html += "</table>"
             return html
         else:
-            raise EventException(f'I do not know how to render datatables for content type {content_type}')
+            raise EventException(f'I do not know how to render content type {content_type}')
 
 
 class StatsEvent(Event):

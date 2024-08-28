@@ -115,6 +115,7 @@ class LogfileProcessor:
                     yield RecordResult(data, self.log_record)
 
             line = line.rstrip()
+            # todo outsource to vendor code
             if line and line[0] == '\x18':
                 data = record
                 record = line[1:]
