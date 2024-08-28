@@ -6,31 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 once its public API is documented.
 
-## [Unreleased]
+## [0.0.4-PRE] - 20240828
 
-### Added
-- Timed event system for modules
-- Persistence
-- Enhanced configuration
-- Email event handler
-- SSHD Module maintenance
+### Added / Changed / Fixed / Deprecated / Removed
 
-### Changed
-- simplify module __init__
-- Event handling file structure
-- Audit event templating
-- Provide base class to easily create customizable syslog servers
-
-
-### Fixed
-- CSV output
-
-### Deprecated
-
-### Removed
-- The capture module
-
-### Security
+- Too much to summarize
 
 ## [0.0.3] - 2023-03-01
 
