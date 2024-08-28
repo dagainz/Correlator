@@ -1,37 +1,13 @@
-# Welcome to the Correlator repository!
+# Welcome to Correlator !
 
-Correlator is a log processing system written in Python. 
+Correlator is an event processing system written in Python. 
 
-It consumes and processes log data looking for patterns, and taking specific actions when they occur. It provides an
-interface to write both custom detection and/or action logic in python, which it can dynamically import.
+It processes event data looking for patterns and taking specific actions when they occur.
 
-out-of-the-box functionality includes:
+Detection and action logic are implemented in Python, which is dynamically imported and instantiated
+when referenced in the configuration.
 
-- RFC 5424 compliant TCP syslog server processes syslog records received from a remote system. It also has the
-ability to capture received syslog packets to a file, and to use these capture files as input.
-- An OpenSSH *logic module*: Detection logic that looks for patterns, such as **Successful login** in OpenSSH's
-log stream, and dispatch *events* in response.
-- Several *event handlers*: action logic that take action when these events occur.
-  - Email: Generates an email from a template using mako, and send via SMTP.
-  - CSV: Writes event data to rows in a csv file.
-  - SMS: Sends a basic SMS via twilio.
-
-And more!
-
----
-
-### Documentation and resources
-
-mkdocs based Markdown formatted documentation is provided in /doc.
-
-A pre-rendered HTML format version is hosted on GitHub pages:
-- [https://tim-pushor.github.io/Correlator/](https://tim-pushor.github.io/Correlator/) - Documentation index
-- [https://tim-pushor.github.io/Correlator/quickstart/](https://tim-pushor.github.io/Correlator/quickstart/) - Quick
-start
-
-# Credits
-
-Developer - Tim Pushor
+This project is currently changing direction, stay tuned!
 
 # License
 
