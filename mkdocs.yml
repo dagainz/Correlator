@@ -10,7 +10,24 @@ plugins:
 
 nav:
   - Home: index.md
-  - Why: why.md
-  - Quick start: quickstart.md
   - Architecture: architecture.md
-  - OpenSSH login module: sshd.md
+  - Implementation: implementation.md
+  - Features: features.md
+  - Quick start: quickstart.md
+  - Concepts:
+      - Frontend engine: frontend.md
+      - Modules: modules.md
+      - Event system: event-system.md
+      - Stack: stack.md
+  - Included front-end processors:
+      - Syslog server: syslog-server.md
+      - Logfile processor: logfile-processor.md
+  - Included Modules:
+      - OpenSSH login: sshd-module.md
+      - Report: report-module.md
+  - Included Event Handlers:
+      - Logback: logback-handler.md
+      - CSV: csv-handler.md
+      - E-Mail: email-handler.md
+      - SMS: sms-handler.md
+  - Why: why.md

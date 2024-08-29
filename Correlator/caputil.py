@@ -27,7 +27,7 @@ import logging
 import os
 import sys
 
-from Correlator.event import EventProcessor, LogbackListener
+from Correlator.Event.core import EventProcessor
 from Correlator.Module.report import Report
 from Correlator.syslog import SyslogServer
 from Correlator.util import setup_root_logger
@@ -110,8 +110,9 @@ def cli():
 
     # Build Correlator stack
     processor = EventProcessor()
-    processor.register_listener(LogbackListener())
-    modules = [Report(processor)]
+    from Correlator.Event.log import LogbackListener
+    processor.register_listener(LogbackListener('Logback'))
+    modules = [Report('Report')]
 
     server = SyslogServer(modules, processor, record_filter=filter_list)
     server.from_file(file_in, file_out)

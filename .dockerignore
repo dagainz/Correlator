@@ -1,0 +1,7 @@
+# Exclude other docker contexts
+
+test/ssh
+*.cap
+venv/
+assets/
+docker-volumes/

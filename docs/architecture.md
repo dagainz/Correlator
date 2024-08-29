@@ -1,115 +1,63 @@
-# Architecture
+# Architecture 
 
-The original vision was a syslog server / log processing system that is easily extendable by writing logic modules
-and handlers in python, which the system could detect and import automatically, and then configured and enabled via
-configuration.
+Although the code in this repository forms a fully running system, in its present state its real-world use is limited:
 
-It's not there yet. This library's purpose is to provide support to build such a system.
+1. The only included logic module is OpenSSH.  Unless all you will ever want is to monitor OpenSSH for login attempts,
+logic module development is necessary.
+2. The included event handlers are very basic and are suitable for testing, demonstration, and to serve as examples
+to develop real handlers.
 
-## The front-end engine
+**This project's current purpose is to provide the framework to build a custom log monitoring system in python**, hence
+its manifestation as a python package.
 
-The front-end engine is responsible for reading log data and forwarding it through one or more logic modules for
-processing. 
+### Programmable components
 
-Support for, and a reference implementation of, a server that supports listening for and processing syslog data over
-the network is included. Support is included for log files as well, but there is no reference implementation.
+There are 3 main functional areas that have been designed to be implemented or extended with python:
 
-The operation of the front end is conceptually simple. It is responsible for consuming log data, modelling each record
-as a python object, and dispatches these objects to one or more logic modules for processing. Processing consists of
-record filtering, correlating, statistics gathering, and event dispatching.
+#### The front-end
 
-## Modules 
+The front-end is responsible for retrieving and parsing log records from the source and distributing them to
+one or more logic modules for analysis.
 
-As stated above, logic modules perform record filtering, correlating, statistics gathering, and event dispatching. They
-would typically either handle one process or a group of related processes. 
+#### Logic modules
 
-They:
+Logic modules detect noteworthy incidents by detecting patterns within log records and dispatching
+events into the event stream in response.
 
-- Maintain and report on statistics 
-- Keep state to correlate log events for a higher level of business intelligence
-- Dispatch events in response to detected situations.
+#### Event handlers
 
-There is one system module provided: Report. It simply dispatches a notice event for every log record, as well 
-as collecting some basic statistics. This module coupled with the Logback event listener is a stack that will simply
-read records from the source, and output a summary of each one to the console, via python logging. In fact, 
-when you run the reference server in this distribution without the --sshd option, this is the exact stack that is
-running.
+Event handlers listen to the event stream and potentially take action in response.
 
-## Event listeners
+### The supporting components
 
-An event listener is a python method that gets executed with every dispatched event. This method can take a custom
-action when it receives an event that it is interested in. It is the duty of the event listener to ignore events that
-it is not. Multiple event listeners can be in use concurrently. All registered listeners receive all dispatched
-events. It is the duty of the event listener to ignore events that it is not interested in.
+At the heart of the system that ties the programmable components together is a pair of configuration systems:
 
-There is one event listener currently shipped with Correlator, the Logback Listener. This simply
-logs all events to the python log, and at least in the case of the provided CLI utilities, the console.
+#### The configuration store
 
-## Events
+The configuration store is a memory based table that contains items that each part of the system use to affect
+their run-time behavior. Values for these items can be set with the application configuration described in the next
+section, or overriden by command line options. The configuration store helps eliminate common errors (like typo's) by:
 
-Events are dispatched from the front-end engine or one of its modules. They are modeled as python objects and
-are instances of Correlator.event.Event or a subclass.
+- Ensuring the configuration items exist, as they must be pre-defined by the module or component.
+- Checking for valid data-types.
 
-Standard event types are supplied to provide appropriate default actions. For example, any custom event
-dispatched is a subclass of ErrorEvent will generate a python log entry with a severity of error when
-being handled by the Logback listener.
+  To show the details of the configuration store while using the syslog server, you can:
 
-## Standard events
+  - Run the server in debug mode using the --d command line argument. This will dump the contents of the
+  configuration store as part of its start up, before processing packets.
+  - Run the server with the --config comnmand line argument. This will dump the contents of the 
+  configuration store and then exit (try: syslog_server --app ssh-email --config).
 
-The standard Event can contain quite a bit of information:
+- **The application config** defines *Correlator Applications* in a configuration file. Applications
+define the behavior of a running Correlator instance. An application consists of:
+    - One or more logic modules, plus their configuration values in the configuration store
+    - One or more event handlers, plus their configuration values in the configuration store 
+    - For each instance of an event handler, a python expression that filters the events that the handler should take
+action on. For example, filters could be used to send all warnings and errors via email, but only errors of a particular
+type via sms. 
 
-- Descriptive summary
-- Data block - list of key/value pairs
-- Timestamp
-- The original log record (if applicable)
-- System - source of the event
-- optionally a text/html message generated bv mako
-- Is this warning, error, or informational message
+      Given the filter expressions described above, and the fact that the application config system dynamically loads
+python
+modules, new Correlator applications can be developed and run without modifying the Correlator source code. Quite a bit
+of the systems behavior can be modified by configuration only. 
 
-ErrorEvent, WarningEvent, and NoticeEvent are all subclasses of Event. To reiterate a point above, unless there is a
-good reason not to, all non-audit type events should extend one of these standard event classes. 
-
-## Audit events
-
-Audit events are dispatched in response to something noteworthy happening, and have a defined data schema. This makes
-these suitable to use as audit records as they can map easily to a CSV row, or database table.
-
-All audit events are custom event classes that extend AuditEvent. An identifier and a list of data fields that will
-be present in each event must be provided in the class defintion.
-
-See Correlator.sshd.SSHDLoginEvent for an example.
-
-## Correlator stack
-
-As described above in "It's not there yet", developing modules or handlers needs to start with a custom
-server script.
-
-Central to doing that is the concept of a correlator stack. A configured list of modules and event handlers together
-is known as a stack. Even though there may be many logic modules and event handlers available to the system, they
-should not always be active. 
-
-For the SIEM example demonstrated in [OpenSSH login module](sshd.md), the stack would be:
-
-- Modules: sshd
-- Handlers: logback
-
-This is the relevant code snippet from Correlator.syslog_server:
-
-```python
-    processor = EventProcessor()
-    processor.register_listener(LogbackListener())
-
-    # Setup list of logic modules
-
-    modules = []
-
-    # Add all modules specified on the command line
-
-    if cmd_args.sshd:
-        modules.append(SSHD(processor))
-
-    # If any weren't added,add the Report module
-
-    if not modules:
-        modules.append(Report(processor))
-```

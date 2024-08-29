@@ -6,21 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 once its public API is documented.
 
-## [Unreleased]
+## [0.0.4-PRE] - 2024-08-28
 
 ### Added
 
+- Docker support
+- Transmission module
+- Email handler with mako template rendering (EARLY)
+- Twilio handler (EARLY)
+- JSON based app configuration with dynamic loading
+- Runtime configuration store
+- Openssh container to test/demo openssh module
+- keyring support for secrets (EARLY)
+
 ### Changed
 
-### Fixed
+- Simplified events
 
 ### Deprecated
 
-### Removed
+- all documents in docs/
 
-### Security
-
-## [0.0.3] - 2023-03-01
+- ## [0.0.3] - 2023-03-01
 
 ### Added
 

@@ -1,30 +1,45 @@
+import logging
 import re
-from mako.template import Template
 
-from Correlator.event import (AuditEvent, EventProcessor)
+from Correlator.Event.core import (EventProcessor, StatsEvent)
 from Correlator.util import ParserError, Module, format_timestamp
+
+log = logging.getLogger(__name__)
 
 
 class LogError(Exception):
     pass
 
 
-class LogfileStatsEvent(AuditEvent):
+class LogfileStatsEvent(StatsEvent):
 
-    audit_id = 'system-stats'
-    fields = ['start', 'end', 'duration']
+    schema = [
+        ['start', 'Session started:'],
+        ['end', 'Session ended:'],
+        ['duration', 'Session duration:'],
+    ]
+    templates = {
+        'text/plain': {
+            'summary': 'Log processing session started at ${start}, ended at ${end}, with a duration of ${duration}'
+        },
+        'text/html': {
+            'summary': 'Log processing session started at <strong>${start}</strong>, ended at <strong>${end}</strong>, with a duration of <strong>${duration}</strong>'
+        }
 
-    def __init__(self, data):
-        super().__init__(self.audit_id, data)
-
-        self.template_txt = Template(
-            'Logfile processing session started at ${start} and ended at '
-            '${end} for a total duration of ${duration}')
+    }
 
 
 class LogRecord:
 
+    """ Base class for custom logfile parser classes to extend
+
+    Args:
+        record: Raw record from logfile
+
+    """
+
     main_regex = None
+    """ For simple parsers, just setting this property is enough"""
 
     def __init__(self, record):
 
@@ -37,6 +52,9 @@ class LogRecord:
 
         self.record = record
         self.match = m
+
+    def __len__(self):
+        return len(self.record)
 
 
 class RecordResult:
@@ -55,14 +73,35 @@ class RecordResult:
 
 
 class LogfileProcessor:
-    def __init__(self, log_record, modules: list[Module], log):
 
-        self.log = log
+    """ Read and process records from a log file
+
+    Args:
+        log_record: Custom parser class
+        modules: List of Correlator modules in this stack
+        processor: Instance of EventProcessor with registered event handlers
+
+    """
+
+    def __init__(self, log_record, modules: list[Module],
+                 processor: EventProcessor):
+
         self.start = None
         self.end = None
 
         self.modules = modules
         self.log_record = log_record
+
+        # No persistence with logfiles
+
+        self.full_store = {}
+
+        for module in modules:
+            module.event_processor = processor
+            if module.module_name not in self.full_store:
+                self.full_store[module.module_name] = module.model()
+            module.store = self.full_store[module.module_name]
+            module.post_init_store()
 
     def logfile_reader(self, file_object):
         record = ''
@@ -76,6 +115,7 @@ class LogfileProcessor:
                     yield RecordResult(data, self.log_record)
 
             line = line.rstrip()
+            # todo outsource to vendor code
             if line and line[0] == '\x18':
                 data = record
                 record = line[1:]
@@ -89,8 +129,7 @@ class LogfileProcessor:
         with open(filename) as logfile:
             for result in self.logfile_reader(logfile):
                 if result.is_error:
-                    self.log.error(
-                        f'Error reading entry: {result.message}')
+                    log.error(f'Error reading entry: {result.message}')
                 else:
                     if (self.start is None or
                             result.record.timestamp < self.start):

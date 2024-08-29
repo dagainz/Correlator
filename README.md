@@ -1,19 +1,13 @@
-# Correlator
+# Welcome to Correlator !
 
-Correlator is a log processing system written in Python. 
+Correlator is an event processing system written in Python. 
 
-It consists of a Python library and collection of utilities that collectively facilitate the creation of log event
-processing systems. Functionality and scaffolding is provided to create systems that process log data in real time over
-the network as well as after-the-fact by reading and processing log files.
+It processes event data looking for patterns and taking specific actions when they occur.
 
-# Installation and Usage
+Detection and action logic are implemented in Python, which is dynamically imported and instantiated
+when referenced in the configuration.
 
-MkDocs compliant documentation is provided in /doc.
-[Read the HTML version online](https://tim-pushor.github.io/Correlator/)
-
-# Credits and blame
-
-Lead Developer - Tim Pushor
+This project is currently changing direction, stay tuned!
 
 # License
 

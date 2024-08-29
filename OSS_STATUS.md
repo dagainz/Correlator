@@ -4,12 +4,11 @@
 
 ## What does that mean?
 
-This repository contains a proof of concept system in very early development, but it **is** in active development.
+This repository contains a proof of concept system in very early development.
 
 ## What should you expect?
 
-- This code is alpha quality at best, and is released as-is
-- This has not been extensively tested and even so, has many known issues.
+- Nothing!
 
 ## How can you contribute?
 
