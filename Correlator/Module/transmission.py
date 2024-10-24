@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass
 
 from Correlator.Event.core import Event, StatsEvent
-from Correlator.util import Module
+from Correlator.core import Module
 
 
 class TransmissionCompleted(Event):

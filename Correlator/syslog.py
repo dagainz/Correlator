@@ -10,7 +10,7 @@ from typing import List, BinaryIO, Callable
 
 from Correlator.config_store import ConfigType, RuntimeConfig
 from Correlator.Event.core import EventProcessor, Event, StatsEvent, SimpleError
-from Correlator.util import ParserError, Module
+from Correlator.core import ParserError, Module
 
 
 log = logging.getLogger(__name__)

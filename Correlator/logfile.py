@@ -2,7 +2,7 @@ import logging
 import re
 
 from Correlator.Event.core import (EventProcessor, StatsEvent)
-from Correlator.util import ParserError, Module, format_timestamp
+from Correlator.core import ParserError, Module, format_timestamp
 
 log = logging.getLogger(__name__)
 

@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 
 from Correlator.Event.core import Event, StatsEvent, EventSeverity
-from Correlator.util import Module, CountOverTime, format_timestamp
+from Correlator.core import Module, CountOverTime, format_timestamp
 from Correlator.config_store import ConfigType
 
 SSHDConfig = [

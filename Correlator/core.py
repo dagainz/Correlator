@@ -4,6 +4,7 @@ import os
 import re
 import sys
 from datetime import datetime, timedelta
+from enum import Enum
 
 import keyring
 
@@ -15,6 +16,16 @@ MAX_SUMMARY = 128
 MAX_BREAK_SEARCH = 10
 
 log = logging.getLogger(__name__)
+
+
+class RecordTypes(Enum):
+    HEARTBEAT = 0
+    SYSLOG_DATA = 1
+
+
+class ResultCodes(Enum):
+    OK = 0
+    Error = 1
 
 
 class Instance:

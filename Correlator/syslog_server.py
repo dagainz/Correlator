@@ -9,7 +9,7 @@ from Correlator.app_config import ApplicationConfig
 from Correlator.Event.core import EventProcessor, EventSeverity
 from Correlator.syslog import (RawSyslogRecord, SyslogRecord, SyslogServer,
                                SyslogStatsEvent)
-from Correlator.util import (setup_root_logger, capture_filename, Instance,
+from Correlator.core import (setup_root_logger, capture_filename, Instance,
                              format_timestamp, prefix_run_dir, setup_keyring)
 
 

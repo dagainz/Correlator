@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 
-from Correlator.util import Module, format_timestamp, calculate_summary
+from Correlator.core import Module, format_timestamp, calculate_summary
 from Correlator.Event.core import Event, SimpleNotice
 
 # log = logging.getLogger(__name__)

@@ -30,7 +30,7 @@ import sys
 from Correlator.Event.core import EventProcessor
 from Correlator.Module.report import Report
 from Correlator.syslog import SyslogServer
-from Correlator.util import setup_root_logger
+from Correlator.core import setup_root_logger
 
 
 def cli():

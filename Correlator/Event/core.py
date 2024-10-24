@@ -125,7 +125,7 @@ class Event:
             if isinstance(source[key], (str, int, float)):
                 destination[key] = source[key]
             elif isinstance(source[key], datetime):
-                from Correlator.util import format_timestamp
+                from Correlator.core import format_timestamp
                 destination[key] = format_timestamp(source[key])
             elif source[key] is None:
                 destination[key] = 'None'

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+// package Sources;
+
+// Interface exported by the server.
+
+// For the TCP Syslog Source (in the Sources/TCP_Syslog directory):
+
+//  python -m grpc_tools.protoc -I../../proto --python_out=. --grpc_python_out=. ../../proto/frontend_record.proto
+
+// For the input processor: (in the main source directory):
+
+// python -m grpc_tools.protoc -Iproto --python_out=. --grpc_python_out=. proto/frontend_record.proto
+
+
+service FrontEndInput {
+  rpc ProcessRecord(stream Record) returns (Result) {}
+}
+
+message Record {
+  string tenant_id = 1;
+  uint64 timestamp = 2;
+  int32 type = 3;
+  string source_id = 4;
+  bytes raw_data = 5;
+}
+
+message Result {
+    int32 code = 1;
+    string message = 2;
+}

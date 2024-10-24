@@ -13,7 +13,7 @@ from schema import Schema, Optional
 
 from Correlator.Event.core import EventProcessor
 from Correlator.config_store import RuntimeConfig
-from Correlator.util import CredentialsReq, SimpleException
+from Correlator.core import CredentialsReq, SimpleException
 
 
 class CorrelatorStack:
@@ -23,34 +23,50 @@ class CorrelatorStack:
 
 
 class ApplicationConfigStore:
-
-    # Schema to validate the system configuration dict.
+    # system configuration schema
 
     config_schema = Schema({
-        'system': {
-            Optional('config', default={}): {
-                str: object
-            }
+        'name': str,
+        'input_processor': {
+            str: object
         },
-        'application': {
-            str: {
-                'description': str,
-                'modules': {
-                    str: {
-                        'module': [str, str],
-                        Optional('config', default={}): {
-                            str: object
-                        }
-                    },
-                },
-                'handlers': {
-                    str: {
-                        'handler': [str, str],
-                        Optional('filter_expression', default=''): str,
-                        Optional('config', default={}): {
-                         str: object
+        'sources': [
+            {
+                'id': str,
+                'desc': str,
+                'connector': str,
+                Optional('config', default={}): {
+                    str: object
+                }
+            }
+
+        ],
+        'engines': [
+            {
+                'id': str,
+                'desc': str,
+                'tenants': [
+                    {
+                        'id': str,
+                        'modules': {
+                            str: {
+                                'module': [str, str],
+                                Optional('config', default={}): {
+                                    str: object
+
+                                }
+                            }
                         }
                     }
+                ]
+            }
+        ],
+        'handlers': {
+            str: {
+                'handler': [str, str],
+                Optional('filter_expression', default=''): str,
+                Optional('config', default={}): {
+                    str: object
                 }
             }
         }
@@ -68,6 +84,7 @@ class ApplicationConfigStore:
         self.cfg = None
         self.imports = {}
         self.log = logging.getLogger('ApplicationConfigStore')
+        self._source_by_id = {}
 
     def load(self, filename: str):
 
@@ -76,10 +93,14 @@ class ApplicationConfigStore:
             with open(filename) as f:
                 parsed_json = json.load(f)
                 cfg = self.config_schema.validate(parsed_json)
-                self.log.debug('Setting system level options')
-                system_settings = cfg['system']['config']
-                for key in system_settings:
-                    RuntimeConfig.set(key, system_settings[key])
+                # self.log.debug('Setting system level options')
+                # system_settings = cfg['system']['config']
+                # for key in system_settings:
+                #     RuntimeConfig.set(key, system_settings[key])
+                sources = cfg.get('sources', [])
+                for source in sources:
+                    # todo validate source
+                    self._source_by_id[source['id']] = source
 
         except Exception as e:
             self.log.error(f'Configuration error: {e}')
@@ -87,6 +108,32 @@ class ApplicationConfigStore:
 
         self.cfg = cfg
         return True
+
+    def source_by_id(self, source_id: str):
+        return self._source_by_id.get(source_id)
+
+    def process_section_config(self, section: str):
+        self.log.info(f'Processing configuration section [{section}]')
+        settings = self.cfg.get(section)
+        if settings:
+            for relative_key in settings:
+                key = f'{section}.{relative_key}'
+                value = settings[key]
+                self.log.debug(f'Setting {key} to {value}')
+                RuntimeConfig.set(key, value)
+        else:
+            self.log.debug('No configuration found')
+
+    def process_source_config(self, source_id: str):
+        self.log.info(f'Processing configuration for source {source_id}')
+        source = self.source_by_id(source_id)
+        if source:
+            settings = source.get('config', {})
+            for relative_key in settings:
+                key = f'sources.{source_id}.{relative_key}'
+                value = settings[relative_key]
+                self.log.debug(f'Setting {key} to {value}')
+                RuntimeConfig.set(key, value)
 
     def add_module(self, module, name):
         if module not in self.imports:
@@ -113,7 +160,8 @@ class ApplicationConfigStore:
             desc = apps[app]['description']
             yield app, desc
 
-    def build_stack(self, app_name: str, cmdline_options: list[list[str, str]]) -> CorrelatorStack | None:
+    def build_stack(self, app_name: str, cmdline_options: list[
+        list[str, str]]) -> CorrelatorStack | None:
 
         self.log.debug('build_stack')
         apps = self.cfg.get('application', {})
@@ -267,5 +315,3 @@ class ApplicationConfigStore:
 
 
 ApplicationConfig = ApplicationConfigStore()
-
-

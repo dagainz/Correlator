@@ -5,7 +5,7 @@ from typing import Dict
 
 from Correlator.config_store import ConfigType
 from Correlator.Event.core import EventListener, Event
-from Correlator.util import SimpleException, prefix_run_dir
+from Correlator.core import SimpleException, prefix_run_dir
 
 
 CSVListenConfig = [
@@ -90,7 +90,7 @@ class CSVListener(EventListener):
             # We don't yet have this file open.
             if self.rotate_files:
                 self.log.debug(f'Rotating {full_path}.csv')
-                from Correlator.util import rotate_file  # Avoid cyclic import
+                from Correlator.core import rotate_file  # Avoid cyclic import
                 rotate_file(full_path, 'csv')
 
             # Open new CSV file
