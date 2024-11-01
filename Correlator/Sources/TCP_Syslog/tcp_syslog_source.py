@@ -5,6 +5,7 @@ import grpc
 import iso8601
 import logging
 import os
+import pickle
 import re
 import select
 import socket
@@ -140,13 +141,13 @@ class SyslogRecord:
         else:
             decoded_record = record.decode('utf-8')
 
-        self.m = re.match(self.main_regex, decoded_record)
+        m = re.match(self.main_regex, decoded_record)
 
-        if not self.m:
+        if not m:
             self.error = "1st stage parse failure"
             return
 
-        self.timestamp_str = self.m.group('timestamp_str')
+        self.timestamp_str = m.group('timestamp_str')
         try:
             timestamp_tz = iso8601.parse_date(self.timestamp_str)
         except iso8601.ParseError:
@@ -155,15 +156,15 @@ class SyslogRecord:
 
         self.timestamp = timestamp_tz.replace(tzinfo=None)
 
-        self.priority = self.m.group('priority')
-        self.hostname = self.m.group('hostname')
-        self.appname = self.m.group('appname')
-        self.proc_id = self.m.group('proc_id')
-        self.msg_id = self.m.group('msg_id')
+        self.priority = m.group('priority')
+        self.hostname = m.group('hostname')
+        self.appname = m.group('appname')
+        self.proc_id = m.group('proc_id')
+        self.msg_id = m.group('msg_id')
 
         try:
             self.detail, self.structured_data = self._parse_sdata(
-                self.m.group('rest'))
+                m.group('rest'))
         except ParserError as e:
             self.error = f'Cannot parse structured data: {e}'
             return
@@ -298,16 +299,16 @@ class SyslogServer:
             timestamp=int(time.time() * 1000),
             type=RecordTypes.HEARTBEAT.value,  # Heartbeat
             source_id=self.source_id,
-            raw_data=b''
+            obj=None
         )
 
-    def _data_message(self, record):
+    def _data_message(self, record: SyslogRecord):
         return frontend_record_pb2.Record(
             tenant_id=self.tenant_id,
             timestamp=int(time.time() * 1000),
             type=RecordTypes.SYSLOG_DATA.value,  # Syslog
             source_id=self.source_id,
-            raw_data=record.raw()
+            obj=pickle.dumps(record)
         )
 
     def __iter__(self):
@@ -418,7 +419,7 @@ class CLI:
     def __init__(self):
         self.log = log.getChild('tcp_syslog')
 
-        parser = argparse.ArgumentParser(description='Syslog Server Correlator source.')
+        parser = argparse.ArgumentParser(description='TCP Syslog Server Correlator Source.')
         parser.add_argument('--id', required=True, help='Source ID')
         parser.add_argument(
             '--config_file',
@@ -466,7 +467,7 @@ class CLI:
             log.error(f'Invalid configuration: {e}')
             return
 
-        log.info(f'Correlator {Instance.Version} Source ID {args.id} TCP Syslog server for tenant {tenant} startup')
+        log.info(f'TCP Syslog server source {args.id} for tenant {tenant} using Correlator {Instance.Version}')
 
         log.debug(f'Connecting to input processor at {hostname}:{port} via gRPC ')
         with grpc.insecure_channel(f'{hostname}:{port}') as channel:

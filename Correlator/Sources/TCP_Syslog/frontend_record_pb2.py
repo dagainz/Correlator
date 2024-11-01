@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15\x66rontend_record.proto\"a\n\x06Record\x12\x11\n\ttenant_id\x18\x01 \x01(\t\x12\x11\n\ttimestamp\x18\x02 \x01(\x04\x12\x0c\n\x04type\x18\x03 \x01(\x05\x12\x11\n\tsource_id\x18\x04 \x01(\t\x12\x10\n\x08raw_data\x18\x05 \x01(\x0c\"\'\n\x06Result\x12\x0c\n\x04\x63ode\x18\x01 \x01(\x05\x12\x0f\n\x07message\x18\x02 \x01(\t26\n\rFrontEndInput\x12%\n\rProcessRecord\x12\x07.Record\x1a\x07.Result\"\x00(\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15\x66rontend_record.proto\"\\\n\x06Record\x12\x11\n\ttenant_id\x18\x01 \x01(\t\x12\x11\n\ttimestamp\x18\x02 \x01(\x04\x12\x0c\n\x04type\x18\x03 \x01(\x05\x12\x11\n\tsource_id\x18\x04 \x01(\t\x12\x0b\n\x03obj\x18\x05 \x01(\x0c\"\'\n\x06Result\x12\x0c\n\x04\x63ode\x18\x01 \x01(\x05\x12\x0f\n\x07message\x18\x02 \x01(\t26\n\rFrontEndInput\x12%\n\rProcessRecord\x12\x07.Record\x1a\x07.Result\"\x00(\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,9 +32,9 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'frontend_record_pb2', _glob
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_RECORD']._serialized_start=25
-  _globals['_RECORD']._serialized_end=122
-  _globals['_RESULT']._serialized_start=124
-  _globals['_RESULT']._serialized_end=163
-  _globals['_FRONTENDINPUT']._serialized_start=165
-  _globals['_FRONTENDINPUT']._serialized_end=219
+  _globals['_RECORD']._serialized_end=117
+  _globals['_RESULT']._serialized_start=119
+  _globals['_RESULT']._serialized_end=158
+  _globals['_FRONTENDINPUT']._serialized_start=160
+  _globals['_FRONTENDINPUT']._serialized_end=214
 # @@protoc_insertion_point(module_scope)

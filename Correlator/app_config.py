@@ -45,6 +45,10 @@ class ApplicationConfigStore:
             {
                 'id': str,
                 'desc': str,
+                Optional('config', default={}): {
+                    str: object
+
+                },
                 'tenants': [
                     {
                         'id': str,
@@ -85,6 +89,7 @@ class ApplicationConfigStore:
         self.imports = {}
         self.log = logging.getLogger('ApplicationConfigStore')
         self._source_by_id = {}
+        self._engine_by_id = {}
 
     def load(self, filename: str):
 
@@ -99,8 +104,13 @@ class ApplicationConfigStore:
                 #     RuntimeConfig.set(key, system_settings[key])
                 sources = cfg.get('sources', [])
                 for source in sources:
-                    # todo validate source
+                    # todo validate source (maybe)
                     self._source_by_id[source['id']] = source
+
+                engines = cfg.get('engines', [])
+                for engine in engines:
+                    # todo validate engine (maybe)
+                    self._engine_by_id[engine['id']] = engine
 
         except Exception as e:
             self.log.error(f'Configuration error: {e}')
@@ -111,6 +121,9 @@ class ApplicationConfigStore:
 
     def source_by_id(self, source_id: str):
         return self._source_by_id.get(source_id)
+
+    def engine_by_id(self, engine_id: str):
+        return self._engine_by_id.get(engine_id)
 
     def process_section_config(self, section: str):
         self.log.info(f'Processing configuration section [{section}]')
@@ -131,6 +144,17 @@ class ApplicationConfigStore:
             settings = source.get('config', {})
             for relative_key in settings:
                 key = f'sources.{source_id}.{relative_key}'
+                value = settings[relative_key]
+                self.log.debug(f'Setting {key} to {value}')
+                RuntimeConfig.set(key, value)
+
+    def process_engine_config(self, engine_id: str):
+        self.log.info(f'Processing configuration for engine {engine_id}')
+        engine = self.engine_by_id(engine_id)
+        if engine:
+            settings = engine.get('config', {})
+            for relative_key in settings:
+                key = f'engines.{engine_id}.{relative_key}'
                 value = settings[relative_key]
                 self.log.debug(f'Setting {key} to {value}')
                 RuntimeConfig.set(key, value)

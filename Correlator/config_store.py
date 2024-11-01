@@ -5,6 +5,7 @@ handles the runtime configuration store that the system, modules, and event
 handlers use during execution.
 
 """
+import copy
 import logging
 import re
 
@@ -74,7 +75,7 @@ class ConfigStore:
                 else:
                     new_key = f'{prefix}.{key}'
 
-                new_item[new_key] = item[key]
+                new_item[new_key] = copy.deepcopy(item[key])
                 self.log.debug(f'Configuration item {key} added as {new_key}')
                 self.store.update(new_item)
 

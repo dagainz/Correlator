@@ -22,7 +22,7 @@ message Record {
   uint64 timestamp = 2;
   int32 type = 3;
   string source_id = 4;
-  bytes raw_data = 5;
+  bytes obj = 5;
 }
 
 message Result {

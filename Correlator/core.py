@@ -4,7 +4,7 @@ import os
 import re
 import sys
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import Enum, IntEnum
 
 import keyring
 
@@ -18,7 +18,7 @@ MAX_BREAK_SEARCH = 10
 log = logging.getLogger(__name__)
 
 
-class RecordTypes(Enum):
+class RecordTypes(IntEnum):
     HEARTBEAT = 0
     SYSLOG_DATA = 1
 
@@ -103,11 +103,7 @@ class Module:
 
     def dispatch_event(self, event: Event):
 
-        if not self._processor:
-            raise NotImplementedError
-
-        event.system = self.module_name
-        self._processor.dispatch_event(event)
+        self.log.info(f'Dispatching severity {event.severity_name} event {event.id} (fqid: {event.fq_id})')
 
     def post_init_store(self):
         return

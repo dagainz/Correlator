@@ -2,7 +2,8 @@
   "name": "giganode1",
   "input_processor": {
     "grpc_listen_address": "0.0.0.0",
-    "grpc_listen_port": 50051
+    "grpc_listen_port": 50051,
+    "rabbitmq_host": "docker1"
   },
   "sources": [
     {
@@ -10,26 +11,60 @@
       "desc": "Syslog feed from Linux server giganode1",
       "connector": "tcp_syslog",
       "config": {
-          "listen_port": 5140,
-          "grpc_host": "127.0.0.1",
-          "grpc_port": 50051,
-          "tenant": "tenant_1"
-        }
+        "listen_port": 5140,
+        "grpc_host": "127.0.0.1",
+        "grpc_port": 50051,
+        "tenant": "tim-dev"
+      }
     }
   ],
   "engines": [
     {
-      "id": "t12345",
-      "desc": "Tenant 12345",
+      "id": "giganode1-dev",
+      "desc": "Giganode1 Development",
+      "config": {
+        "rabbitmq_input_stream": "Correlator-input",
+        "rabbitmq_event_stream": "Correlator-event",
+        "rabbitmq_host": "docker1"
+      },
       "tenants": [
         {
-          "id": "12345",
+          "id": "tim-dev",
           "modules": {
             "report": {
               "module": [
                 "Correlator.Module.report",
                 "Report"
               ]
+            },
+            "OpenSSH": {
+              "module": [
+                "Correlator.Module.sshd",
+                "SSHD"
+              ],
+              "config": {
+                "login_failure_limit": "6"
+              }
+            }
+          }
+        },
+        {
+          "id": "tim-dev_2",
+          "modules": {
+            "report": {
+              "module": [
+                "Correlator.Module.report",
+                "Report"
+              ]
+            },
+            "OpenSSH": {
+              "module": [
+                "Correlator.Module.sshd",
+                "SSHD"
+              ],
+              "config": {
+                "login_failure_limit": "3"
+              }
             }
           }
         }
