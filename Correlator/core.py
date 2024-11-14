@@ -77,11 +77,12 @@ class Module:
 
     description: str = ''
 
-    def __init__(self, module_name):
+    def __init__(self, module_name, event_dispatcher):
         self._processor = None
         self._store = None
         self.model = None
         self.module_name = module_name
+        self.event_dispatcher = event_dispatcher
         self.log = logging.getLogger(f'{module_name}-module')
         self.configuration_prefix = f'module.{self.module_name}.'
 
@@ -103,7 +104,8 @@ class Module:
 
     def dispatch_event(self, event: Event):
 
-        self.log.info(f'Dispatching severity {event.severity_name} event {event.id} (fqid: {event.fq_id})')
+        self.event_dispatcher(event)
+         # self..log.info(f'Dispatching severity {event.severity_name} event {event.id} (fqid: {event.fq_id})'))
 
     def post_init_store(self):
         return
@@ -112,6 +114,9 @@ class Module:
         if self._store is None:
             raise ValueError('No Store!')
         self.process_record(record)
+
+    def handle_event(self, event: Event):
+        self.log.debug(f'Ignoring event {event.fq_id}')
 
     def process_record(self, record):
         raise NotImplementedError
@@ -231,6 +236,7 @@ def calculate_summary(detail: str):
 
 
 class CountOverTime:
+    #todo: This looks really broken.
     def __init__(self, expiry_seconds: int, store: dict):
         self.expiry_seconds = expiry_seconds
         self.store = store

@@ -55,9 +55,9 @@ class TransmissionStore:
 
 
 class Transmission(Module):
-    def __init__(self, module_name: str):
+    def __init__(self, module_name: str, dispatcher):
 
-        super().__init__(module_name)
+        super().__init__(module_name, dispatcher)
 
         self.description = 'Transmission daemon'
         self.identifier = 'transmission'

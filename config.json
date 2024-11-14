@@ -25,7 +25,10 @@
       "config": {
         "rabbitmq_input_stream": "Correlator-input",
         "rabbitmq_event_stream": "Correlator-event",
-        "rabbitmq_host": "docker1"
+        "rabbitmq_host": "docker1",
+        "mediator_endpoint": "localhost:50051",
+        "persistence_store": "/Users/timp/Projects/Correlator/run/dev-store",
+        "save_store_interval": 100
       },
       "tenants": [
         {
@@ -45,7 +48,14 @@
               "config": {
                 "login_failure_limit": "6"
               }
+            },
+            "Transmission": {
+              "module": [
+                "Correlator.Module.transmission",
+                "Transmission"
+              ]
             }
+
           }
         },
         {

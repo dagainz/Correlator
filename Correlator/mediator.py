@@ -9,8 +9,8 @@ import pickle
 
 from rstream import AMQPMessage, Producer
 
-import frontend_record_pb2_grpc
-import frontend_record_pb2
+import mediator_pb2_grpc
+import mediator_pb2
 import grpc
 
 from grpc_interceptor import AsyncServerInterceptor
@@ -75,28 +75,36 @@ InputConfig = [
 ]
 
 
-class FrontEndInputServicer(frontend_record_pb2_grpc.FrontEndInputServicer):
+class MediatorServicer(mediator_pb2_grpc.MediatorServicer):
 
     record_types = {x.value: x.name for x in RecordTypes}
 
-    def __init__(self, producer: Producer, stream: str) -> None:
+    def __init__(self, producer: Producer, source_stream: str, event_stream: str) -> None:
         # log.info('In constructor')
         self.producer = producer
-        self.stream = stream
+        self.source_stream = source_stream
+        self.event_stream = event_stream
         self.lock = asyncio.Lock()
 
-    async def _send(self, record):
-        """Sends syslog record to rabbitmq"""
+    async def ConnectionTest(self, request, context):
+        log.info('Connection test')
+        return mediator_pb2.Result(code=0, message='OK')
+
+    async def DispatchEvent(self, request, context):
+        log.info(f'Dispatching event for tenant {request.tenant_id}')
         await self.lock.acquire()
         payload = AMQPMessage(
-                body=pickle.dumps(record)
-            )
+            body=pickle.dumps(request)
+        )
         try:
-            await self.producer.send(stream=self.stream, message=payload)
+            await self.producer.send(stream=self.event_stream, message=payload)
         finally:
             self.lock.release()
 
-    async def ProcessRecord(self, iterator, context):
+        return mediator_pb2.Result(code=0, message='OK')
+
+
+    async def StreamSourceData(self, iterator, context):
         async for record in iterator:
             if record.type == RecordTypes.HEARTBEAT.value:
                 log.info('Ignoring heartbeat')
@@ -107,13 +115,13 @@ class FrontEndInputServicer(frontend_record_pb2_grpc.FrontEndInputServicer):
                     body=pickle.dumps(record)
                 )
                 try:
-                    await self.producer.send(stream=self.stream, message=payload)
+                    await self.producer.send(stream=self.source_stream, message=payload)
                 finally:
                     self.lock.release()
             else:
                 log.error(f'Unknown record type: {record.type} for {record.tenant_id} from {record.source_id}')
 
-        return frontend_record_pb2.Result(code=0, message='OK')
+        return mediator_pb2.Result(code=0, message='OK')
 
     # async def _send(self, record):
     #     log.info(f'sending {self.record_types[record.type]} record')
@@ -122,7 +130,7 @@ class FrontEndInputServicer(frontend_record_pb2_grpc.FrontEndInputServicer):
 class LoggingInterceptor(AsyncServerInterceptor):
 
     method_map = {
-        '/FrontEndInput/ProcessRecord': 'A request to open an input data stream'
+        '/Mediator/StreamSourceData': 'A request to open an input data stream'
     }
 
     # async def intercept_service(self, continuation: Callable[
@@ -205,34 +213,18 @@ class InputProcessorCLI:
 
         # gRPC
 
-            stream = RuntimeConfig.get('input_processor.rabbitmq_input_stream')
-            interceptors = [LoggingInterceptor()]
+            source_stream = RuntimeConfig.get('input_processor.rabbitmq_input_stream')
+            event_stream = RuntimeConfig.get('input_processor.rabbitmq_event_stream')
+
+            #interceptors = [LoggingInterceptor()]
+            interceptors = []
             server = grpc.aio.server(interceptors=interceptors)
-            frontend_record_pb2_grpc.add_FrontEndInputServicer_to_server(FrontEndInputServicer(producer, stream), server)
+            mediator_pb2_grpc.add_MediatorServicer_to_server(MediatorServicer(producer, source_stream, event_stream), server)
             server.add_insecure_port(self.grpc_listen_addr)
             await server.start()
             log.info(f"Async server started, listening for gRPC requests on {self.grpc_listen_addr}")
             await server.wait_for_termination()
             log.info('Await complete')
-
-   # async def _server(self) -> None:
-   #      # RabbitMQ
-   #
-   #      log.info('Connecting to RabbitMQ')
-   #      async with Producer("docker1", username="guest", password="guest") as producer:
-   #          log.info('Creating stream if it does not exist')
-   #          await producer.create_stream('Correlator', exists_ok=True)
-   #
-   #      # gRPC
-   #
-   #          # interceptors = [LoggingInterceptor()]
-   #          interceptors = None
-   #          server = grpc.aio.server(interceptors=interceptors)
-   #          frontend_record_pb2_grpc.add_FrontEndInputServicer_to_server(FrontEndInput(producer), server)
-   #          server.add_insecure_port(self.listen_addr)
-   #          await server.start()
-   #          log.info(f"Async server started, listening for gRPC requests on {self.listen_addr}")
-   #          await server.wait_for_termination()
 
 
 if __name__ == "__main__":

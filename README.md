@@ -1,13 +1,9 @@
 # Welcome to Correlator !
 
-Correlator is an event processing system written in Python. 
+Correlator is a system that centralizes, analyzes, and correlates log and event data in real-time to detect and respond
+to patterns within in the data.
 
-It processes event data looking for patterns and taking specific actions when they occur.
-
-Detection and action logic are implemented in Python, which is dynamically imported and instantiated
-when referenced in the configuration.
-
-This project is currently changing direction, stay tuned!
+Think SIEM, but not specifically focused on security.
 
 # License
 

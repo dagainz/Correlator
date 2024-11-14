@@ -31,9 +31,9 @@ class ReportState:
 
 class Report(Module):
 
-    def __init__(self, module_name: str):
+    def __init__(self, module_name: str, dispatcher):
 
-        super().__init__(module_name)
+        super().__init__(module_name, dispatcher)
 
         self.log.debug('Initialing Report module')
         self.description = 'Report-only'
@@ -77,8 +77,10 @@ class Report(Module):
         if self.store.end is None or record.timestamp > self.store.end:
             self.store.end = record.timestamp
 
-        self.dispatch_event(
-            SimpleNotice({'message': calculate_summary(str(record))}))
+        # self.dispatch_event(
+        #     SimpleNotice({'message': calculate_summary(str(record))}))
+
+        self.log.info(calculate_summary(str(record)))
 
         self.store.num_records += 1
         self.store.size_records += recordsize

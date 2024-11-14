@@ -1,6 +1,6 @@
 import argparse
-import frontend_record_pb2_grpc
-import frontend_record_pb2
+import mediator_pb2_grpc
+import mediator_pb2
 import grpc
 import iso8601
 import logging
@@ -294,7 +294,7 @@ class SyslogServer:
     #     log.info(f"Heartbeat! {self.timeout_seconds}")
 
     def _heartbeat_message(self):
-        return frontend_record_pb2.Record(
+        return mediator_pb2.SourceRecord(
             tenant_id=self.tenant_id,
             timestamp=int(time.time() * 1000),
             type=RecordTypes.HEARTBEAT.value,  # Heartbeat
@@ -303,7 +303,7 @@ class SyslogServer:
         )
 
     def _data_message(self, record: SyslogRecord):
-        return frontend_record_pb2.Record(
+        return mediator_pb2.SourceRecord(
             tenant_id=self.tenant_id,
             timestamp=int(time.time() * 1000),
             type=RecordTypes.SYSLOG_DATA.value,  # Syslog
@@ -472,9 +472,9 @@ class CLI:
         log.debug(f'Connecting to input processor at {hostname}:{port} via gRPC ')
         with grpc.insecure_channel(f'{hostname}:{port}') as channel:
             log.info(f'gRPC connection established to Correlator input processor at {hostname}:{port}')
-            SyslogSource = SyslogServer(source_id=args.id, tenant_id=tenant)
-            stub = frontend_record_pb2_grpc.FrontEndInputStub(channel)
-            response = stub.ProcessRecord(iter(SyslogSource))
+            syslog_source = SyslogServer(source_id=args.id, tenant_id=tenant)
+            stub = mediator_pb2_grpc.MediatorStub(channel)
+            response = stub.StreamSourceData(iter(syslog_source))
             message = f'Server responded with {response.message}, Code: {response.code}'
             if response.code != 0:
                 log.error(message)

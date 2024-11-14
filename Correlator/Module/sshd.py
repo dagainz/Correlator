@@ -132,9 +132,9 @@ class SSHD(Module):
 
     # GlobalConfig.add(SSHDConfig)
 
-    def __init__(self, module_name: str):
+    def __init__(self, module_name: str, dispatcher):
 
-        super().__init__(module_name)
+        super().__init__(module_name, dispatcher)
 
         self.description = 'OpenSSH Server SSH Logins'
         self.identifier = 'sshd_logins'
@@ -149,11 +149,13 @@ class SSHD(Module):
 
     def initialize(self):
 
-        self.log.debug('Process module related configuration items')
+        self.log.info('Process module related configuration items')
 
         self.expiry_seconds = self.get_config('login_failure_window')
         self.failure_limit = self.get_config('login_failure_limit')
         self.max_transaction_age = self.get_config('max_transaction_age')
+
+        self.log.info(f'login_failure_window = {self.expiry_seconds}')
 
     def maintenance(self):
         """ perform module maintenance
@@ -345,6 +347,9 @@ class SSHD(Module):
             return {}
 
         return None
+
+    def handle_event(self, event: Event):
+        self.log.info(f'Loudly ignoring event {event.fq_id}')
 
     def process_record(self, record):
 
