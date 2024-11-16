@@ -15,7 +15,7 @@ import grpc
 
 from grpc_interceptor import AsyncServerInterceptor
 from Correlator.config_store import RuntimeConfig, ConfigType
-from Correlator.app_config import ApplicationConfig
+from Correlator.sysconfig import ApplicationConfig
 
 from Correlator.core import setup_root_logger, RecordTypes, ResultCodes, Instance
 

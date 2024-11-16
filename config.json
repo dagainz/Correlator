@@ -81,13 +81,41 @@
       ]
     }
   ],
-  "handlers": {
-    "Logback": {
-      "handler": [
-        "Correlator.Event.log",
-        "LogbackListener"
-      ],
-      "filter_expression": "True"
+  "reactors": [
+    {
+      "id": "giganode1-dev",
+      "desc": "Giganode1 Development",
+      "config": {
+        "rabbitmq_event_stream": "Correlator-event",
+        "rabbitmq_host": "docker1"
+      },
+      "tenants": [
+        {
+          "id": "tim-dev",
+          "handlers": {
+            "Logback": {
+              "handler": [
+                "Correlator.Event.log",
+                "LogbackListener"
+              ],
+              "filter_expression": "True"
+            }
+          }
+        },
+        {
+          "id": "tim-dev_2",
+          "handlers": {
+            "Logback": {
+              "handler": [
+                "Correlator.Event.log",
+                "LogbackListener"
+              ],
+              "filter_expression": "True"
+            }
+          }
+        }
+      ]
     }
-  }
+  ]
 }
+

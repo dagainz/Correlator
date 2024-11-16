@@ -1,8 +1,6 @@
-"""Support for Correlator application configuration and setup.
+"""
 
-While confusing, there are two configuration systems. This is the one that
-handles Correlator applications - A collection of modules, event handlers,
-and configuration that define them.
+Logic related to JSON system configuration
 
 """
 
@@ -65,15 +63,30 @@ class ApplicationConfigStore:
                 ]
             }
         ],
-        'handlers': {
-            str: {
-                'handler': [str, str],
-                Optional('filter_expression', default=''): str,
+        'reactors': [
+            {
+                'id': str,
+                'desc': str,
                 Optional('config', default={}): {
                     str: object
-                }
+
+                },
+                'tenants': [
+                    {
+                        'id': str,
+                        'handlers': {
+                            str: {
+                                'handler': [str, str],
+                                Optional('filter_expression', default=''): str,
+                                Optional('config', default={}): {
+                                    str: object
+                                }
+                            }
+                        }
+                    }
+                ]
             }
-        }
+        ]
     })
 
     # mako filter expressions will have these imports available to the
@@ -90,6 +103,7 @@ class ApplicationConfigStore:
         self.log = logging.getLogger('ApplicationConfigStore')
         self._source_by_id = {}
         self._engine_by_id = {}
+        self._reactor_by_id = {}
 
     def load(self, filename: str):
 
@@ -112,6 +126,9 @@ class ApplicationConfigStore:
                     # todo validate engine (maybe)
                     self._engine_by_id[engine['id']] = engine
 
+                for reactor in cfg.get('reactors', []):
+                    self._reactor_by_id[reactor['id']] = reactor
+
         except Exception as e:
             self.log.error(f'Configuration error: {e}')
             return False
@@ -124,6 +141,9 @@ class ApplicationConfigStore:
 
     def engine_by_id(self, engine_id: str):
         return self._engine_by_id.get(engine_id)
+
+    def reactor_by_id(self, reactor_id: str):
+        return self._reactor_by_id.get(reactor_id)
 
     def process_section_config(self, section: str):
         self.log.info(f'Processing configuration section [{section}]')
@@ -155,6 +175,17 @@ class ApplicationConfigStore:
             settings = engine.get('config', {})
             for relative_key in settings:
                 key = f'engines.{engine_id}.{relative_key}'
+                value = settings[relative_key]
+                self.log.debug(f'Setting {key} to {value}')
+                RuntimeConfig.set(key, value)
+
+    def process_reactor_config(self, reactor_id: str):
+        self.log.info(f'Processing configuration for reactor {reactor_id}')
+        reactor = self.reactor_by_id(reactor_id)
+        if reactor:
+            settings = reactor.get('config', {})
+            for relative_key in settings:
+                key = f'reactors.{reactor_id}.{relative_key}'
                 value = settings[relative_key]
                 self.log.debug(f'Setting {key} to {value}')
                 RuntimeConfig.set(key, value)
