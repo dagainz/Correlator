@@ -16,7 +16,7 @@ from rstream import (
 
 from Correlator.config_store import RuntimeConfig, ConfigType
 from Correlator.Event.core import Event
-from Correlator.sysconfig import ApplicationConfig
+from Correlator.runtime_config import ApplicationConfig
 from Correlator.core import setup_root_logger, RecordTypes, ResultCodes, Instance, CredentialsReq, SimpleException
 
 import grpc

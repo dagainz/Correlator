@@ -120,7 +120,7 @@ class Email(EventListener):
             'From': self.email_from,
             'Subject': subject,
             'version': Instance.Version,
-            'summary': event.render_summary(content_type),
+            'summary': event._render_summary(content_type),
             'data_table': event.render_datatable(content_type, **args),
             'event': event
             }

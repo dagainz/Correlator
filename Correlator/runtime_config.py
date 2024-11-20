@@ -168,6 +168,15 @@ class ApplicationConfigStore:
                 self.log.debug(f'Setting {key} to {value}')
                 RuntimeConfig.set(key, value)
 
+    def process_mediator_config(self):
+        self.log.info('Processing mediator configuration')
+        settings = self.cfg.get('input_processor')
+        for relative_key in settings:
+            key = f'input_processor.{relative_key}'
+            value = settings[relative_key]
+            self.log.debug(f'Setting {key} to {value}')
+            RuntimeConfig.set(key, value)
+
     def process_engine_config(self, engine_id: str):
         self.log.info(f'Processing configuration for engine {engine_id}')
         engine = self.engine_by_id(engine_id)

@@ -13,7 +13,7 @@ import time
 from dataclasses import dataclass
 from typing import Callable
 
-from Correlator.sysconfig import ApplicationConfig
+from Correlator.runtime_config import ApplicationConfig
 
 from Correlator.config_store import ConfigType, RuntimeConfig
 from Correlator.core import setup_root_logger, RecordTypes, ResultCodes, Instance

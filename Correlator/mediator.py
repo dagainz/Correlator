@@ -15,7 +15,7 @@ import grpc
 
 from grpc_interceptor import AsyncServerInterceptor
 from Correlator.config_store import RuntimeConfig, ConfigType
-from Correlator.sysconfig import ApplicationConfig
+from Correlator.runtime_config import ApplicationConfig
 
 from Correlator.core import setup_root_logger, RecordTypes, ResultCodes, Instance
 
@@ -187,6 +187,8 @@ class InputProcessorCLI:
         setup_root_logger(level)
 
         log.info(f'Correlator {Instance.Version} Input processor startup')
+        ApplicationConfig.process_mediator_config()
+
         RuntimeConfig.dump_to_log()
 
         grpc_host = RuntimeConfig.get('input_processor.grpc_listen_address')
