@@ -164,10 +164,10 @@ class Event:
 
     @property
     def summary(self):
-        return self.render_summary('text/plain')
+        return self._render_summary('text/plain')
 
     @cache
-    def render_summary(self, content_type: str = 'text/plain'):
+    def _render_summary(self, content_type: str = 'text/plain'):
         templates = self.templates[content_type]
         summary_template = templates.get('summary')
         if summary_template:

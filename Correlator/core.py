@@ -53,6 +53,29 @@ def setup_root_logger(log_level):
     return logger
 
 
+def setup_logger(name: str, debug: bool = False):
+
+    if debug:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
+
+    logger = logging.getLogger(name)
+    logger.setLevel(log_level)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(log_level)
+
+    # noinspection SpellCheckingInspection
+    formatter = logging.Formatter(
+        '%(asctime)s %(name)s %(levelname)s: %(message)s',
+        '%Y-%m-%d %H:%M:%S')
+    ch.setFormatter(formatter)
+
+    logger.addHandler(ch)
+
+    return logger
+
+
 def setup_keyring():
 
     keyring_pass = os.getenv('KEYRING_CRYPTFILE_PASSWORD')
@@ -259,6 +282,21 @@ class CountOverTime:
     def clear(self, identifier: str):
         if identifier in self.store:
             del self.store[identifier]
+
+
+def handle_config_argument(parser: argparse.ArgumentParser, prompt='Correlator configuration file'):
+    if 'CORRELATOR_CFG' in os.environ:
+        parser.add_argument(
+            '--config_file',
+            default=os.environ['CORRELATOR_CFG'],
+            help=prompt
+        )
+    else:
+        parser.add_argument(
+            '--config_file',
+            required=True,
+            help=prompt
+        )
 
 
 def process_cmdline_options(cmd_args: argparse.Namespace):
