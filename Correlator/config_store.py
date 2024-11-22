@@ -41,7 +41,6 @@ BaseSystemConfig = [
         }
     }
 ]
-"""Configuration that serves as the base for any application"""
 
 
 class ConfigStore:
@@ -180,12 +179,7 @@ class ConfigStore:
              ] for x in self.store
         ]
 
-    def dump_to_log(self, debug=True):
-
-        if debug:
-            log_obj = self.log.debug
-        else:
-            log_obj = self.log.info
+    def dump_to_log(self, log_obj):
 
         log_obj(f'{"Parameter":<45} {"Type":<10} {"Value":<10} {"Default":<10} '
                 f'{"Description":<14}')

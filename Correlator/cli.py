@@ -1,12 +1,31 @@
 import argparse
+import logging
 import os
+
+from Correlator.config_store import RuntimeConfig
 
 
 class BaseCLI:
     """Stuff common to several CLI utilities"""
 
+    def __init__(self):
+        self.log = logging.getLogger('BaseCLI')
+
+    def _process_overrides(self, args: argparse.Namespace) -> [(str, str)]:
+        # Prepare list of settings from command line
+
+        settings = []
+
+        for option in args.option:
+            pos = option.find('=')
+            if pos > 0:
+                key = option[0:pos]
+                value = option[pos+1:]
+                settings.append((key, value))
+        return settings
+
     @staticmethod
-    def _offset_spec(value: str):
+    def _offset_spec(value: str) -> [int, int]:
 
         """Argparse 'type' method to handle a single integer or range in the format integer-integer
 

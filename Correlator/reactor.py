@@ -66,7 +66,7 @@ class Reactor:
     ]
 
     # def __init__(self, config_block: dict, configuration_prefix: str):
-    def __init__(self, reactor_id: str):
+    def __init__(self, reactor_id: str, overrides: [(str, str)]):
 
         self._filters = []
         # self._reactor_id = reactor_id
@@ -148,6 +148,12 @@ class Reactor:
                 for key, value in handler_settings.items():
                     RuntimeConfig.set(
                         f'handler.{fq_handler_name}.{key}', value)
+
+                self.log.debug('Setting handler level overrides')
+                for (key, value) in overrides:
+                    if key.startswith(f'handler.{fq_handler_name}.'):
+                        RuntimeConfig.set(key, value)
+
                 try:
                     obj.initialize()
                 except CredentialsReq as e:
@@ -206,32 +212,27 @@ class ReactorCLI(BaseCLI):
 
     def __init__(self):
 
+        super().__init__()
         self.test_start = None
         self.test_end = None
 
         parser = argparse.ArgumentParser(description='Correlator Reactor')
         parser.add_argument('--id', required=True, help='Reactor ID')
-
-        # Allow for config file environment override
-
-        if 'CORRELATOR_CFG' in os.environ:
-            parser.add_argument(
-                '--config_file',
-                default=os.environ['CORRELATOR_CFG'],
-                help='Correlator configuration file'
-            )
-        else:
-            parser.add_argument(
-                '--config_file',
-                required=True,
-                help='Correlator configuration file'
-            )
+        self._handle_configfile_argument(parser)
 
         parser.add_argument('-d', '--debug', action='store_true', help='Enable more verbose output')
-        parser.add_argument('-c', '--config', action='store_true', help='Display runtime configuration')
         parser.add_argument('-r', '--rerun', type=self._offset_spec,
                             help='** re-runs the reactor engine against historical events according to this argument. It can be specified as an Integer or range separated by hyphen.')
+        parser.add_argument(
+            '--option',
+            action='append',
+            metavar='option.name=value',
+            help='Set configuration option.name to value',
+            default=[]
+        )
         args = parser.parse_args()
+
+        overrides = self._process_overrides(args)
 
         reactor_id = args.id
         configuration_prefix = f"reactors.{reactor_id}"
@@ -256,6 +257,12 @@ class ReactorCLI(BaseCLI):
         RuntimeConfig.add(ReactorConfig, configuration_prefix)
 
         ApplicationConfig.process_reactor_config(reactor_id)
+
+        self.log.debug('Setting service level overrides')
+        for (key, value) in overrides:
+            if key.startswith('reactors.'):
+                RuntimeConfig.set(key, value)
+
         self.rmq_host = RuntimeConfig.get(f'{configuration_prefix}.rabbitmq_host')
         self.rmq_user = RuntimeConfig.get(f'{configuration_prefix}.rabbitmq_user')
 
@@ -268,12 +275,14 @@ class ReactorCLI(BaseCLI):
         # Instantiate reactor engine with handlers
 
         try:
-            reactor = Reactor(reactor_id)
+            reactor = Reactor(reactor_id, overrides)
         except ValueError as e:
             self.log.error(f'Reactor startup failed: {e}')
             raise
 
-        RuntimeConfig.dump_to_log()
+        self._process_overrides(args)
+
+        RuntimeConfig.dump_to_log(self.log.info)
 
         # Subscribe to event stream and send received events through the reactor engine
 

@@ -1,9 +1,26 @@
 from Correlator.Event.core import EventListener, Event, log, EventSeverity
+from Correlator.config_store import ConfigType
+
+LogConfig = [
+    {
+        'sample': {
+            'default': '',
+            'desc': 'Sample Arg no-op',
+            'type': ConfigType.STRING
+        }
+    }
+]
 
 
 class LogbackListener(EventListener):
 
     handler_name = 'Logback'
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.add_to_config(LogConfig)
 
     def initialize(self):
         self.log.debug('Handler initialize')

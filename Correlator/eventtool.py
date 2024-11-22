@@ -34,11 +34,12 @@ class EventToolCLI(BaseCLI):
         self._handle_configfile_argument(parser)
         parser.add_argument('-d', '--debug', action='store_true',
                             help='Enable more verbose output')
-        parser.add_argument('-p', '--page', type=int, default=20,
+        parser.add_argument('-p', '--page', type=int, default=0,
                             help='How many events to display before a new header line is printed')
         group = parser.add_mutually_exclusive_group(required=True)
         group.add_argument('-l', '--list', type=self._offset_spec,
-                           help='List events in stream according to this offset specification: Integer or range separated by hyphen.')
+                           help='List events in stream according to this offset specification: Integer or range '
+                                'separated by hyphen.')
         group.add_argument('-i', '--inspect', type=int,
                            help='Inspect a single event in stream by its Integer offset.')
         group.add_argument('-w', '--watch', action='store_true',
@@ -86,10 +87,6 @@ class EventToolCLI(BaseCLI):
         self.rmq_port = 5552
         self.rmq_event_stream = RuntimeConfig.get(
             f'{configuration_prefix}.rabbitmq_event_stream')
-
-        # No need for reactor engine
-
-        # RuntimeConfig.dump_to_log()
 
         self.total_messages = 0
 
